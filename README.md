@@ -2,7 +2,9 @@
 
 依手寫清單建置：匯市、債市、股市、商品、國家與公司現金流、VIX，從 1995 年開始做 30 年關聯研究，另有「鉅亨每日」分頁每天匯入鉅亨網新聞與報價並自動標註重點。
 
-打開 `dashboard.html` 就能看（單一檔案，資料已內嵌；字型需要網路，離線會退回系統字型）。
+**線上 demo：https://ahhshiba.github.io/global-flow-dashboard/** （公開示範版，每天自動更新）
+
+本機打開 `dashboard.html` 就能看（單一檔案，資料已內嵌；字型需要網路，離線會退回系統字型）。
 
 ## 分頁
 
@@ -45,6 +47,14 @@ crontab 每天跑兩次（安裝前的備份：`~/crontab.bak_20260915_223816_pr
 每次都會更新日線、重算分析、匯入鉅亨網、重新產出 `dashboard.html`；月資料快取超過 7 天才重抓。`run_daily.sh` 有檔案鎖，上一次還沒跑完就略過。log 在 `logs/daily_YYYYMM.log`。要停用就刪掉那兩行 crontab。
 
 線上 Artifact 連結不會被排程自動更新，只有本機檔案會。
+
+## 發佈到 GitHub Pages
+
+- 原始碼在 `main`，網頁在 `gh-pages` 分支（每次部署都是**單一 commit 強制覆蓋**，所以 2 MB 的 HTML 不會天天累積在 repo 裡）。
+- `python3 gfd.py build --public` 產生 `docs/index.html`：和本機版相同，但**新聞只留標題與原文連結、不含摘要**，避免公開轉載鉅亨網內文；頁尾會標示這是公開示範版。
+- `./deploy_pages.sh` 把 `docs/index.html` 推上 `gh-pages`；`run_daily.sh` 每天更新完會自動呼叫它，所以 demo 跟著本機一起更新（電腦關機那天就不會更新）。
+- 推送用 `gh` 的 git credential helper，不需要另外存 token。要停止公開更新：刪掉 `run_daily.sh` 裡呼叫 `deploy_pages.sh` 那段，或在 GitHub 設定關掉 Pages。
+- `data/`、`logs/`、`docs/` 都不進版控，repo 只有原始碼（19 個檔案）。
 
 ## 報價跑馬燈與單一標的線圖
 
