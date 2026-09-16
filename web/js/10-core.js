@@ -559,19 +559,72 @@ function sparkline(values, { w = 160, h: hh = 26, color = "var(--accent)" } = {}
 }
 
 /* ── KPI 磚 ── */
+/* 大數字一律是「最新已收盤價＋日漲跌」，和鉅亨每日頁同一份數字；研究用月資料只用來算 30 年位階。
+   研究序列 → 每日報價代碼（沒列到的改用單一標的日線，再沒有才退回月資料並明講是月資料）。 */
+const KPI_QUOTE = {
+  fx_dxy: "GI:DXY:INDEX", fx_usdtwd: "FX:USDTWD:FOREX", fx_usdjpy: "FX:USDJPY:FOREX", fx_usdcny: "FX:USDCNY:FOREX",
+  fx_eurusd: "FX:EURUSD:FOREX", b_us3m: "^IRX", b_us5y: "^FVX", b_us10y: "^TNX", b_us30y: "^TYX", b_jp10y: "JGB10Y",
+  b_lqd: "LQD", b_hyg: "HYG", eq_spx: "GI:INX:INDEX", eq_dji: "GI:DJI:INDEX", eq_sox: "GI:SOX:INDEX", eq_hsi: "GI:HSI:INDEX",
+  eq_twii: "TWS:TSE01:INDEX", eq_sse: "GI:SSEC:INDEX", c_gold: "GC=F", c_silver: "SI=F", c_copper: "HG=F", c_brent: "BZ=F",
+  c_wti: "CL=F", c_natgas: "NG=F", c_maize: "ZC=F", c_soy: "ZS=F", v_vix: "^VIX",
+};
+const LATEST_QUOTES = Object.fromEntries((((GFD.daily || [])[0]) || { quotes: [] }).quotes.map((q) => [q.symbol, q]));
+
+function latestClose(sid) {
+  const D = (GFD.detail || {})[sid];
+  const q = LATEST_QUOTES[KPI_QUOTE[sid]];
+  const unit = D ? D.unit : (A.series[sid] || {}).unit;
+  if (q) return { value: q.close, date: q.asof, dayChg: q.chg, rate: q.unit === "bp", unit, note: q.note, src: q.source };
+  if (D && D.d && D.d[1].length >= 2) {
+    const [t, v] = D.d;
+    const n = v.length - 1;
+    const rate = unit === "%" || unit === "個百分點";
+    return { value: v[n], date: new Date(t[n] * 86400000).toISOString().slice(0, 10),
+      dayChg: rate ? (v[n] - v[n - 1]) * 100 : (v[n] / v[n - 1] - 1) * 100, rate, unit, src: D.src };
+  }
+  return null;
+}
+function yearChange(sid, L) {
+  const D = (GFD.detail || {})[sid];
+  if (!D || !D.w) return null;
+  const [t, v] = D.w;
+  const target = Math.round(Date.parse(L.date) / 86400000) - 365;
+  let j = -1;
+  for (let i = 0; i < t.length; i++) if (t[i] <= target) j = i;
+  if (j < 0 || !fin(v[j]) || v[j] === 0) return null;
+  return L.rate ? (L.value - v[j]) * 100 : (L.value / v[j] - 1) * 100;
+}
+
 function kpi(sid, name) {
   const s = A.series[sid];
   if (!s || !s.stats) return h("div", { class: "kpi" }, h("div", { class: "k-name" }, name || sid), h("div", { class: "k-val muted" }, "—"));
   const st = s.stats;
-  const isY = s.kind === "yield";
-  const unit = isY ? "%" : ["點", "指數", "比值"].includes(s.unit) ? "" : s.unit;
-  const d = (v) => (isY ? chg(v, 0, "bp") : chg(v, 1, "%"));
+  const pct = `30 年位階 ${fin(st.pct) ? st.pct.toFixed(0) : "—"}%`;
+  const L = latestClose(sid);
+  if (!L) {  // 沒有日資料來源（例：央行重貼現率）：明講是月資料
+    const isY = s.kind === "yield";
+    const unit = isY ? "%" : ["點", "指數", "比值"].includes(s.unit) ? "" : s.unit;
+    const d = (v) => (isY ? chg(v, 0, "bp") : chg(v, 1, "%"));
+    return h("div", { class: "kpi" },
+      h("div", { class: "k-name", title: s.note }, name || s.name),
+      h("div", { class: "k-val" }, isY ? fmtNum(st.value, 2) : fmtNum(st.value), unit ? h("span", { class: "k-unit" }, unit) : null),
+      h("div", { class: "k-d" }, h("span", {}, h("span", { class: "muted" }, "1月 "), d(st.c1)), h("span", {}, h("span", { class: "muted" }, "12月 "), d(st.c12))),
+      sparkline(s.values.slice(-37), { color: "var(--accent)" }),
+      h("div", { class: "k-asof" }, `${st.last} 月資料・${pct}`));
+  }
+  const D = (GFD.detail || {})[sid];
+  const rate = L.rate || L.unit === "%" || L.unit === "個百分點";
+  const valText = L.unit === "%" ? fmtNum(L.value, 3) : L.unit === "個百分點" ? fmtSigned(L.value, 2) : fmtNum(L.value);
+  const unitText = ["點", "指數", "比值", "2010=100"].includes(L.unit) ? "" : L.unit;
+  const yc = yearChange(sid, L);
   return h("div", { class: "kpi" },
-    h("div", { class: "k-name", title: s.note }, name || s.name),
-    h("div", { class: "k-val" }, isY ? fmtNum(st.value, 2) : fmtNum(st.value), unit ? h("span", { class: "k-unit" }, unit) : null),
-    h("div", { class: "k-d" }, h("span", {}, h("span", { class: "muted" }, "1月 "), d(st.c1)), h("span", {}, h("span", { class: "muted" }, "12月 "), d(st.c12))),
-    sparkline(s.values.slice(-37), { color: "var(--accent)" }),
-    h("div", { class: "k-asof" }, `${st.last}　30 年位階 ${fin(st.pct) ? st.pct.toFixed(0) : "—"}%`));
+    h("div", { class: "k-name", title: `${s.note}；最新收盤來源：${L.src}` }, name || s.name),
+    h("div", { class: "k-val" }, valText, unitText ? h("span", { class: "k-unit" }, unitText) : null),
+    h("div", { class: "k-d" },
+      h("span", {}, h("span", { class: "muted" }, "日 "), rate ? chg(L.dayChg, 1, "bp") : chg(L.dayChg, 2, "%")),
+      h("span", {}, h("span", { class: "muted" }, "12月 "), fin(yc) ? (rate ? chg(yc, 0, "bp") : chg(yc, 1, "%")) : (rate ? chg(st.c12, 0, "bp") : chg(st.c12, 1, "%")))),
+    sparkline(D && D.d ? D.d[1].slice(-120) : s.values.slice(-37), { color: "var(--accent)" }),
+    h("div", { class: "k-asof" }, `${L.date.slice(5)} 收盤${L.note ? "・" + L.note : ""}・${pct}`));
 }
 function kpiRow(items) { return h("div", { class: "kpis span-12" }, items.filter(([sid]) => A.series[sid]).map(([sid, name]) => kpi(sid, name))); }
 

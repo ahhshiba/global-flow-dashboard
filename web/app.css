@@ -251,6 +251,8 @@ table.data .heatcell { text-align: center; font-family: var(--f-mono); font-size
 .qrow .n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
 .qrow svg { width: 64px; height: 20px; display: block; }
 .qrow.flagged { background: linear-gradient(90deg, var(--warn-soft), transparent 70%); }
+.qnote { display: inline-block; margin-left: 6px; font: 500 10.5px var(--f-body); color: var(--accent);
+  background: var(--accent-soft); border-radius: 3px; padding: 0 4px; }
 .zflag { display: inline-block; margin-left: 6px; font: 500 10.5px var(--f-mono); color: var(--warn-ink);
   background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 3px; padding: 0 3px; }
 

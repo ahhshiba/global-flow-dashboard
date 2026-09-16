@@ -251,6 +251,19 @@ def fetch_detail(log=print):
     return errors
 
 
+def refresh_daily(log=print):
+    """每天跑：月資料（讓當月數字跟上）＋日線。年度資料與公司現金流仍由 run() 每週更新。"""
+    quiet = lambda m: None if m.strip().startswith("ok") else log(m)  # noqa: E731 - 只記錄失敗的序列
+    log("[history] 月資料序列（每日更新當月數字）")
+    cov = fetch_series(quiet)
+    ids = {c["id"] for c in cov}
+    old = [c for c in _load("coverage.json", {}).get("items", []) if c["id"] not in ids]
+    _save("coverage.json", dict(generated_at=dt.datetime.now().isoformat(timespec="seconds"), items=old + cov))
+    bad = [c for c in cov if c["status"] != "ok"]
+    log(f"[history] 月資料 {len(cov) - len(bad)} 成功、{len(bad)} 失敗或沿用舊資料")
+    fetch_detail(log)
+
+
 def run(log=print):
     log("[history] 月資料序列")
     cov = fetch_series(log)

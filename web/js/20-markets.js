@@ -121,7 +121,7 @@ TABS.overview = (root, redo) => {
   }
 
   g.append(kpiRow([["fx_dxy", "美元指數"], ["fx_usdtwd", "美元/新台幣"], ["b_us10y", "美 10 年殖利率"], ["v_vix", "VIX"],
-    ["eq_spx", "S&P 500"], ["eq_twii", "台灣加權"], ["c_gold", "黃金（月均）"], ["c_brent", "布蘭特（月均）"]]));
+    ["eq_spx", "S&P 500"], ["eq_twii", "台灣加權"], ["c_gold", "黃金期貨"], ["c_brent", "布蘭特原油"]]));
 
   const others = (A.findings || []).filter((f) => f.tab !== "overview");
   const oc = card({ title: "各市場重點", span: 7, sub: "來自各分頁的自動敘述。" });
@@ -212,7 +212,7 @@ TABS.bond = (root, redo) => {
 /* ── 股市 ── */
 function leadersCard() {
   const c = card({ title: "龍頭股觀察", span: 12,
-    sub: "還原權息月報酬；β 與相關係數以近 60 個月對所屬指數計算。點公司名稱就能在上方圖表比較個股與指數。",
+    sub: "最新收盤與日漲跌取自鉅亨每日（台股除權息日以證交所基準價計算）；1 個月以後的報酬為還原權息月資料；β 與相關係數以近 60 個月對所屬指數計算。點公司名稱就能在上方圖表比較個股與指數。",
     note: "名單為大型權值股，不是即時市值排名；要換股請改 gfd/config.py 的 LEADERS。" });
   let mkt = store.get("leadersMkt", "tw");
   let sel = null;
@@ -226,15 +226,18 @@ function leadersCard() {
     if (!valid(L, sel)) sel = (L.items.find((x) => !x.missing) || {}).id;
     chips.replaceChildren(...["tw", "us", "hk"].map((k) => h("button", { class: "chip", type: "button", "aria-pressed": String(k === mkt),
       onclick: () => { mkt = k; store.set("leadersMkt", k); sel = null; build(); draw(); } }, A.leaders[k].title)));
-    const head = ["公司", "最新", "1 個月", "12 個月", "5 年", "年化報酬", "最大回撤", "β", "相關", "近 3 年走勢"];
+    const head = ["公司", "最新收盤", "日漲跌", "1 個月", "12 個月", "5 年", "年化報酬", "最大回撤", "β", "相關", "近 3 年走勢"];
     const rows = L.items.map((it) => {
-      if (it.missing) return h("tr", {}, h("td", {}, it.name, h("span", { class: "sub" }, it.ticker)), h("td", { class: "n muted", colspan: 9 }, "無資料"));
+      if (it.missing) return h("tr", {}, h("td", {}, it.name, h("span", { class: "sub" }, it.ticker)), h("td", { class: "n muted", colspan: 10 }, "無資料"));
       const st = it.stats;
+      const q = LATEST_QUOTES[it.cnyes];
       const btn = h("button", { class: "rowbtn", type: "button", "aria-pressed": String(it.id === sel) }, it.name);
       btn.addEventListener("click", () => { sel = it.id; store.set("leadersSel:" + mkt, sel); build(); draw(); });
       return h("tr", { class: it.id === sel ? "sel" : null },
         h("td", {}, btn, h("span", { class: "sub" }, `${it.ticker}・${st.first} 起`)),
-        h("td", { class: "n" }, fmtNum(st.value)),
+        q ? h("td", { class: "n" }, fmtNum(q.close), h("span", { class: "sub" }, `${q.asof.slice(5)}${q.note ? "・" + q.note : ""}`))
+          : h("td", { class: "n" }, fmtNum(st.value), h("span", { class: "sub" }, `${st.last} 月資料`)),
+        h("td", { class: "n" }, q ? chg(q.chg, 2) : "—"),
         h("td", { class: "n" }, chg(st.c1)), h("td", { class: "n" }, chg(st.c12)), h("td", { class: "n" }, chg(st.c60)),
         h("td", { class: "n" }, fin(st.cagr) ? fmtSigned(st.cagr, 1, "%") : "—"),
         h("td", { class: "n" }, fin(st.mdd) ? `${st.mdd.toFixed(0)}%` : "—"),

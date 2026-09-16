@@ -19,7 +19,8 @@ HISTORY_MAX_AGE_DAYS = 7
 
 
 def history_is_stale():
-    p = ROOT / "data" / "raw" / "series.json"
+    # 看年度資料（外匯存底、TIC、公司現金流）的新舊；月資料每天都會更新，不能拿來判斷
+    p = ROOT / "data" / "raw" / "annual.json"
     return not p.exists() or time.time() - p.stat().st_mtime > HISTORY_MAX_AGE_DAYS * 86400
 
 
@@ -53,7 +54,7 @@ def main():
         if args.force_history or history_is_stale():
             history.run()
         else:
-            history.fetch_detail()  # 日／週線每次都更新；月資料一週重抓一次就夠
+            history.refresh_daily()  # 月資料的當月數字與日線每天更新；年度資料一週一次
         analysis.run()
         now = dt.datetime.now(daily.TPE)
         if now.hour < 12:

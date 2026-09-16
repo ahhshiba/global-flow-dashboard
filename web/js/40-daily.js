@@ -30,6 +30,7 @@ TABS.daily = (root) => {
     return h("div", { class: `qrow${q.flag ? " flagged" : ""}` },
       h("div", { class: "q-name", title: `${q.symbol}・${q.source}・${q.asof}` }, q.name,
         q.flag ? h("span", { class: "zflag", title: "當日變動相對近 60 個交易日的標準差" }, `${Math.abs(q.z).toFixed(1)}σ`) : null,
+        q.note ? h("span", { class: "qnote", title: "漲跌以證交所除權息後的開盤競價基準計算" }, q.note) : null,
         h("small", {}, `${q.source === "鉅亨網" ? "" : q.source + " "}${q.asof.slice(5)}${q.stale ? " 休市" : ""}`)),
       h("span", { class: "n" }, isBp ? q.close.toFixed(3) + "%" : fmtNum(q.close)),
       h("span", { class: `n ${dirClass(q.chg)}` }, `${arrow(q.chg)}${fmtSigned(q.chg, isBp ? 1 : 2, isBp ? "bp" : "%")}`),

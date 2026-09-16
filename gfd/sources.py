@@ -345,6 +345,32 @@ def finmind_cashflow(stock_id, start="2005-01-01"):
                  fcf=(ocf[end] - capex[end]) if end in capex else None) for end in sorted(ocf)]
 
 
+# ── 台灣證券交易所 ──
+def twse_ex_rights(start, end):
+    """除權除息計算結果表 → {(股票代號, "YYYY-MM-DD"): {base, kind, value}}。
+
+    台股當日漲跌是以「開盤競價基準」為基準，除權息日這個基準不是前一日收盤
+    （例：台積電 2026-09-16 除息 7 元，前收 2,385、基準 2,380，收 2,380 為平盤）。
+    """
+    url = "https://www.twse.com.tw/rwd/zh/exRight/TWT49U?" + urllib.parse.urlencode(
+        dict(startDate=start.strftime("%Y%m%d"), endDate=end.strftime("%Y%m%d"), response="json"))
+    d = get_json(url, timeout=40)
+    if d.get("stat") != "OK":
+        raise RuntimeError(f"證交所 TWT49U：{d.get('stat')}")
+    f = d["fields"]
+    i_date, i_code, i_base = f.index("資料日期"), f.index("股票代號"), f.index("開盤競價基準")
+    i_kind, i_value = f.index("權/息"), f.index("權值+息值")
+    out = {}
+    for row in d.get("data") or []:
+        m = re.match(r"(\d+)年(\d+)月(\d+)日", str(row[i_date]))
+        base = _f(row[i_base])
+        if not m or base is None:
+            continue
+        iso = f"{int(m.group(1)) + 1911:04d}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+        out[(str(row[i_code]).strip(), iso)] = dict(base=base, kind=str(row[i_kind]).strip(), value=_f(row[i_value]))
+    return out
+
+
 # ── 鉅亨網 ──
 CNYES_HEADERS = {"Referer": "https://www.cnyes.com/", "Origin": "https://www.cnyes.com"}
 

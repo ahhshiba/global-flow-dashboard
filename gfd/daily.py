@@ -37,21 +37,29 @@ def _rows(src, symbol, cache):
     return cache[key]
 
 
-def quote_entry(rows, day, unit):
+def quote_entry(rows, day, unit, refs=None):
+    """refs：台股除權息日的漲跌基準 {日期: {base, kind, value}}；其他日子以前一日收盤為基準。"""
     rows = [(d, v) for d, v in rows if d <= day.isoformat()]
     if len(rows) < 2:
         return None
-    (d_last, v_last), (_d_prev, v_prev) = rows[-1], rows[-2]
+    refs = refs or {}
+    d_last, v_last = rows[-1]
 
     def delta(a, b):
         return (b - a) * 100 if unit == "bp" else (b / a - 1) * 100
 
-    chg = delta(v_prev, v_last)
-    hist = [delta(rows[i - 1][1], rows[i][1]) for i in range(max(1, len(rows) - 61), len(rows) - 1)]
+    def base(i):
+        r = refs.get(rows[i][0])
+        return r["base"] if r else rows[i - 1][1]
+
+    chg = delta(base(len(rows) - 1), v_last)
+    hist = [delta(base(i), rows[i][1]) for i in range(max(1, len(rows) - 61), len(rows) - 1)]
     sd = statistics.pstdev(hist) if len(hist) >= 20 else 0
     z = chg / sd if sd > 0 else None
+    ex = refs.get(d_last)
+    note = f"除{ex['kind']} {ex['value']:.2f} 元" if ex and ex.get("value") is not None else None
     return dict(asof=d_last, close=round(v_last, 4), chg=round(chg, 3), z=round(z, 2) if z is not None else None,
-                flag=bool(z is not None and abs(z) >= C.MOVER_Z),
+                flag=bool(z is not None and abs(z) >= C.MOVER_Z), note=note,
                 stale=(day - dt.date.fromisoformat(d_last)).days > 4,
                 spark=[round(v, 4) for _, v in rows[-30:]])
 
@@ -94,10 +102,22 @@ def run(day=None, log=print):
     day = day or dt.datetime.now(TPE).date()
     errors, cache = [], {}
 
+    # 台股漲跌基準：除權息日用證交所「開盤競價基準」，不是前一日收盤
+    tw_refs = {}
+    tw_codes = {sym.split(":")[1] for _s, _g, src, sym, _n, _u in C.DAILY_QUOTES
+                if src == "cnyes" and sym.startswith("TWS:") and sym.endswith(":STOCK")}
+    try:
+        for (code, iso), info in S.twse_ex_rights(day - dt.timedelta(days=150), day).items():
+            if code in tw_codes:
+                tw_refs.setdefault(code, {})[iso] = info
+    except Exception as ex:  # noqa: BLE001 - 查不到就退回前一日收盤，並記錄
+        errors.append(f"證交所除權息表：{type(ex).__name__}: {ex}；台股漲跌暫以前一日收盤計算"[:200])
+
     quotes = []
     for sec, group, src, symbol, name, unit in C.DAILY_QUOTES:
         try:
-            e = quote_entry(_rows(src, symbol, cache), day, unit)
+            refs = tw_refs.get(symbol.split(":")[1]) if symbol.startswith("TWS:") and symbol.endswith(":STOCK") else None
+            e = quote_entry(_rows(src, symbol, cache), day, unit, refs)
             if e is None:
                 raise RuntimeError("資料不足")
             quotes.append(dict(section=sec, group=group, source=SOURCE_LABEL[src], symbol=symbol, name=name,
