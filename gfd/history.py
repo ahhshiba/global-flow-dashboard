@@ -225,7 +225,7 @@ def fetch_detail(log=print):
     for sid, (src, sym, unit) in specs.items():
         try:
             if src == "yahoo":
-                got, _meta = S.yahoo_chart(sym, interval="1d", start="1994-12-01", adjusted=False)
+                got, _meta = S.yahoo_chart(sym, interval="1d", start="1994-12-01", adjusted=False, completed_only=True)
                 time.sleep(0.35)
             elif src == "mof":
                 got = [(dt.date.fromisoformat(d), v) for d, v in S.mof_jgb_daily(sym)]

@@ -109,6 +109,7 @@ button { font: inherit; color: inherit; }
 .tape-item { display: inline-flex; gap: 7px; align-items: baseline; }
 .tape-item .t-name { font-family: var(--f-body); color: var(--ink-2); }
 .tape-item .t-val { color: var(--ink); }
+.tape-item .t-date { color: var(--muted); font-size: 11px; }
 .tape-item .t-flag { color: var(--warn-ink); background: var(--warn-soft); border-radius: 3px; padding: 0 4px; font-size: 11px; }
 .tape-date { color: var(--muted); font-family: var(--f-body); }
 

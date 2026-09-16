@@ -47,7 +47,8 @@ def _f(v):
 
 
 # ── Yahoo Finance ──
-def yahoo_chart(symbol, *, interval, start=None, rng=None, adjusted=True):
+def yahoo_chart(symbol, *, interval, start=None, rng=None, adjusted=True, completed_only=False):
+    """completed_only=True：交易時段還沒結束的最後一根（盤中價，期貨晚盤價）不算收盤，捨棄。"""
     q = {"interval": interval, "events": "div,split"}
     if rng:
         q["range"] = rng
@@ -64,12 +65,18 @@ def yahoo_chart(symbol, *, interval, start=None, rng=None, adjusted=True):
     close = r["indicators"]["quote"][0].get("close") or []
     adj = (r["indicators"].get("adjclose") or [{}])[0].get("adjclose") if adjusted else None
     off = r["meta"].get("gmtoffset") or 0
-    out = []
+    out, last_t = [], None
     for i, t in enumerate(ts):
         v = adj[i] if adj and i < len(adj) and adj[i] is not None else (close[i] if i < len(close) else None)
         if v is None:
             continue
         out.append((dt.datetime.fromtimestamp(t + off, dt.timezone.utc).date(), float(v)))
+        last_t = t
+    # Yahoo 的當日 K 棒在交易時段內是即時價；期貨在美東晚盤到午夜之間也還不是結算價。
+    reg = ((r["meta"].get("currentTradingPeriod") or {}).get("regular") or {})
+    if completed_only and out and reg.get("start") and reg.get("end") \
+            and last_t >= reg["start"] and time.time() < reg["end"]:
+        out.pop()
     return out, r["meta"]
 
 
@@ -82,7 +89,7 @@ def yahoo_monthly(symbol, start, adjusted=True):
 
 
 def yahoo_daily(symbol, rng="6mo"):
-    rows, _meta = yahoo_chart(symbol, interval="1d", rng=rng, adjusted=False)
+    rows, _meta = yahoo_chart(symbol, interval="1d", rng=rng, adjusted=False, completed_only=True)
     return sorted({day.isoformat(): v for day, v in rows}.items())
 
 
@@ -365,7 +372,15 @@ def cnyes_history(symbol, days=150):
     for t, c in zip(data.get("t") or [], data.get("c") or []):
         if c is not None:
             rows[dt.datetime.fromtimestamp(t, dt.timezone.utc).date().isoformat()] = float(c)
-    return sorted(rows.items())
+    rows = sorted(rows.items())
+    # 交易時段還沒結束時，最後一根是盤中價（24 小時交易的外匯、美元指數尤其明顯），不是收盤。
+    # 時段所屬日期＝時段結束時間的 UTC 日期（台股 13:35、美股次日 04:00、外匯次日 05:00～06:00 台北時間都成立）。
+    sess = [s for s in (data.get("session") or []) if isinstance(s, (list, tuple)) and len(s) == 2]
+    if rows and sess:
+        end = max(b for _, b in sess)
+        if time.time() < end and rows[-1][0] == dt.datetime.fromtimestamp(end, dt.timezone.utc).date().isoformat():
+            rows.pop()
+    return rows
 
 
 def strip_html(s, limit=160):

@@ -67,7 +67,8 @@
         h("span", { class: "t-name" }, q.name),
         h("span", { class: "t-val" }, isBp ? q.close.toFixed(3) + "%" : fmtNum(q.close)),
         h("span", { class: dirClass(q.chg) }, `${arrow(q.chg)}${fmtSigned(q.chg, isBp ? 1 : 2, isBp ? "bp" : "%")}`),
-        q.flag ? h("span", { class: "t-flag" }, `${Math.abs(q.z).toFixed(1)}σ`) : null);
+        q.flag ? h("span", { class: "t-flag" }, `${Math.abs(q.z).toFixed(1)}σ`) : null,
+        q.asof !== latest.date ? h("span", { class: "t-date", title: "這個市場最後一次收盤的日期" }, q.asof.slice(5)) : null);
     };
     const seq = () => h("div", { class: "tape-seq" }, quotes.map(item));
     const clone = seq();
@@ -83,7 +84,7 @@
       store.set("tapePaused", p);
     };
     btn.addEventListener("click", () => setPaused(!paused));
-    tape.append(h("span", { class: "tape-date" }, `${latest.date} 收盤`), h("div", { class: "tape-view" }, track), btn);
+    tape.append(h("span", { class: "tape-date", title: "各市場最近一次已收盤的價格；日期不同的標在數字後面" }, `最新收盤・${latest.date.slice(5)}`), h("div", { class: "tape-view" }, track), btn);
     setPaused(paused);
     requestAnimationFrame(() => {
       const w = track.firstChild.getBoundingClientRect().width;
