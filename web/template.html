@@ -1,0 +1,49 @@
+<title>資金流向觀測台</title>
+<meta name="description" content="1995 年以來匯市、債市、股市、商品與資金流的關聯研究，搭配鉅亨網每日重點。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>/*__CSS__*/</style>
+
+<div class="app">
+  <header class="mast">
+    <div class="brand">
+      <h1>資金流向觀測台</h1>
+      <p class="brand-sub">匯市・債市・股市・商品・現金流・VIX　<span class="mono" id="span-range">1995 →</span></p>
+    </div>
+    <dl class="stamps" id="stamps"></dl>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="分頁">
+    <button role="tab" id="t-overview" data-tab="overview" aria-controls="tab-overview">總覽</button>
+    <button role="tab" id="t-fx" data-tab="fx" aria-controls="tab-fx">匯市</button>
+    <button role="tab" id="t-bond" data-tab="bond" aria-controls="tab-bond">債市</button>
+    <button role="tab" id="t-equity" data-tab="equity" aria-controls="tab-equity">股市</button>
+    <button role="tab" id="t-commodity" data-tab="commodity" aria-controls="tab-commodity">商品</button>
+    <button role="tab" id="t-flow" data-tab="flow" aria-controls="tab-flow">現金流</button>
+    <button role="tab" id="t-vol" data-tab="vol" aria-controls="tab-vol">VIX</button>
+    <button role="tab" id="t-research" data-tab="research" aria-controls="tab-research">30 年關聯</button>
+    <button role="tab" id="t-daily" data-tab="daily" aria-controls="tab-daily">鉅亨每日<span class="tab-dot" id="daily-dot" hidden></span></button>
+  </nav>
+
+  <div class="tape" id="tape" aria-label="最新收盤"></div>
+
+  <main>
+    <section class="tab" id="tab-overview" role="tabpanel" aria-labelledby="t-overview" hidden></section>
+    <section class="tab" id="tab-fx" role="tabpanel" aria-labelledby="t-fx" hidden></section>
+    <section class="tab" id="tab-bond" role="tabpanel" aria-labelledby="t-bond" hidden></section>
+    <section class="tab" id="tab-equity" role="tabpanel" aria-labelledby="t-equity" hidden></section>
+    <section class="tab" id="tab-commodity" role="tabpanel" aria-labelledby="t-commodity" hidden></section>
+    <section class="tab" id="tab-flow" role="tabpanel" aria-labelledby="t-flow" hidden></section>
+    <section class="tab" id="tab-vol" role="tabpanel" aria-labelledby="t-vol" hidden></section>
+    <section class="tab" id="tab-research" role="tabpanel" aria-labelledby="t-research" hidden></section>
+    <section class="tab" id="tab-daily" role="tabpanel" aria-labelledby="t-daily" hidden></section>
+  </main>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+
+<div class="tip" id="tip" role="status" hidden></div>
+
+<script id="gfd-data" type="application/json">/*__DATA__*/</script>
+<script>/*__JS__*/</script>

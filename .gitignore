@@ -1,0 +1,10 @@
+# 抓下來的原始資料與產物（體積大、每天會變，不進版控）
+data/
+logs/
+__pycache__/
+*.pyc
+dashboard.html
+dashboard.artifact.html
+*.tmp
+.run_daily.lock
+docs/
