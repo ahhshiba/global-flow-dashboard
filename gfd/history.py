@@ -264,6 +264,27 @@ def refresh_daily(log=print):
     fetch_detail(log)
 
 
+def fetch_cascade_daily(log=print):
+    """事件衝擊分析用的日線（1995 起全量）→ data/raw/daily_cascade.json。不內嵌網頁，只給分析用。"""
+    old = _load("daily_cascade.json", {}).get("series", {})
+    out, errors = {}, []
+    for sym, name, layer in C.CASCADE_UNIVERSE:
+        try:
+            rows, _meta = S.yahoo_chart(sym, interval="1d", start="1994-12-01", adjusted=False, completed_only=True)
+            rows = [(d.isoformat(), v) for d, v in rows if d.isoformat() >= "1995-01-01"]
+            if len(rows) < 250:
+                raise RuntimeError(f"日線只有 {len(rows)} 筆")
+            out[sym] = dict(name=name, layer=layer, dates=[d for d, _ in rows], closes=[round(v, 4) for _, v in rows])
+            time.sleep(0.3)
+        except Exception as e:  # noqa: BLE001
+            if sym in old:
+                out[sym] = dict(old[sym], stale=True)
+            errors.append(f"{sym}（{name}）：{_err(e)}")
+    _save("daily_cascade.json", dict(fetched_at=dt.datetime.now().isoformat(timespec="seconds"), series=out, errors=errors))
+    log(f"[cascade] 日線 {len(out)}/{len(C.CASCADE_UNIVERSE)} 檔" + (f"，失敗 {len(errors)}：{errors[0]}" if errors else ""))
+    return errors
+
+
 def run(log=print):
     log("[history] 月資料序列")
     cov = fetch_series(log)
@@ -273,6 +294,8 @@ def run(log=print):
     cov += fetch_company_cf(log)
     log("[history] 單一標的日線")
     fetch_detail(log)
+    log("[history] 事件衝擊用日線")
+    fetch_cascade_daily(log)
     _save("coverage.json", dict(generated_at=dt.datetime.now().isoformat(timespec="seconds"), items=cov))
     bad = [c for c in cov if c["status"] != "ok"]
     log(f"[history] 完成：{len(cov) - len(bad)} 成功、{len(bad)} 失敗或沿用舊資料")

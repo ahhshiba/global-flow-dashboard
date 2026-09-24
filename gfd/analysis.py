@@ -6,6 +6,7 @@ import pathlib
 
 import numpy as np
 
+from . import cascade as CA
 from . import chains as CH
 from . import config as C
 from . import playbook as PB
@@ -529,7 +530,7 @@ def run(log=print):
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),
-        chains=chain_block, playbook=play,
+        chains=chain_block, playbook=play, cascade=CA.build(log=log),
         findings=findings(series, comp, pr, flow, vix, tic_blk, res) + chain_findings,
         coverage=(_load("coverage.json") or {}).get("items", []),
         gaps=[dict(item=a, reason=b, proxy=c) for a, b, c in C.GAPS],

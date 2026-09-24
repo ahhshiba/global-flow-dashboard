@@ -138,7 +138,7 @@ TABS.overview = (root, redo) => {
   const own = findingsList("overview");
   if (own) oc.body.append(own);
   if (others.length) {
-    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", chains: "傳導鏈", playbook: "訊號劇本", research: "30 年關聯" };
+    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", cascade: "事件衝擊", chains: "傳導鏈", playbook: "訊號劇本", research: "30 年關聯" };
     oc.body.append(h("ul", { class: "finds", style: "margin-top:12px" }, others.map((f) => h("li", { class: `t-${f.tone}` },
       h("b", {}, `【${tabName[f.tab] || f.tab}】${f.title}`), h("span", {}, f.text)))));
   }

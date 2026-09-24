@@ -319,6 +319,63 @@ CHAINS = [
          ]),
 ]
 
+# ── 事件衝擊鏈（真實事件 → 兩週／一個月／兩個月的逐層傳導）──
+# 這裡用「日線」而不是月資料，因為兩週的尺度用月資料做不出來。
+CASCADE_WINDOWS = [10, 21, 42]     # 交易日：約兩週、一個月、兩個月
+CASCADE_PRE = 10                   # 事件前先看幾個交易日（判斷有沒有提前反映）
+CASCADE_REACT_SIGMA = 2.0          # 首次反應門檻：累積變動 ≥ 2σ×√天數（σ 為事件前 60 日的日波動）
+CASCADE_MAX_DAYS = 42
+
+# 五層：從上游原物料一路到資金面。id 為 Yahoo 代碼。
+CASCADE_UNIVERSE = [
+    ("CL=F", "WTI 原油", "upstream"), ("NG=F", "天然氣", "upstream"), ("GC=F", "黃金", "upstream"),
+    ("HG=F", "銅", "upstream"), ("KE=F", "小麥", "upstream"), ("ZC=F", "玉米", "upstream"), ("ZS=F", "大豆", "upstream"),
+    ("XLE", "美國能源股", "resources"), ("XOP", "油氣探勘股", "resources"), ("XLB", "美國原物料股", "resources"),
+    ("IGE", "天然資源股", "resources"), ("GDX", "金礦股", "resources"),
+    ("XLI", "美國工業股", "industry"), ("IYT", "美國運輸股", "industry"), ("2603.TW", "長榮", "industry"),
+    ("2609.TW", "陽明", "industry"), ("2002.TW", "中鋼", "industry"), ("1301.TW", "台塑", "industry"),
+    ("6505.TW", "台塑化", "industry"),
+    ("XLY", "非必需消費股", "downstream"), ("XLP", "必需消費股", "downstream"), ("XLK", "美國科技股", "downstream"),
+    ("^SOX", "費城半導體", "downstream"), ("2330.TW", "台積電", "downstream"), ("^TWII", "台灣加權", "downstream"),
+    ("^GSPC", "S&P 500", "downstream"), ("^NDX", "那斯達克 100", "downstream"), ("^HSI", "恆生指數", "downstream"),
+    ("^TNX", "美 10 年殖利率", "money"), ("^IRX", "美 3 個月利率", "money"), ("DX-Y.NYB", "美元指數", "money"),
+    ("JPY=X", "美元/日圓", "money"), ("TWD=X", "美元/新台幣", "money"), ("TLT", "美國長債 ETF", "money"),
+    ("HYG", "高收益債 ETF", "money"), ("XLU", "公用事業股", "money"), ("XLF", "美國金融股", "money"),
+    ("^VIX", "VIX", "money"),
+]
+CASCADE_LAYERS = [("upstream", "上游：原物料與能源價格"), ("resources", "中游：能源與資源股"),
+                  ("industry", "中游：工業、運輸與石化鋼鐵"), ("downstream", "下游：終端需求與科技股"),
+                  ("money", "資金面：利率、匯率、避險")]
+CASCADE_RATE_IDS = {"^TNX", "^IRX", "^VIX"}   # 這幾個用變動點數／百分點表示，不是報酬
+
+# 真實事件清單：日期為公開已知的事件發生日（approx=True 者為區間起點的概略日）。
+# 這是研究用清單，可自行增刪；分類用來做跨事件彙總。
+SHOCK_EVENTS = [
+    dict(id="sep11", date="2001-09-11", cat="geo", name="美國 911 恐怖攻擊", note="美股停市四個交易日，重啟後補跌"),
+    dict(id="iraq03", date="2003-03-20", cat="geo", name="美軍入侵伊拉克", note="開戰前油價已大漲，開戰後回落"),
+    dict(id="katrina", date="2005-08-29", cat="energy", name="卡崔娜颶風登陸", note="墨西哥灣油氣生產與煉廠中斷"),
+    dict(id="lehman", date="2008-09-15", cat="crisis", name="雷曼兄弟破產", note="全球信用凍結"),
+    dict(id="macondo", date="2010-04-20", cat="energy", name="深水地平線漏油", note="墨西哥灣鑽探禁令"),
+    dict(id="libya11", date="2011-02-17", cat="geo", name="利比亞內戰爆發", approx=True, note="阿拉伯之春擴散，日產能中斷"),
+    dict(id="fukushima", date="2011-03-11", cat="energy", name="東日本大地震與福島事故", note="核電停擺，日本轉向 LNG"),
+    dict(id="usdowngrade", date="2011-08-05", cat="crisis", name="標普調降美國主權評等", note="全球股市重挫"),
+    dict(id="cny815", date="2015-08-11", cat="policy", name="人民幣 811 匯改", note="中間價機制改革，人民幣一次性貶值"),
+    dict(id="brexit", date="2016-06-23", cat="policy", name="英國脫歐公投", note="隔日英鎊與全球股市重挫"),
+    dict(id="tariff18", date="2018-07-06", cat="policy", name="美國對中首波關稅生效", note="340 億美元商品加徵 25%"),
+    dict(id="abqaiq", date="2019-09-14", cat="energy", name="沙烏地 Abqaiq 油設施遇襲", note="一度中斷全球約 5% 供給"),
+    dict(id="opec20", date="2020-03-06", cat="energy", name="OPEC+ 破局、沙俄價格戰", note="油價單日崩跌"),
+    dict(id="covid", date="2020-03-11", cat="crisis", name="WHO 宣布新冠為全球大流行", note="流動性危機與封城"),
+    dict(id="colonial", date="2021-05-07", cat="energy", name="Colonial 油管遭勒索軟體攻擊", note="美東成品油供應中斷"),
+    dict(id="eugas21", date="2021-09-01", cat="energy", name="歐洲天然氣危機升溫", approx=True, note="庫存偏低與供給收緊"),
+    dict(id="ukraine22", date="2022-02-24", cat="geo", name="俄羅斯全面入侵烏克蘭", note="能源與穀物同時受衝擊"),
+    dict(id="nordstream", date="2022-09-26", cat="energy", name="北溪管線遭破壞", note="歐洲天然氣供給結構性改變"),
+    dict(id="boj_ycc", date="2022-12-20", cat="policy", name="日本央行放寬 YCC 區間", note="日圓急升、全球利率跳動"),
+    dict(id="svb", date="2023-03-10", cat="crisis", name="矽谷銀行倒閉", note="區域銀行擠兌與降息預期"),
+    dict(id="israel23", date="2023-10-07", cat="geo", name="哈瑪斯攻擊以色列", note="中東地緣風險升高"),
+    dict(id="redsea24", date="2024-01-12", cat="geo", name="紅海航運危機升溫", approx=True, note="繞道好望角，運費與運期上升"),
+]
+SHOCK_CATS = [("geo", "戰爭與地緣衝突"), ("energy", "能源與供應鏈中斷"), ("crisis", "金融危機"), ("policy", "政策衝擊")]
+
 # ── 訊號劇本（事件前兆 × 事件後全資產期望值）──
 # 期望值一律看「相對該資產自己的無條件基準」的超額，並要通過三道關卡才標為穩健。
 PLAYBOOK_SPLIT = "2012-01"      # 樣本外切點：前半段找到的規律，後半段要同方向
