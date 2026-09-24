@@ -326,56 +326,173 @@ CASCADE_PRE = 10                   # 事件前先看幾個交易日（判斷有�
 CASCADE_REACT_SIGMA = 2.0          # 首次反應門檻：累積變動 ≥ 2σ×√天數（σ 為事件前 60 日的日波動）
 CASCADE_MAX_DAYS = 42
 
+CASCADE_START = "1979-06-01"      # 1980 年初的事件也要有 60 個交易日的事前波動可算
+
 # 五層：從上游原物料一路到資金面。id 為 Yahoo 代碼。
 CASCADE_UNIVERSE = [
     ("CL=F", "WTI 原油", "upstream"), ("NG=F", "天然氣", "upstream"), ("GC=F", "黃金", "upstream"),
+    ("SI=F", "白銀", "upstream"),
     ("HG=F", "銅", "upstream"), ("KE=F", "小麥", "upstream"), ("ZC=F", "玉米", "upstream"), ("ZS=F", "大豆", "upstream"),
     ("XLE", "美國能源股", "resources"), ("XOP", "油氣探勘股", "resources"), ("XLB", "美國原物料股", "resources"),
-    ("IGE", "天然資源股", "resources"), ("GDX", "金礦股", "resources"),
+    ("IGE", "天然資源股", "resources"), ("GDX", "金礦股", "resources"), ("^GSPTSE", "加拿大 TSX（資源國）", "resources"),
     ("XLI", "美國工業股", "industry"), ("IYT", "美國運輸股", "industry"), ("2603.TW", "長榮", "industry"),
     ("2609.TW", "陽明", "industry"), ("2002.TW", "中鋼", "industry"), ("1301.TW", "台塑", "industry"),
     ("6505.TW", "台塑化", "industry"),
     ("XLY", "非必需消費股", "downstream"), ("XLP", "必需消費股", "downstream"), ("XLK", "美國科技股", "downstream"),
     ("^SOX", "費城半導體", "downstream"), ("2330.TW", "台積電", "downstream"), ("^TWII", "台灣加權", "downstream"),
     ("^GSPC", "S&P 500", "downstream"), ("^NDX", "那斯達克 100", "downstream"), ("^HSI", "恆生指數", "downstream"),
+    ("^N225", "日經 225", "downstream"), ("^GDAXI", "德國 DAX", "downstream"), ("^FTSE", "英國富時 100", "downstream"),
     ("^TNX", "美 10 年殖利率", "money"), ("^IRX", "美 3 個月利率", "money"), ("DX-Y.NYB", "美元指數", "money"),
     ("JPY=X", "美元/日圓", "money"), ("TWD=X", "美元/新台幣", "money"), ("TLT", "美國長債 ETF", "money"),
     ("HYG", "高收益債 ETF", "money"), ("XLU", "公用事業股", "money"), ("XLF", "美國金融股", "money"),
     ("^VIX", "VIX", "money"),
 ]
+# ETF 與期貨大多 1999–2000 年才有日線。更早的事件用「代理序列」接在前面：
+# 只取代理序列在主序列開始日之前的報酬，接點以主序列第一天的價位對齊，所以接點之後完全是原序列。
+# 種類：yahoo＝Yahoo 代碼（共同基金用還原淨值，避免配息日假跌）、eia＝美國能源資訊署現貨日價、
+# lbma＝倫敦金銀定盤價、twse＝證交所每日加權指數（1990 起）。
+CASCADE_PROXY = {
+    "CL=F": ("eia", "RWTC", "WTI 現貨價（EIA）"),
+    "GC=F": ("lbma", "gold_pm", "倫敦黃金下午定盤價"),
+    "SI=F": ("lbma", "silver", "倫敦白銀定盤價"),
+    "XLE": ("yahoo", "FSENX", "Fidelity 能源產業基金"),
+    "XLB": ("yahoo", "FSDPX", "Fidelity 原物料產業基金"),
+    "GDX": ("yahoo", "^XAU", "費城金銀礦業指數"),
+    "IYT": ("yahoo", "FSRFX", "Fidelity 運輸產業基金"),
+    "XLY": ("yahoo", "FSRPX", "Fidelity 零售產業基金"),
+    "XLP": ("yahoo", "FDFAX", "Fidelity 必需消費產業基金"),
+    "XLK": ("yahoo", "FSPTX", "Fidelity 科技產業基金"),
+    "^SOX": ("yahoo", "FSELX", "Fidelity 半導體產業基金"),
+    "^NDX": ("yahoo", "^IXIC", "那斯達克綜合指數"),
+    "^TWII": ("twse", "TAIEX", "證交所每日加權指數"),
+    "TLT": ("yahoo", "VUSTX", "Vanguard 長期公債基金"),
+    "HYG": ("yahoo", "VWEHX", "Vanguard 高收益公司債基金"),
+    "XLU": ("yahoo", "FSUTX", "Fidelity 公用事業產業基金"),
+    "XLF": ("yahoo", "FIDSX", "Fidelity 金融產業基金"),
+}
 CASCADE_LAYERS = [("upstream", "上游：原物料與能源價格"), ("resources", "中游：能源與資源股"),
                   ("industry", "中游：工業、運輸與石化鋼鐵"), ("downstream", "下游：終端需求與科技股"),
                   ("money", "資金面：利率、匯率、避險")]
 CASCADE_RATE_IDS = {"^TNX", "^IRX", "^VIX"}   # 這幾個用變動點數／百分點表示，不是報酬
+# 同一分類裡，兩個事件相隔不到這麼多天（日曆日）時，分類彙總只算較早那一個，
+# 否則同一段價格路徑會被算兩次。單一事件頁仍然會列出，並標出與哪些事件的視窗重疊。
+CASCADE_DEDUP_DAYS = 30
+CASCADE_NULL_ROUNDS = 20          # 虛無校準：把事件日隨機移位重跑幾輪
+CASCADE_NULL_SPAN = 1095           # 移位範圍：原日期前後三年（保留大致相同的年代與資料涵蓋）
+CASCADE_OVERLAP_DAYS = 60          # 約 42 個交易日：在這個距離內的事件，兩個月視窗會互相污染
+# 「類型比較」矩陣的欄：各層各挑代表，事件類型之間才比得起來
+CASCADE_COMPARE = ["CL=F", "GC=F", "XLE", "GDX", "^GSPC", "^NDX", "^SOX", "^TWII", "^N225", "^HSI",
+                   "XLP", "XLU", "TLT", "HYG", "^TNX", "DX-Y.NYB", "^VIX"]
 
 # 真實事件清單：日期為公開已知的事件發生日（approx=True 者為區間起點的概略日）。
+# 事件發生在美股收盤後或週末時，日期填「消息公布日」，基準自動取那之前最後一個收盤。
 # 這是研究用清單，可自行增刪；分類用來做跨事件彙總。
 SHOCK_EVENTS = [
+    # 戰爭與地緣衝突
+    dict(id="kuwait90", date="1990-08-02", cat="geo", name="伊拉克入侵科威特", note="兩國合計約占全球 7% 原油供給，油價兩個月內翻倍"),
+    dict(id="storm91", date="1991-01-17", cat="geo", name="沙漠風暴空襲開始", note="開戰當天油價單日崩跌約三分之一、美股大漲——「開戰即利空出盡」的經典案例"),
+    dict(id="ussr91", date="1991-08-19", cat="geo", name="蘇聯八一九政變", note="三天後失敗，年底蘇聯解體"),
+    dict(id="taiwan95", date="1995-07-21", cat="geo", name="第一次台海飛彈試射", note="7/21–26 於彭佳嶼外海試射"),
+    dict(id="taiwan96", date="1996-03-08", cat="geo", name="台海飛彈危機（首次總統直選前）", note="向基隆、高雄外海試射；美國派兩個航艦戰鬥群"),
     dict(id="sep11", date="2001-09-11", cat="geo", name="美國 911 恐怖攻擊", note="美股停市四個交易日，重啟後補跌"),
     dict(id="iraq03", date="2003-03-20", cat="geo", name="美軍入侵伊拉克", note="開戰前油價已大漲，開戰後回落"),
-    dict(id="katrina", date="2005-08-29", cat="energy", name="卡崔娜颶風登陸", note="墨西哥灣油氣生產與煉廠中斷"),
-    dict(id="lehman", date="2008-09-15", cat="crisis", name="雷曼兄弟破產", note="全球信用凍結"),
-    dict(id="macondo", date="2010-04-20", cat="energy", name="深水地平線漏油", note="墨西哥灣鑽探禁令"),
     dict(id="libya11", date="2011-02-17", cat="geo", name="利比亞內戰爆發", approx=True, note="阿拉伯之春擴散，日產能中斷"),
+    dict(id="crimea14", date="2014-03-01", cat="geo", name="俄羅斯出兵克里米亞", note="俄國國會 3/1（週六）授權出兵，3/3 全球股市下跌"),
+    dict(id="ukraine22", date="2022-02-24", cat="geo", name="俄羅斯全面入侵烏克蘭", note="能源與穀物同時受衝擊"),
+    dict(id="pelosi22", date="2022-08-02", cat="geo", name="裴洛西訪台", note="解放軍 8/4 起環台軍演"),
+    dict(id="israel23", date="2023-10-07", cat="geo", name="哈瑪斯攻擊以色列", note="中東地緣風險升高"),
+    dict(id="redsea24", date="2024-01-12", cat="geo", name="紅海航運危機升溫", approx=True, note="繞道好望角，運費與運期上升"),
+    dict(id="iran25", date="2025-06-13", cat="geo", name="以色列空襲伊朗", note="6/22 美國轟炸伊朗核設施，6/24 停火"),
+    # 能源與商品供給衝擊
+    dict(id="katrina", date="2005-08-29", cat="energy", name="卡崔娜颶風登陸", note="墨西哥灣油氣生產與煉廠中斷"),
+    dict(id="macondo", date="2010-04-20", cat="energy", name="深水地平線漏油", note="墨西哥灣鑽探禁令"),
     dict(id="fukushima", date="2011-03-11", cat="energy", name="東日本大地震與福島事故", note="核電停擺，日本轉向 LNG"),
-    dict(id="usdowngrade", date="2011-08-05", cat="crisis", name="標普調降美國主權評等", note="全球股市重挫"),
-    dict(id="cny815", date="2015-08-11", cat="policy", name="人民幣 811 匯改", note="中間價機制改革，人民幣一次性貶值"),
-    dict(id="brexit", date="2016-06-23", cat="policy", name="英國脫歐公投", note="隔日英鎊與全球股市重挫"),
-    dict(id="tariff18", date="2018-07-06", cat="policy", name="美國對中首波關稅生效", note="340 億美元商品加徵 25%"),
+    dict(id="opec14", date="2014-11-27", cat="energy", name="OPEC 拒絕減產", note="維也納會議決定維持產量（美國感恩節休市），油價一年半內腰斬再腰斬"),
     dict(id="abqaiq", date="2019-09-14", cat="energy", name="沙烏地 Abqaiq 油設施遇襲", note="一度中斷全球約 5% 供給"),
     dict(id="opec20", date="2020-03-06", cat="energy", name="OPEC+ 維也納會談破局",
          note="當日減產協議談判破裂；沙俄價格戰 3/8 開打、油價 3/9 單日崩跌，本表以談判破局日為事件日"),
-    dict(id="covid", date="2020-03-11", cat="crisis", name="WHO 宣布新冠為全球大流行", note="流動性危機與封城"),
+    dict(id="negoil20", date="2020-04-20", cat="energy", name="WTI 期貨跌成負值", note="5 月合約結算 −37.63 美元，儲油空間耗盡"),
+    dict(id="suez21", date="2021-03-23", cat="energy", name="長賜輪卡住蘇伊士運河", note="3/29 脫困，全球貨櫃航運延誤"),
     dict(id="colonial", date="2021-05-07", cat="energy", name="Colonial 油管遭勒索軟體攻擊", note="美東成品油供應中斷"),
     dict(id="eugas21", date="2021-09-01", cat="energy", name="歐洲天然氣危機升溫", approx=True, note="庫存偏低與供給收緊"),
-    dict(id="ukraine22", date="2022-02-24", cat="geo", name="俄羅斯全面入侵烏克蘭", note="能源與穀物同時受衝擊"),
     dict(id="nordstream", date="2022-09-26", cat="energy", name="北溪管線遭破壞", note="歐洲天然氣供給結構性改變"),
-    dict(id="boj_ycc", date="2022-12-20", cat="policy", name="日本央行放寬 YCC 區間", note="日圓急升、全球利率跳動"),
+    # 金融危機與信用事件
+    dict(id="conti84", date="1984-05-09", cat="crisis", name="伊利諾大陸銀行擠兌", approx=True, note="當時美國第七大銀行，聯邦存保公司接管，「大到不能倒」一詞由此而來"),
+    dict(id="barings95", date="1995-02-26", cat="crisis", name="霸菱銀行倒閉", note="交易員李森押注日經期貨虧損（阪神地震後日經重挫），週日宣布破產"),
+    dict(id="ltcm98", date="1998-09-23", cat="crisis", name="長期資本管理公司紓困", note="紐約聯邦準備銀行召集 14 家銀行注資 36 億美元"),
+    dict(id="bnp07", date="2007-08-09", cat="crisis", name="法國巴黎銀行凍結次貸基金", note="信用緊縮起點，歐洲央行當天緊急注資"),
+    dict(id="bear08", date="2008-03-14", cat="crisis", name="貝爾斯登獲緊急融資", note="聯準會經摩根大通緊急融資，兩天後以每股 2 美元賤賣"),
+    dict(id="lehman", date="2008-09-15", cat="crisis", name="雷曼兄弟破產", note="全球信用凍結"),
+    dict(id="greece10", date="2010-04-27", cat="crisis", name="希臘主權債遭降為垃圾級", note="標普同日調降葡萄牙，歐債危機擴散"),
+    dict(id="usdowngrade", date="2011-08-05", cat="crisis", name="標普調降美國主權評等", note="全球股市重挫"),
+    dict(id="evergrande21", date="2021-09-20", cat="crisis", name="恆大違約疑慮", note="恆指重挫、全球股市跟跌（中國中秋休市）"),
     dict(id="svb", date="2023-03-10", cat="crisis", name="矽谷銀行倒閉", note="區域銀行擠兌與降息預期"),
-    dict(id="israel23", date="2023-10-07", cat="geo", name="哈瑪斯攻擊以色列", note="中東地緣風險升高"),
-    dict(id="redsea24", date="2024-01-12", cat="geo", name="紅海航運危機升溫", approx=True, note="繞道好望角，運費與運期上升"),
+    # 市場崩盤與流動性事件（事件本身就是市場的急跌，看的是它怎麼傳到其他市場）
+    dict(id="silver80", date="1980-03-27", cat="crash", name="白銀星期四", note="韓特兄弟囤積白銀的保證金追繳失敗，銀價單日崩跌"),
+    dict(id="crash87", date="1987-10-19", cat="crash", name="黑色星期一", note="道瓊單日 −22.6%，程式交易與投資組合保險踩踏"),
+    dict(id="hk97", date="1997-10-23", cat="crash", name="國際炒家狙擊港幣", note="金管局抽緊銀根捍衛聯繫匯率，恆指單日 −10.4%；10/27 美股首次熔斷"),
+    dict(id="china07", date="2007-02-27", cat="crash", name="上證單日重挫 8.8%", note="「二二七」全球股市連鎖下跌"),
+    dict(id="flash10", date="2010-05-06", cat="crash", name="美股閃電崩盤", note="道瓊盤中 20 分鐘內跌近千點後收回大半"),
+    dict(id="china15", date="2015-08-24", cat="crash", name="中國黑色星期一", note="人民幣匯改兩週後，上證單日 −8.5%、美股開盤道瓊跌逾千點"),
+    dict(id="volmag18", date="2018-02-05", cat="crash", name="波動率崩盤（Volmageddon）", note="VIX 單日翻倍，做空波動率商品清算"),
+    dict(id="carry24", date="2024-08-05", cat="crash", name="日圓套利交易平倉", note="7/31 日銀升息＋8/2 美國就業數據疲弱，日經單日 −12.4%"),
+    # 央行轉向與利率衝擊
+    dict(id="boj89", date="1989-12-25", cat="cb", name="日銀三重野升息", note="新總裁上任一週即升息至 4.25%；日經四天後見歷史高點，泡沫破裂"),
+    dict(id="fed94", date="1994-02-04", cat="cb", name="聯準會五年來首次升息", note="「債券大屠殺」起點，一年內升息 300bp"),
+    dict(id="fedcut01", date="2001-01-03", cat="cb", name="聯準會會議間緊急降息 50bp", note="網路泡沫破裂後的第一刀"),
+    dict(id="draghi12", date="2012-07-26", cat="cb", name="德拉吉「不惜一切代價」", note="歐債危機轉折點"),
+    dict(id="taper13", date="2013-05-22", cat="cb", name="柏南奇暗示縮減購債", note="「縮減恐慌」：美債殖利率與新興市場資金外流"),
+    dict(id="liftoff15", date="2015-12-16", cat="cb", name="聯準會海嘯後首次升息", note="結束七年零利率"),
+    dict(id="bojnirp16", date="2016-01-29", cat="cb", name="日銀宣布負利率", note="隨後日圓不跌反升"),
+    dict(id="pivot19", date="2019-01-04", cat="cb", name="鮑爾轉向「耐心」", note="2018 年底美股急跌後，聯準會暗示暫停升息"),
+    dict(id="jackson22", date="2022-08-26", cat="cb", name="鮑爾傑克森洞「會帶來痛苦」", note="八分鐘演講，S&P 當天 −3.4%"),
+    dict(id="boj_ycc", date="2022-12-20", cat="cb", name="日本央行放寬 YCC 區間", note="日圓急升、全球利率跳動"),
+    dict(id="pivot23", date="2023-12-13", cat="cb", name="聯準會點陣圖轉向降息", note="預告隔年降息三次"),
+    dict(id="cut24", date="2024-09-18", cat="cb", name="聯準會首次降息 50bp", note="本輪降息循環開始"),
+    # 匯率與國際收支危機
+    dict(id="mexico82", date="1982-08-12", cat="fx", name="墨西哥宣布無力償債", note="拉美債務危機爆發；美股同月見底展開長多"),
+    dict(id="plaza85", date="1985-09-22", cat="fx", name="廣場協議", note="五國聯手讓美元貶值（週日簽署），日圓兩年內升值近一倍"),
+    dict(id="erm92", date="1992-09-16", cat="fx", name="英鎊退出歐洲匯率機制", note="「黑色星期三」，索羅斯放空英鎊"),
+    dict(id="peso94", date="1994-12-20", cat="fx", name="墨西哥披索貶值", note="龍舌蘭危機"),
+    dict(id="baht97", date="1997-07-02", cat="fx", name="泰銖放棄釘住美元", note="亞洲金融風暴起點"),
+    dict(id="russia98", date="1998-08-17", cat="fx", name="俄羅斯違約與盧布貶值", note="一個月後引爆長期資本管理公司危機"),
+    dict(id="snb15", date="2015-01-15", cat="fx", name="瑞士央行取消歐元兌瑞郎下限", note="瑞郎盤中升值近 30%"),
+    dict(id="cny815", date="2015-08-11", cat="fx", name="人民幣 811 匯改", note="中間價機制改革，人民幣一次性貶值"),
+    dict(id="lira18", date="2018-08-10", cat="fx", name="土耳其里拉崩跌", note="美國加倍課徵土耳其鋼鋁關稅，新興市場連鎖賣壓"),
+    dict(id="ukbudget22", date="2022-09-23", cat="fx", name="英國迷你預算", note="英鎊創歷史新低、英債殖利率暴衝，英格蘭銀行緊急購債"),
+    # 貿易與政策衝擊
+    dict(id="brexit", date="2016-06-23", cat="policy", name="英國脫歐公投", note="隔日英鎊與全球股市重挫"),
+    dict(id="s301_18", date="2018-03-22", cat="policy", name="川普簽署對中 301 關稅備忘錄", note="美中貿易戰開端"),
+    dict(id="tariff18", date="2018-07-06", cat="policy", name="美國對中首波關稅生效", note="340 億美元商品加徵 25%"),
+    dict(id="trade19", date="2019-05-05", cat="policy", name="川普宣布對中關稅調高至 25%", note="週日推文，談判破裂"),
+    dict(id="liberation25", date="2025-04-03", cat="policy", name="「解放日」對等關稅", note="4/2 美股盤後宣布；4/9 宣布暫緩 90 天"),
+    # 選舉與政局
+    dict(id="tw04", date="2004-03-20", cat="election", name="三一九槍擊與總統大選", note="3/19 下午槍擊（台股已收盤），3/22 開盤重挫"),
+    dict(id="us16", date="2016-11-09", cat="election", name="川普首次當選", note="開票結果在台北時間 11/9 白天揭曉，基準為 11/8 收盤"),
+    dict(id="us20", date="2020-11-04", cat="election", name="拜登當選（開票日）", note="基準為 11/3 投票日收盤"),
+    dict(id="us24", date="2024-11-06", cat="election", name="川普再度當選", note="基準為 11/5 投票日收盤"),
+    # 科技與產業週期
+    dict(id="huawei19", date="2019-05-16", cat="tech", name="華為列入實體清單", note="美國商務部 5/15 盤後宣布"),
+    dict(id="chips22", date="2022-10-07", cat="tech", name="美國對中先進晶片出口管制", note="限制先進製程設備與 AI 晶片出口"),
+    dict(id="chatgpt22", date="2022-11-30", cat="tech", name="ChatGPT 上線", note="生成式 AI 行情起點（當時市場幾乎沒反應）"),
+    dict(id="nvda23", date="2023-05-25", cat="tech", name="輝達財測大幅上修", note="5/24 盤後公布，隔日股價 +24%"),
+    dict(id="deepseek25", date="2025-01-27", cat="tech", name="DeepSeek 衝擊", note="R1 於 1/20 發布，1/27 AI 股重挫（輝達單日 −17%）；台股農曆年休市至 2/3"),
+    # 疫情
+    dict(id="sars03", date="2003-03-12", cat="pandemic", name="WHO 發布 SARS 全球警訊", note="八天後美軍入侵伊拉克，兩者視窗重疊"),
+    dict(id="h1n1_09", date="2009-04-24", cat="pandemic", name="H1N1 新型流感爆發", note="墨西哥與美國通報疫情（週五），6 月 WHO 宣布大流行"),
+    dict(id="covid_early20", date="2020-01-20", cat="pandemic", name="中國證實新冠人傳人", note="美股 1/20 休市；市場一個月後才真正反應"),
+    dict(id="covid", date="2020-03-11", cat="pandemic", name="WHO 宣布新冠為全球大流行", note="流動性危機與封城"),
+    # 天災與事故
+    dict(id="chernobyl86", date="1986-04-28", cat="disaster", name="車諾比核災曝光", note="4/26（週六）事故，4/28 瑞典偵測到輻射後蘇聯承認"),
+    dict(id="kobe95", date="1995-01-17", cat="disaster", name="阪神大地震", note="日本開盤前發生；日經隨後重挫並拖垮霸菱銀行"),
+    dict(id="quake921", date="1999-09-21", cat="disaster", name="九二一大地震", note="凌晨發生，台股停市數日；科學園區停電影響晶圓代工"),
+    dict(id="texas21", date="2021-02-15", cat="disaster", name="德州寒流大停電", approx=True, note="2/13–17 冬季風暴，天然氣井與電廠凍結"),
+    dict(id="hualien24", date="2024-04-03", cat="disaster", name="花蓮強震", note="台股開盤前發生，晶圓廠短暫疏散"),
 ]
-SHOCK_CATS = [("geo", "戰爭與地緣衝突"), ("energy", "能源與供應鏈中斷"), ("crisis", "金融危機"), ("policy", "政策衝擊")]
+SHOCK_CATS = [("geo", "戰爭與地緣衝突"), ("energy", "能源與商品供給衝擊"), ("crisis", "金融危機與信用事件"),
+              ("crash", "市場崩盤與流動性事件"), ("cb", "央行轉向與利率衝擊"), ("fx", "匯率與國際收支危機"),
+              ("policy", "貿易與政策衝擊"), ("election", "選舉與政局"), ("tech", "科技與產業週期"),
+              ("pandemic", "疫情"), ("disaster", "天災與事故")]
 
 # ── 訊號劇本（事件前兆 × 事件後全資產期望值）──
 # 期望值一律看「相對該資產自己的無條件基準」的超額，並要通過三道關卡才標為穩健。

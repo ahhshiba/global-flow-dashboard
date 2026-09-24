@@ -371,6 +371,54 @@ def twse_ex_rights(start, end):
     return out
 
 
+def eia_spot_daily(series):
+    """美國能源資訊署現貨日價（例：RWTC＝WTI 1986 起、RBRTE＝布蘭特 1987 起）→ [(date, value)]。
+
+    頁面是週表：一列一週（週一～週五五欄），列標「1986 Jan- 6 to Jan-10」，第 k 欄＝週一加 k 天。
+    """
+    t = http_get(f"https://www.eia.gov/dnav/pet/hist/{series}D.htm", timeout=60).decode("latin-1")
+    out = []
+    for label, rest in re.findall(r"<td class='B6'>(.*?)</td>(.*?)</tr>", t, re.S):
+        m = re.search(r"(\d{4})\s+([A-Z][a-z]{2})-\s*(\d+)", html.unescape(label))
+        if not m:
+            continue
+        monday = dt.datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%Y %b %d").date()
+        for k, cell in enumerate(re.findall(r"<td class='B3'>\s*([^<]*?)\s*</td>", rest)[:5]):
+            v = _f(cell)
+            if v is not None:
+                out.append((monday + dt.timedelta(days=k), v))
+    if len(out) < 1000:
+        raise RuntimeError(f"EIA {series} 只解析到 {len(out)} 筆")
+    return sorted(out)
+
+
+def lbma_daily(metal):
+    """倫敦金銀市場協會定價（gold_pm＝黃金下午定盤 1968 起、silver 1968 起），取美元欄 → [(date, value)]。"""
+    d = get_json(f"https://prices.lbma.org.uk/json/{metal}.json", timeout=60)
+    out = [(dt.date.fromisoformat(x["d"]), float(x["v"][0])) for x in d if x.get("v") and x["v"][0]]
+    if len(out) < 1000:
+        raise RuntimeError(f"LBMA {metal} 只有 {len(out)} 筆")
+    return out
+
+
+def twse_taiex_month(year, month):
+    """證交所 FMTQIK：該月每日加權指數（1990-01 起）→ [(date, value)]。日期是民國年。"""
+    url = "https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?" + urllib.parse.urlencode(
+        dict(date=f"{year:04d}{month:02d}01", response="json"))
+    d = get_json(url, timeout=40)
+    if d.get("stat") != "OK":
+        raise RuntimeError(f"證交所 FMTQIK {year}-{month:02d}：{d.get('stat')}")
+    f = d["fields"]
+    i_date, i_idx = f.index("日期"), f.index("發行量加權股價指數")
+    out = []
+    for row in d.get("data") or []:
+        m = re.match(r"\s*(\d+)/(\d+)/(\d+)", str(row[i_date]))
+        v = _f(row[i_idx])
+        if m and v is not None:
+            out.append((dt.date(int(m.group(1)) + 1911, int(m.group(2)), int(m.group(3))), v))
+    return out
+
+
 # ── 鉅亨網 ──
 CNYES_HEADERS = {"Referer": "https://www.cnyes.com/", "Origin": "https://www.cnyes.com"}
 

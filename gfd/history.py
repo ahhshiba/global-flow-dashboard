@@ -264,17 +264,74 @@ def refresh_daily(log=print):
     fetch_detail(log)
 
 
+def _twse_taiex_hist(log=print):
+    """證交所每日加權指數 1990-01～1997-07（Yahoo ^TWII 從 1997-07 才有）。歷史資料不會變，抓過就快取。"""
+    cache = _load("twse_taiex_hist.json", {})
+    months = [(y, m) for y in range(1990, 1998) for m in range(1, 13) if (y, m) <= (1997, 7)]
+    missing = [ym for ym in months if f"{ym[0]:04d}-{ym[1]:02d}" not in cache]
+    if missing:
+        log(f"[cascade] 證交所加權指數補抓 {len(missing)} 個月（每月間隔 3 秒）")
+    for y, m in missing:
+        try:
+            cache[f"{y:04d}-{m:02d}"] = [(d.isoformat(), v) for d, v in S.twse_taiex_month(y, m)]
+        except Exception as e:  # noqa: BLE001 - 缺的月份下次再補
+            log(f"[cascade] 證交所 {y}-{m:02d} 失敗：{_err(e)}")
+        time.sleep(3)
+    if missing:
+        _save("twse_taiex_hist.json", cache)
+    return sorted((dt.date.fromisoformat(d), v) for rows in cache.values() for d, v in rows)
+
+
+def _proxy_rows(kind, pid, log):
+    if kind == "yahoo":
+        rows, _ = S.yahoo_chart(pid, interval="1d", start=C.CASCADE_START, adjusted=True)
+        return rows
+    if kind == "eia":
+        return S.eia_spot_daily(pid)
+    if kind == "lbma":
+        return S.lbma_daily(pid)
+    if kind == "twse":
+        return _twse_taiex_hist(log)
+    raise ValueError(kind)
+
+
+def _splice(rows, proxy):
+    """在主序列開始日之前接上代理序列的報酬；接點以主序列第一天的價位對齊，接點之後完全是主序列。"""
+    if not rows:
+        return rows, None
+    first_day, first_v = rows[0]
+    before = [(d, v) for d, v in proxy if d < first_day and v > 0]
+    at = [v for d, v in proxy if d >= first_day and v > 0][:1] or [before[-1][1] if before else None]
+    if not before or at[0] is None:
+        return rows, None
+    k = first_v / at[0]
+    return [(d, v * k) for d, v in before] + rows, before[-1][0].isoformat()
+
+
 def fetch_cascade_daily(log=print):
-    """事件衝擊分析用的日線（1995 起全量）→ data/raw/daily_cascade.json。不內嵌網頁，只給分析用。"""
+    """事件衝擊分析用的日線（1979-06 起全量）→ data/raw/daily_cascade.json。不內嵌網頁，只給分析用。
+
+    主序列（ETF／期貨）開始日之前接上 CASCADE_PROXY 的代理序列，series[sym]["proxy"] 記錄接到哪一天。
+    """
     old = _load("daily_cascade.json", {}).get("series", {})
     out, errors = {}, []
     for sym, name, layer in C.CASCADE_UNIVERSE:
         try:
-            rows, _meta = S.yahoo_chart(sym, interval="1d", start="1994-12-01", adjusted=False, completed_only=True)
-            rows = [(d.isoformat(), v) for d, v in rows if d.isoformat() >= "1995-01-01"]
+            rows, _meta = S.yahoo_chart(sym, interval="1d", start=C.CASCADE_START, adjusted=False, completed_only=True)
             if len(rows) < 250:
                 raise RuntimeError(f"日線只有 {len(rows)} 筆")
-            out[sym] = dict(name=name, layer=layer, dates=[d for d, _ in rows], closes=[round(v, 4) for _, v in rows])
+            proxy = None
+            if sym in C.CASCADE_PROXY:
+                kind, pid, pname = C.CASCADE_PROXY[sym]
+                try:
+                    rows, until = _splice(rows, _proxy_rows(kind, pid, log))
+                    if until:
+                        proxy = dict(id=pid, name=pname, until=until)
+                except Exception as e:  # noqa: BLE001 - 代理失敗就只用主序列
+                    errors.append(f"{sym} 代理 {pid}：{_err(e)}")
+            rows = [(d.isoformat(), v) for d, v in rows if d.isoformat() >= C.CASCADE_START]
+            out[sym] = dict(name=name, layer=layer, dates=[d for d, _ in rows],
+                            closes=[float(f"{v:.6g}") for _, v in rows], proxy=proxy)
             time.sleep(0.3)
         except Exception as e:  # noqa: BLE001
             if sym in old:
