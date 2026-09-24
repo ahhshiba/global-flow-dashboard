@@ -38,6 +38,52 @@ def _triggers(series):
     return out
 
 
+def _chain_expectations():
+    """鏈的敘事裡，每個訊號之後各資產「應該」往哪走：{觸發id: {sid: +1/-1}}。
+
+    用來自動標記「量到的方向和當初的假說相反」的結果，例如日圓升值照套利平倉的說法
+    應該讓半導體走弱，但資料量到的是正超額——這種矛盾要讓人看到，不能默默排進名單。
+    """
+    out = {}
+    for chain in C.CHAINS:
+        for i, nd in enumerate(chain["nodes"]):
+            tid = f"{chain['id']}_{nd['id']}"
+            exp = {}
+            for later in chain["nodes"][i + 1:]:
+                exp[later["sid"]] = -1 if later["cmp"] == "<=" else 1
+            if exp:
+                out[tid] = dict(expect=exp, chain=chain["name"])
+    return out
+
+
+def _null_calibration(g, series, assets, info, fmats, end, split_idx, rounds=3, iters=500, seed=SEED + 7):
+    """虛無校準：把事件時點整體隨機位移後跑同一套流程，看「確定沒有訊號」時會有幾組通過門檻。
+
+    這取代了「篩選大概能濾掉一半」這種拍腦袋的假設——直接量出來。
+    """
+    rng = np.random.default_rng(seed)
+    counts = []
+    for _ in range(rounds):
+        shift = int(rng.integers(24, max(25, end - 24)))
+        passed = 0
+        for rec in info:
+            if len(rec["starts"]) < 3:
+                continue
+            starts = sorted({(t + shift) % (end + 1) for t in rec["starts"]})
+            ep_mask = np.zeros(len(g.months), bool)
+            ep_mask[starts] = True
+            for h in C.PLAYBOOK_HORIZONS:
+                F = fmats[h]
+                pv = _shift_pvalues(ep_mask, F, end, iters=iters, seed=int(rng.integers(1, 10**6)))
+                for col, sid in enumerate(assets):
+                    row = _asset_row(sid, series, starts, F, col, end, split_idx, pv[col])
+                    if row and row["p"] is not None and row["n"] >= C.PLAYBOOK_MIN_EPISODES \
+                            and row["p"] <= C.PLAYBOOK_STRICT_P and row["agree"] and row["big"]:
+                        passed += 1
+        counts.append(passed)
+    return counts
+
+
 def _forward_matrix(g, series, assets, h):
     cols = []
     for sid in assets:
@@ -202,8 +248,7 @@ def build(g, series, months, log=print):
         exp = M * thr
         buckets.append(dict(p=thr, observed=obs, expected=round(exp),
                             fdr=CH.r(min(1.0, exp / obs) * 100, 0) if obs else None,
-                            with_filters=obs_agree,
-                            fdr_filtered=CH.r(min(1.0, exp * 0.5 / obs_agree) * 100, 0) if obs_agree else None))
+                            with_filters=obs_agree))
     strict = C.PLAYBOOK_STRICT_P
     for _t, _h, r in tested:
         r["robust"] = bool(r["p"] <= strict and r["agree"] and r["big"])
@@ -216,21 +261,40 @@ def build(g, series, months, log=print):
         if r["robust"]:
             robust_all.append(dict(trigger=t["id"], trigger_label=t["label"], **r))
     robust_all.sort(key=lambda r: abs(r["lift"]), reverse=True)
+    # 虛無校準：同一套門檻在「沒有訊號」的資料上會過幾組
+    null_counts = _null_calibration(g, series, assets, info, fmats, end, split_idx)
+    null_mean = float(np.mean(null_counts)) if null_counts else None
+    expect = _chain_expectations()
+    for r in robust_all:
+        meta = expect.get(r["trigger"])
+        if not meta:
+            continue
+        want = meta["expect"].get(r["sid"])
+        if want and np.sign(r["lift"]) != want:
+            r["conflict"] = (f"與「{meta['chain']}」的假說方向相反："
+                             f"該鏈預期這個標的會{'下跌' if want < 0 else '上漲'}，資料量到的卻是反向超額。"
+                             "可能是統計假象，也可能是這個訊號其實反映了別的機制，別直接照用。")
+    conflicts = sum(1 for r in robust_all if r.get("conflict"))
     strict_bucket = next(b for b in buckets if b["p"] == strict)
+    fdr_est = CH.r(min(1.0, null_mean / len(robust_all)) * 100, 0) if null_mean is not None and robust_all else None
     stats = dict(tested=M, buckets=buckets, strict_p=strict, p_floor=CH.r(2 / (end + 2), 4),
                  robust=len(robust_all), robust_investable=sum(1 for r in robust_all if r["investable"]),
-                 expected_by_chance=strict_bucket["expected"],
-                 fdr_estimate=strict_bucket["fdr_filtered"],
+                 conflicts=conflicts, null_runs=null_counts, null_mean=CH.r(null_mean, 1),
+                 expected_by_chance=strict_bucket["expected"], fdr_estimate=fdr_est,
                  note=(f"共檢定 {M} 組（訊號×資產×期間）。位移檢定的 p 值有下限（約 {2 / (end + 2):.3f}），"
                        f"因此不用 BH（會因精度不足把一切判成無效），改以「運氣預期值 ÷ 實際通過數」估偽發現率。"
                        f"最嚴格一格 p ≤ {strict}：實際 {strict_bucket['observed']} 組、運氣預期約 "
-                       f"{strict_bucket['expected']} 組；再加上前後半期同方向與幅度門檻後剩 "
-                       f"{strict_bucket['with_filters']} 組，估計仍有約 {strict_bucket['fdr_filtered']}% 是運氣。"))
+                       f"{strict_bucket['expected']} 組。全部門檻（含前後半期同方向與幅度）套用後剩 "
+                       f"{len(robust_all)} 組；把事件時點整體隨機位移後用同一套流程重跑 {len(null_counts)} 次，"
+                       f"在確定沒有訊號的情況下平均仍有 {null_mean:.1f} 組過關（各次 {null_counts}），"
+                       f"因此估計偽發現率約 {fdr_est}%。"))
     log(f"[playbook] 可投資標的中穩健 {sum(1 for r in robust_all if r['investable'])} 組、"
         f"觀察指標 {sum(1 for r in robust_all if not r['investable'])} 組")
+    log(f"[playbook] 虛無校準 {null_counts}（平均 {null_mean:.1f}）→ 估計偽發現率 {fdr_est}%；"
+        f"與鏈敘事方向相反者 {conflicts} 組")
     log(f"[playbook] {len(out)} 個訊號、{len(assets)} 個資產；檢定 {M} 組；"
         + "；".join(f"p≤{b['p']} 實際 {b['observed']}／運氣 {b['expected']}" for b in buckets)
-        + f"；最終穩健 {len(robust_all)} 組（估計偽發現率 {strict_bucket['fdr_filtered']}%）")
+        + f"；最終穩健 {len(robust_all)} 組")
     inv = [r for r in robust_all if r["investable"]]
     obs = [r for r in robust_all if not r["investable"]]
     return dict(triggers=out, assets=assets,

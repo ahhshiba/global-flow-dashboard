@@ -3,12 +3,18 @@
 function pbNum(v, unit, d) {
   return fin(v) ? fmtSigned(v, d ?? (unit === "bp" ? 0 : 1), unit === "bp" ? "bp" : "%") : "—";
 }
+let PB_CONFLICT = {};
+const pbConflictOf = (r) => r.conflict || PB_CONFLICT[`${r.trigger || ""}|${r.sid}|${r.horizon}`];
+function pbConflictBadge(r) {
+  const c = pbConflictOf(r);
+  return c ? h("span", { class: "qnote", style: "background:var(--warn-soft);color:var(--warn-ink)", title: c }, "⚠ 與假說相反") : null;
+}
 function pbRows(rows, showFlag) {
   const head = ["資產", "期間", "事件後中位數", "平常", "超額", "上漲比例", "最糟一次", "前半／後半", "p", "n"];
   return h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
     h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))),
     h("tbody", {}, rows.map((r) => h("tr", { class: r.robust ? "sel" : null },
-      h("td", {}, r.name, r.robust && showFlag ? h("span", { class: "qnote" }, "通過檢驗") : null,
+      h("td", {}, r.name, r.robust && showFlag ? h("span", { class: "qnote" }, "通過檢驗") : null, pbConflictBadge(r),
         !r.investable ? h("span", { class: "sub" }, "觀察指標，不能直接買") : null),
       h("td", { class: "n" }, `${r.horizon} 個月`),
       h("td", { class: "n" }, h("span", { class: dirClass(r.median) }, pbNum(r.median, r.unit))),
@@ -64,7 +70,7 @@ function pbTriggerCard(t, P) {
       h("button", { class: "chip", type: "button", "aria-pressed": String(onlyInv),
         onclick: () => { onlyInv = !onlyInv; store.set("pbInvestable", onlyInv); drawRows(); } }, onlyInv ? "只看可投資標的" : "含觀察指標"));
     const blk = t.assets[String(horizon)];
-    const pick = (arr) => arr.filter((r) => !onlyInv || r.investable);
+    const pick = (arr) => arr.filter((r) => !onlyInv || r.investable).map((r) => Object.assign({ trigger: t.id }, r));
     const top = pick(blk.top), bottom = pick(blk.bottom);
     tbl.replaceChildren(
       h("h4", { class: "sub-h" }, `事件後 ${horizon} 個月：超額最高的標的（超額＝事件後中位數 − 該資產自己的平常水準）`),
@@ -91,16 +97,22 @@ TABS.playbook = (root) => {
     sub: "一次檢定這麼多組合，光靠運氣就會撈到一批「有效」的結果。下面是實際通過數與運氣預期值的對照。",
     note: `位移檢定的 p 值下限約 ${s.p_floor}（只有 ${A.months.length} 種位移），所以不用 Benjamini-Hochberg（會因精度不足把全部判成無效），改用運氣預期值估偽發現率。資產彼此相關，實際偽發現率可能更高。` });
   mc.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
-    h("thead", {}, h("tr", {}, ["p 值門檻", "實際通過", "純靠運氣預期", "估計偽發現率", "再加前後半期一致＋幅度門檻", "估計偽發現率"]
+    h("thead", {}, h("tr", {}, ["p 值門檻", "實際通過", "純靠運氣預期", "估計偽發現率", "再加前後半期一致＋幅度門檻"]
       .map((x, i) => h("th", { class: i ? "n" : null }, x)))),
     h("tbody", {}, s.buckets.map((b) => h("tr", { class: b.p === s.strict_p ? "sel" : null },
       h("td", {}, `p ≤ ${b.p}${b.p === s.strict_p ? "（採用）" : ""}`),
       h("td", { class: "n" }, b.observed), h("td", { class: "n muted" }, b.expected),
       h("td", { class: "n" }, `${b.fdr}%`),
-      h("td", { class: "n" }, b.with_filters), h("td", { class: "n" }, h("b", {}, `${b.fdr_filtered}%`))))))));
-  mc.body.append(h("p", { class: "note" },
-    `共檢定 ${s.tested} 組（訊號 × 資產 × 期間）。最後留下 ${s.robust} 組，其中可投資標的 ${s.robust_investable} 組；`
-    + `估計仍有約 ${s.fdr_estimate}% 是運氣。換句話說：這張清單是「候選」，不是「結論」，三組裡大概有一組是雜訊。`));
+      h("td", { class: "n" }, b.with_filters)))))));
+  mc.body.append(h("h4", { class: "sub-h" }, "虛無校準：把事件時點整體隨機位移後，用同一套門檻重跑"),
+    h("p", { class: "note", style: "margin:0" },
+      `在「確定沒有訊號」的資料上重跑 ${s.null_runs.length} 次，通過全部門檻的組數分別是 ${s.null_runs.join("、")}（平均 ${s.null_mean}）。`
+      + `實際資料留下 ${s.robust} 組（可投資 ${s.robust_investable} 組），所以估計約 ${s.fdr_estimate}% 是運氣——大約一半。`
+      + "這個比例是直接量出來的，不是假設出來的。這張清單是「候選」，不是「結論」。"));
+  if (s.conflicts) {
+    mc.body.append(h("p", { class: "note" },
+      `另有 ${s.conflicts} 組的方向與當初的假說相反（清單中以 ⚠ 標示）。這種結果要嘛是統計假象，要嘛代表該訊號反映的其實是別的機制，不要直接照用。`));
+  }
   g.append(mc.el);
 
   const fc = findingsCard("playbook", "目前成立中的訊號");
@@ -109,6 +121,10 @@ TABS.playbook = (root) => {
   // 全域通過檢驗清單
   const up = P.robust.filter((r) => r.lift > 0).slice(0, 15);
   const down = P.robust.filter((r) => r.lift < 0).slice(0, 10);
+  PB_CONFLICT = {};
+  for (const r of P.robust.concat(P.robust_observe || [])) {
+    if (r.conflict) PB_CONFLICT[`${r.trigger}|${r.sid}|${r.horizon}`] = r.conflict;
+  }
   const rc = card({ title: "通過檢驗的組合（可投資標的）", span: 12,
     sub: "事件數 ≥ 8、2012 年前後兩段同方向、超額幅度夠大、位移檢定 p ≤ " + P.max_p_strict_label,
     note: "「前半／後半」是 2012 年前後各自的事件後中位數；兩邊同號才列入。最糟一次是該事件後最差的一次結果，決定停損要放多寬。" });
@@ -117,7 +133,7 @@ TABS.playbook = (root) => {
       .map((x, i) => h("th", { class: i ? "n" : null }, x)))),
     h("tbody", {}, rows.map((r) => h("tr", {},
       h("td", {}, r.trigger_label),
-      h("td", {}, r.name),
+      h("td", {}, r.name, pbConflictBadge(r)),
       h("td", { class: "n" }, `${r.horizon} 個月`),
       h("td", { class: "n" }, h("b", { class: dirClass(r.lift) }, pbNum(r.lift, r.unit))),
       h("td", { class: "n" }, pbNum(r.median, r.unit)),
