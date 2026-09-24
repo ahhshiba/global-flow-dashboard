@@ -319,6 +319,48 @@ CHAINS = [
          ]),
 ]
 
+# ── 訊號劇本（事件前兆 × 事件後全資產期望值）──
+# 期望值一律看「相對該資產自己的無條件基準」的超額，並要通過三道關卡才標為穩健。
+PLAYBOOK_SPLIT = "2012-01"      # 樣本外切點：前半段找到的規律，後半段要同方向
+PLAYBOOK_MIN_EPISODES = 8       # 獨立事件數下限
+PLAYBOOK_MAX_P = 0.10           # 列表用的寬鬆 p 值上限
+PLAYBOOK_STRICT_P = 0.02        # 標為穩健所需的嚴格 p 值（位移檢定的下限約 0.005）
+PLAYBOOK_HORIZONS = [3, 6, 12]
+PLAYBOOK_TOP = 12               # 每個期間保留的排行長度（另外保留最差 3 名）
+# 事件後要排名的資產（涵蓋股、債、匯、商品；殖利率以 bp 呈現，不與報酬混排）
+PLAYBOOK_UNIVERSE = [
+    "eq_spx", "eq_ndx", "eq_dji", "eq_sox", "eq_hsi", "eq_twii", "eq_n225", "eq_sse",
+    "b_ust_long", "b_ig", "b_hy", "b_brk",
+    "c_gold", "c_silver", "c_platinum", "c_copper", "c_alu", "c_brent", "c_wti", "c_natgas",
+    "c_maize", "c_soy", "c_wheat", "ci_energy", "ci_agri", "ci_metals", "ci_precious",
+    "fx_dxy", "fx_usdtwd", "fx_usdjpy", "fx_usdcny", "fx_eurusd",
+    "b_us10y", "b_us3m", "b_jp10y", "d_curve", "v_vix",
+]
+# 這些是觀察指標，不是能直接買進持有的標的（VIX 要用期貨或選擇權、殖利率與利差要用債券部位表達）。
+# 事件後它們常出現「機械性」的強烈反應（例如股市大跌後 VIX 必然先衝高再回落），
+# 放在同一張排行榜會把真正可投資的標的擠掉，所以分開呈現。
+PLAYBOOK_OBSERVE_ONLY = ["v_vix", "d_curve", "b_us10y", "b_us3m", "b_jp10y"]
+
+# 除了傳導鏈的節點以外，另外納入這些常被討論的訊號（格式同鏈節點）
+PLAYBOOK_EXTRA_TRIGGERS = [
+    dict(id="curve_inv", sid="d_curve", op="level", cmp="<=", thr=0.0,
+         label="美債殖利率曲線倒掛（10 年 < 3 個月）", why="歷史上數次領先衰退，但領先時間長短差很多"),
+    dict(id="vix_25", sid="v_vix", op="level", cmp=">=", thr=25.0,
+         label="VIX 月底 ≥ 25", why="比 30 寬的壓力門檻，事件較多"),
+    dict(id="dxy_down", sid="fx_dxy", op="chg6", cmp="<=", thr=-3.0,
+         label="美元指數 6 個月貶值 ≥ 3%", why="美元走弱時資金通常流向非美資產"),
+    dict(id="twd_weak", sid="fx_usdtwd", op="chg3", cmp=">=", thr=2.0,
+         label="新台幣 3 個月貶值 ≥ 2%", why="外資撤出台灣時，匯率通常先動"),
+    dict(id="spx_dd", sid="eq_spx", op="chg12", cmp="<=", thr=-10.0,
+         label="S&P 500 12 個月跌 ≥ 10%", why="年度級別的空頭，檢驗長線進場點"),
+    dict(id="gold_run", sid="c_gold", op="chg6", cmp=">=", thr=15.0,
+         label="黃金 6 個月漲 ≥ 15%", why="避險或通膨預期急升的痕跡"),
+    dict(id="rates_up", sid="b_us10y", op="chg6", cmp=">=", thr=80.0,
+         label="美 10 年殖利率 6 個月上升 ≥ 80bp", why="利率衝擊，對長天期資產最不利"),
+    dict(id="rates_down", sid="b_us10y", op="chg6", cmp="<=", thr=-80.0,
+         label="美 10 年殖利率 6 個月下降 ≥ 80bp", why="降息預期或避險買盤湧入"),
+]
+
 # ── 單一標的線圖（日／週／月／年）──
 # 日線保留年數、週線保留年數；月線與年線從 1995 起。收盤價已含分割調整、不含股息。
 DETAIL_KEEP_YEARS = {"d": 3, "w": 15}

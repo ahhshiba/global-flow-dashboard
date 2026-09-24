@@ -8,6 +8,7 @@ import numpy as np
 
 from . import chains as CH
 from . import config as C
+from . import playbook as PB
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
@@ -512,6 +513,15 @@ def run(log=print):
     res, ca = reserves_ca(g, annual)
     tic_blk = tic(annual)
     chain_block, chain_findings = CH.build(g, series, g.months, log=log)
+    play = PB.build(g, series, g.months, log=log)
+    for t in [x for x in play["triggers"] if x["active"]][:6]:
+        best = [r for h in play["horizons"] for r in t["assets"][str(h)]["robust"]]
+        best.sort(key=lambda r: r["lift"], reverse=True)
+        txt = (f"歷史上出現過 {t['episodes']} 次。" +
+               (f"通過三道檢驗的資產：{'、'.join(f'{r['name']}（超額 {r['lift']:+.1f}{r['unit']}）' for r in best[:3])}。"
+                if best else "事件後沒有任何資產通過穩健檢驗（事件數、前後半期一致、位移檢定）。"))
+        chain_findings.append(dict(tab="playbook", tone="alert" if best else "neutral",
+                                   title=f"訊號成立中：{t['label']}", text=txt))
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
@@ -519,7 +529,7 @@ def run(log=print):
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),
-        chains=chain_block,
+        chains=chain_block, playbook=play,
         findings=findings(series, comp, pr, flow, vix, tic_blk, res) + chain_findings,
         coverage=(_load("coverage.json") or {}).get("items", []),
         gaps=[dict(item=a, reason=b, proxy=c) for a, b, c in C.GAPS],
