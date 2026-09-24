@@ -53,7 +53,7 @@ crontab 每天跑兩次（安裝前的備份：`~/crontab.bak_20260915_223816_pr
 
 ## 發佈到 GitHub Pages
 
-- 原始碼在 `main`，網頁在 `gh-pages` 分支（每次部署都是**單一 commit 強制覆蓋**，所以 2 MB 的 HTML 不會天天累積在 repo 裡）。
+- 原始碼在 `main`，網頁在 `gh-pages` 分支（每次部署都是**單一 commit 強制覆蓋**，所以約 5 MB 的 HTML 不會天天累積在 repo 裡）。
 - `python3 gfd.py build --public` 產生 `docs/index.html`：和本機版相同，但**新聞只留標題與原文連結、不含摘要**，避免公開轉載鉅亨網內文；頁尾會標示這是公開示範版。
 - `./deploy_pages.sh` 把 `docs/index.html` 推上 `gh-pages`；`run_daily.sh` 每天更新完會自動呼叫它，所以 demo 跟著本機一起更新（電腦關機那天就不會更新）。
 - 推送用 `gh` 的 git credential helper，不需要另外存 token。要停止公開更新：刪掉 `run_daily.sh` 裡呼叫 `deploy_pages.sh` 那段，或在 GitHub 設定關掉 Pages。

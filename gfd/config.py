@@ -373,7 +373,6 @@ CASCADE_PROXY = {
 CASCADE_LAYERS = [("upstream", "上游：原物料與能源價格"), ("resources", "中游：能源與資源股"),
                   ("industry", "中游：工業、運輸與石化鋼鐵"), ("downstream", "下游：終端需求與科技股"),
                   ("money", "資金面：利率、匯率、避險")]
-CASCADE_RATE_IDS = {"^TNX", "^IRX", "^VIX"}   # 這幾個用變動點數／百分點表示，不是報酬
 # 同一分類裡，兩個事件相隔不到這麼多天（日曆日）時，分類彙總只算較早那一個，
 # 否則同一段價格路徑會被算兩次。單一事件頁仍然會列出，並標出與哪些事件的視窗重疊。
 CASCADE_DEDUP_DAYS = 30

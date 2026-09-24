@@ -272,7 +272,8 @@ def build(log=print):
     stats = dict(tests=_count(cats, None), p05=_count(cats, 0.05), p10=_count(cats, 0.10))
     # 結果只取決於日線與事件清單，排程每天 analyze 不必重跑（約 40 秒）
     key = hashlib.sha1(json.dumps([raw_meta.get("fetched_at"), C.SHOCK_EVENTS, C.SHOCK_CATS, C.CASCADE_UNIVERSE,
-                                   C.CASCADE_WINDOWS, C.CASCADE_DEDUP_DAYS, C.CASCADE_NULL_ROUNDS, C.CASCADE_NULL_SPAN],
+                                   C.CASCADE_WINDOWS, C.CASCADE_DEDUP_DAYS, C.CASCADE_NULL_ROUNDS, C.CASCADE_NULL_SPAN,
+                                   C.CASCADE_REACT_SIGMA, C.CASCADE_PRE, C.CASCADE_MAX_DAYS, C.CASCADE_START],
                                   ensure_ascii=False, sort_keys=True).encode()).hexdigest()
     cache_p = RAW / "cascade_null.json"
     cached = json.loads(cache_p.read_text(encoding="utf-8")) if cache_p.exists() else {}

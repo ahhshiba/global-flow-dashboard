@@ -178,6 +178,7 @@ TABS.cascade = (root) => {
       btn(l, k === mode, () => { mode = k; store.set("csMode", k); draw(); }));
     chips2.replaceChildren();
     if (mode === "event") {
+      if (fcat !== "all" && !CA.categories.some((c) => c.id === fcat)) fcat = "all";   // 存的分類已不存在
       const evs = CA.events.filter((e) => fcat === "all" || e.cat === fcat).slice().sort((a, b) => a.date.localeCompare(b.date));
       if (!evs.some((e) => e.id === sel)) sel = evs[0].id;
       chips.replaceChildren(...modeChips, h("span", { class: "lab", style: "margin-left:10px" }, "類型"),
