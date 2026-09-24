@@ -230,6 +230,95 @@ GAPS = [
      "月均值會平滑波動，關聯係數略為低估；每日頁籤使用鉅亨網收盤"),
 ]
 
+# ── 傳導鏈（事件 → 第二層 → 第三層…）──
+# 每個節點都要有可判定的觸發條件，程式才能量測「上游成立後，下游多久成立、值多少」。
+# op：chg1/chg3/chg6/chg12＝過去 N 個月變動（價格用對數報酬 %、殖利率用 bp）；level＝原始水準。
+# 這些鏈是先寫下經濟學上的假說，再用 1995 年以來的月資料檢定，不是從資料挖出來的規則。
+CHAIN_WITHIN = 6      # 下游條件要在上游成立後幾個月內出現才算「傳導到了」
+CHAIN_HORIZONS = [1, 3, 6, 12]
+CHAINS = [
+    dict(id="dollar", name="美元緊縮鏈", tab="chains",
+         thesis="美元是全球融資貨幣。美元走強＝離岸美元變貴，先壓非美股市，再壓以美元計價的原物料，最後透過需求走弱回到債市。",
+         nodes=[
+             dict(id="dxy", sid="fx_dxy", op="chg6", cmp=">=", thr=3.0,
+                  label="美元指數 6 個月升值 ≥ 3%", why="美元走強代表全球美元流動性收緊"),
+             dict(id="hsi", sid="eq_hsi", op="chg3", cmp="<=", thr=-3.0,
+                  label="恆生指數 3 個月跌 ≥ 3%", why="港股是離岸美元最敏感的亞洲市場"),
+             dict(id="copper", sid="c_copper", op="chg3", cmp="<=", thr=-3.0,
+                  label="銅價 3 個月跌 ≥ 3%", why="以美元計價的工業金屬跟著變貴、需求轉弱"),
+             dict(id="agri", sid="ci_agri", op="chg6", cmp="<=", thr=-3.0,
+                  label="農產品指數 6 個月下跌", why="傳導到民生物價，通常最慢"),
+             dict(id="ust", sid="b_ust_long", op="chg6", cmp=">=", thr=3.0,
+                  label="美國長債 6 個月上漲 ≥ 3%", why="需求轉弱、通膨預期下滑後，長債受惠"),
+         ]),
+    dict(id="carry", name="日圓套利平倉鏈", tab="chains",
+         thesis="日圓是低利融資貨幣。日債殖利率上行使借日圓成本升高，套利部位被迫平倉，先賣掉流動性最好的美股，再擴散到半導體與台股。",
+         nodes=[
+             dict(id="jgb", sid="b_jp10y", op="chg6", cmp=">=", thr=20.0,
+                  label="日本 10 年殖利率 6 個月上升 ≥ 20bp", why="日圓融資成本上升是套利交易的壓力來源"),
+             dict(id="jpy", sid="fx_usdjpy", op="chg3", cmp="<=", thr=-2.0,
+                  label="日圓 3 個月升值 ≥ 2%", why="平倉要買回日圓，日圓走升本身就是平倉的痕跡"),
+             dict(id="spx", sid="eq_spx", op="chg3", cmp="<=", thr=-3.0,
+                  label="S&P 500 3 個月跌 ≥ 3%", why="先賣流動性最好的資產"),
+             dict(id="sox", sid="eq_sox", op="chg3", cmp="<=", thr=-5.0,
+                  label="費城半導體 3 個月跌 ≥ 5%", why="高 beta 的科技股跌得更深"),
+             dict(id="twii", sid="eq_twii", op="chg3", cmp="<=", thr=-5.0,
+                  label="台股 3 個月跌 ≥ 5%", why="台股權重集中半導體，是這條鏈的末端"),
+         ]),
+    dict(id="inflation", name="通膨傳導鏈", tab="chains",
+         thesis="油價是通膨預期最直接的輸入。油價急漲推升長天期殖利率，折現率上升先壓縮成長股評價，曲線趨平，避險需求轉向黃金。",
+         nodes=[
+             dict(id="oil", sid="c_brent", op="chg6", cmp=">=", thr=20.0,
+                  label="布蘭特原油 6 個月漲 ≥ 20%", why="能源是通膨預期的主要輸入"),
+             dict(id="ust10", sid="b_us10y", op="chg6", cmp=">=", thr=40.0,
+                  label="美 10 年殖利率 6 個月上升 ≥ 40bp", why="通膨預期推升長率"),
+             dict(id="ndx", sid="eq_ndx", op="chg3", cmp="<=", thr=-3.0,
+                  label="那斯達克 100 3 個月下跌 ≥ 3%", why="折現率上升對長天期現金流的成長股傷害最大"),
+             dict(id="curve", sid="d_curve", op="level", cmp="<=", thr=0.5,
+                  label="美債 10 年−3 個月利差 ≤ 0.5 個百分點", why="升息壓過成長預期時曲線趨平甚至倒掛"),
+             dict(id="gold", sid="c_gold", op="chg6", cmp=">=", thr=5.0,
+                  label="黃金 6 個月漲 ≥ 5%", why="實質利率見頂後避險與抗通膨需求轉向黃金"),
+         ]),
+    dict(id="cycle", name="景氣擴張鏈", tab="chains",
+         thesis="銅相對黃金走強代表實體需求回來。半導體是製造業景氣的前緣，接著是台股，外資匯入推升台幣，最後風險偏好擴散到信用債。",
+         nodes=[
+             dict(id="cuau", sid="d_cu_au", op="chg6", cmp=">=", thr=10.0,
+                  label="銅/黃金比 6 個月上升 ≥ 10%", why="實體需求相對避險需求轉強"),
+             dict(id="sox", sid="eq_sox", op="chg3", cmp=">=", thr=8.0,
+                  label="費城半導體 3 個月漲 ≥ 8%", why="半導體是製造業循環的前緣"),
+             dict(id="twii", sid="eq_twii", op="chg3", cmp=">=", thr=5.0,
+                  label="台股 3 個月漲 ≥ 5%", why="台股跟著半導體循環走"),
+             dict(id="twd", sid="fx_usdtwd", op="chg3", cmp="<=", thr=-1.0,
+                  label="新台幣 3 個月升值 ≥ 1%", why="外資買超需要先換成台幣"),
+             dict(id="hy", sid="b_hy", op="chg6", cmp=">=", thr=2.0,
+                  label="高收益債 6 個月漲 ≥ 2%", why="風險偏好擴散到信用市場是循環的後段"),
+         ]),
+    dict(id="panic", name="恐慌反轉鏈", tab="chains",
+         thesis="恐慌指數衝高時信用市場先失血，股市補跌；這條鏈要檢驗的是「相對低點買入」這個說法在歷史上值多少、又要承受多深的逆行。",
+         nodes=[
+             dict(id="vix", sid="v_vix", op="level", cmp=">=", thr=30.0,
+                  label="VIX 月底 ≥ 30", why="恐慌指數站上 30 是壓力事件的客觀門檻"),
+             dict(id="hy", sid="b_hy", op="chg3", cmp="<=", thr=-3.0,
+                  label="高收益債 3 個月跌 ≥ 3%", why="信用市場先反映流動性壓力"),
+             dict(id="spx", sid="eq_spx", op="chg3", cmp="<=", thr=-8.0,
+                  label="S&P 500 3 個月跌 ≥ 8%", why="股市補跌，常是事件的中後段"),
+             dict(id="twii", sid="eq_twii", op="chg3", cmp="<=", thr=-10.0,
+                  label="台股 3 個月跌 ≥ 10%", why="台股在全球恐慌中的跌幅通常更大"),
+         ]),
+    dict(id="china", name="中國與人民幣鏈", tab="chains",
+         thesis="人民幣走貶通常伴隨中國內需與信用轉弱，先反映在港股，再到工業金屬，最後透過供應鏈影響台韓電子。",
+         nodes=[
+             dict(id="cny", sid="fx_usdcny", op="chg6", cmp=">=", thr=2.0,
+                  label="人民幣 6 個月貶值 ≥ 2%", why="匯率是中國政策與內需壓力的出口"),
+             dict(id="hsi", sid="eq_hsi", op="chg3", cmp="<=", thr=-5.0,
+                  label="恆生指數 3 個月跌 ≥ 5%", why="港股是中國資產的離岸定價"),
+             dict(id="metals", sid="ci_metals", op="chg3", cmp="<=", thr=-3.0,
+                  label="金屬與礦產指數 3 個月下跌", why="中國是工業金屬的最大需求方"),
+             dict(id="sox", sid="eq_sox", op="chg3", cmp="<=", thr=-5.0,
+                  label="費城半導體 3 個月跌 ≥ 5%", why="透過供應鏈與終端需求傳導到電子"),
+         ]),
+]
+
 # ── 單一標的線圖（日／週／月／年）──
 # 日線保留年數、週線保留年數；月線與年線從 1995 起。收盤價已含分割調整、不含股息。
 DETAIL_KEEP_YEARS = {"d": 3, "w": 15}

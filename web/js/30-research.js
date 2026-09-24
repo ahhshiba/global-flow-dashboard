@@ -82,7 +82,7 @@ function cfCard(CF) {
 
 TABS.flow = (root, redo) => {
   root.replaceChildren(tabHead("現金流：國家與公司",
-    "國家層級看外國持有美債的增減與經常帳（賺進或流出的外匯）；公司層級看龍頭企業賺到多少現金、又投入多少資本支出。", true, redo));
+    "分開閱讀三種口徑：TIC 是月底美債持有量存量、經常帳是期間收支餘額、公司現金流是財報期間現金收支。它們與價格相對強弱不可互換。", true, redo));
   const g = h("div", { class: "grid" });
   root.append(g);
   const f = findingsCard("flow");
@@ -92,7 +92,7 @@ TABS.flow = (root, redo) => {
     const xs = T.months.map((m) => { const [y, mo] = m.split("-").map(Number); return y + (mo - 1) / 12; });
     const holders = T.holders.filter((x) => x.key !== "grand total");
     g.append(xCard({ key: "flow-tic", title: "主要外國持有美債（十億美元）", span: 7, xs, labels: T.months, rangeAware: true, xName: "月份", height: 280,
-      sub: "減持＝調整外匯存底或資金撤離美元資產；增持＝美元回流美國。", note: "資料：美國財政部 TIC，2000 年起，月底持有量（含官方與民間）。",
+      sub: "月底持有量存量及其變化；存量變動可能包含估值等影響，不能直接視為跨境淨買賣流量。", note: `資料：美國財政部 TIC，2000 年起，月底持有量（含官方與民間）；資料期間至 ${T.months[T.months.length - 1] || "未提供"}。`,
       series: holders.map((x, i) => ({ key: x.key, name: x.name, color: `var(--s${i + 1})`, values: x.values, fmt: (v) => (fin(v) ? fmtNum(v, 1) + " B" : "—") })) }));
     const tc = card({ title: "持有量與 12 個月變化", span: 5, sub: `截至 ${T.holders[0].latest_at}（十億美元）` });
     tc.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
@@ -106,7 +106,7 @@ TABS.flow = (root, redo) => {
   const CA = A.current_account;
   if (CA) {
     g.append(xCard({ key: "flow-ca", title: "經常帳餘額（十億美元）", span: 12, xs: CA.years, labels: CA.years.map(String), rangeAware: true, xName: "年度", height: 260,
-      sub: "正值＝貿易與投資所得帶進外匯（資金淨流入）；負值＝需要外國資金支應。", note: "世界銀行年資料；台灣不在世界銀行資料庫中，見總覽的資料缺口。",
+      sub: "期間內商品、服務、初次所得與二次所得的收支餘額；不是金融帳或證券投資淨流量。", note: "世界銀行年資料；各國最新非空年份見圖表，缺值不等於零。台灣不在世界銀行資料庫中，見總覽的資料缺口。",
       refs: [{ y: 0 }], series: CA.countries.map((c, i) => ({ key: c.code, name: c.name, color: `var(--s${i + 1})`, values: c.values, fmt: (v) => (fin(v) ? fmtNum(v, 0) + " B" : "—") })) }));
   }
   if (A.company_cf) g.append(cfCard(A.company_cf));

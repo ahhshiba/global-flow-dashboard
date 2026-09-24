@@ -95,8 +95,9 @@
     tape.hidden = true;
   }
 
-  document.getElementById("foot").append(
-    GFD.public ? h("span", {}, "公開示範版：新聞只列標題與原文連結（摘要請看鉅亨網原文）；資料每天自動更新。") : null,
+  const foot = document.getElementById("foot");
+  if (GFD.public) foot.append(h("span", {}, "公開示範版：新聞只列標題與原文連結（摘要請看鉅亨網原文）；資料每天自動更新。"));
+  foot.append(
     h("span", {}, "資料來源：Yahoo Finance、台灣中央銀行、世界銀行（API 與 Pink Sheet）、日本財務省、美國財政部 TIC、SEC EDGAR、FinMind、鉅亨網。"),
     h("span", {}, "紅漲綠跌為台灣行情慣例。所有統計皆為歷史樣本內描述，僅供研究參考，不構成投資建議。"),
     h("span", {}, "更新：在專案資料夾執行 python3 gfd.py all（歷史資料超過 7 天才會重抓）。"));

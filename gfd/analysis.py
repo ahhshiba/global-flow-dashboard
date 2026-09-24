@@ -6,6 +6,7 @@ import pathlib
 
 import numpy as np
 
+from . import chains as CH
 from . import config as C
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -136,7 +137,9 @@ def build_series(g, raw_values):
         if sid not in g.arr:
             continue
         a = g.arr[sid]
-        out[sid] = dict(name=s["name"], group=s["group"], kind=s["kind"], unit=s["unit"], note=s["note"],
+        source = {"yahoo": "Yahoo Finance", "cbc": "台灣中央銀行", "wb_pink": "世界銀行 Pink Sheet",
+                  "mof_jgb": "日本財務省"}.get(s["src"][0], s["src"][0])
+        out[sid] = dict(name=s["name"], group=s["group"], kind=s["kind"], unit=s["unit"], note=s["note"], source=source,
                         values=[compact(x) for x in a], stats=series_stats(a, s["kind"], g.months))
     # 衍生序列
     derived = []
@@ -323,11 +326,15 @@ def vix_regimes(g):
 
 
 def flowmap(g, series):
+    """Legacy payload key: relative price performance, never measured fund flows."""
     out = []
     for sid, label in C.FLOWMAP:
         st = (series.get(sid) or {}).get("stats")
         if st:
-            out.append(dict(id=sid, label=label, r1=st["c1"], r3=st["c3"], r12=st["c12"], asof=st["last"]))
+            meta = series[sid]
+            out.append(dict(id=sid, label=label, r1=st["c1"], r3=st["c3"], r12=st["c12"], asof=st["last"],
+                            measure="relative_price_change", source=meta.get("source", "未標示"),
+                            basis=meta.get("note", "")))
     return out
 
 
@@ -437,7 +444,7 @@ def findings(series, comp, pr, flow, vix, tic_blk, res):
         lo = min(cs, key=lambda c: c["latest"])
         hi = max(cs, key=lambda c: c["latest"])
         add("overview", "up" if comp["latest"] > 0.5 else "down" if comp["latest"] < -0.5 else "neutral",
-            f"資金風險偏好指數 {comp['latest']:+.2f}（{comp['state']}）",
+            f"風險偏好代理指數 {comp['latest']:+.2f}（{comp['state']}）",
             f"截至 {comp['latest_at']}，位於 1995 年以來第 {comp['percentile']:.0f} 百分位。"
             f"最推升的是「{hi['name']}」（z {hi['latest']:+.2f}），最拖累的是「{lo['name']}」（z {lo['latest']:+.2f}）。")
     if flow:
@@ -445,7 +452,7 @@ def findings(series, comp, pr, flow, vix, tic_blk, res):
         if len(rank) >= 4:
             top = "、".join(f"{f['label']} {f['r3']:+.1f}%" for f in rank[:3])
             bot = "、".join(f"{f['label']} {f['r3']:+.1f}%" for f in rank[-3:][::-1])
-            add("overview", "neutral", "近 3 個月資金流向", f"最強：{top}；最弱：{bot}。")
+            add("overview", "neutral", "近 3 個月跨資產相對強弱", f"最強：{top}；最弱：{bot}。依價格變動排序，未量測資金淨流入或淨流出。")
     for p in pr:
         if p["r_full"] is None or p["r_recent"] is None:
             continue
@@ -478,7 +485,7 @@ def findings(series, comp, pr, flow, vix, tic_blk, res):
     if dxy and dxy.get("c3") is not None:
         add("fx", "neutral", f"美元指數近 3 個月 {dxy['c3']:+.1f}%",
             f"近 12 個月 {dxy['c12']:+.1f}%，目前位於 1995 年以來第 {dxy['pct']:.0f} 百分位。"
-            + ("美元走強通常伴隨資金回流美國。" if dxy["c3"] > 2 else "美元走弱有利資金流向非美資產。" if dxy["c3"] < -2 else ""))
+            + "匯率變化本身不足以判定跨境資金淨流量。")
     if tic_blk:
         parts = [f"{h['name']} {h['c12']:+.0f}" for h in tic_blk["holders"] if h["c12"] is not None and h["key"] != "grand total"]
         if parts:
@@ -504,6 +511,7 @@ def run(log=print):
     annual = _load("annual.json", {})
     res, ca = reserves_ca(g, annual)
     tic_blk = tic(annual)
+    chain_block, chain_findings = CH.build(g, series, g.months, log=log)
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
@@ -511,7 +519,8 @@ def run(log=print):
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),
-        findings=findings(series, comp, pr, flow, vix, tic_blk, res),
+        chains=chain_block,
+        findings=findings(series, comp, pr, flow, vix, tic_blk, res) + chain_findings,
         coverage=(_load("coverage.json") or {}).get("items", []),
         gaps=[dict(item=a, reason=b, proxy=c) for a, b, c in C.GAPS],
         events_cfg=[dict(id=a, name=b, start=c, end=d) for a, b, c, d in C.EVENTS],

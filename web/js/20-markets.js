@@ -68,15 +68,15 @@ function findingsCard(tab, title) {
 
 /* ── 總覽 ── */
 TABS.overview = (root, redo) => {
-  root.replaceChildren(tabHead("全球資金往哪裡去",
-    "把美元、恐慌、日圓套利、景氣實需、信用胃納、亞洲資金六個訊號標準化後合成一個指數，搭配各資產的近期報酬排行：先看方向，再到各市場分頁找原因。", true, redo));
+  root.replaceChildren(tabHead("跨資產相對強弱與風險偏好",
+    "六個市場訊號合成風險偏好代理指數，搭配近期價格變動排行。持有量、經常帳與公司現金流在「現金流」分頁各依原始口徑呈現。", true, redo));
   const g = h("div", { class: "grid" });
   root.append(g);
   const C = A.composite;
 
   if (C) {
     const tone = C.latest > 0.5 ? "up" : C.latest < -0.5 ? "down" : "neutral";
-    const gc = card({ title: "資金風險偏好指數", span: 5, sub: "六個訊號各自對過去 60 個月做 z 分數後平均；正值＝資金偏向風險資產。" });
+    const gc = card({ title: "風險偏好代理指數", span: 5, sub: "六個市場訊號對過去 60 個月做 z 分數後，取當月可用訊號平均（至少四項）；正值表示風險偏好代理訊號偏強。", note: "描述性代理指標；不是實際資金流量，也未完成樣本外交易驗證。" });
     gc.body.append(
       h("div", { class: "gauge" },
         h("span", { class: `g-val ${tone === "neutral" ? "" : tone}` }, fmtSigned(C.latest, 2)),
@@ -84,25 +84,35 @@ TABS.overview = (root, redo) => {
         h("span", { class: "g-meta" }, `截至 ${C.latest_at}・1995 年以來第 ${fmtNum(C.percentile, 0)} 百分位`)),
       h("h4", { class: "sub-h" }, "組成訊號（z 分數，已調整方向）"),
       divBars(C.components.map((x) => ({ label: x.name, v: x.latest })), { suffix: "", digits: 2 }),
-      h("ul", { class: "gaps", style: "margin-top:12px" }, C.components.map((x) => h("li", {}, h("b", {}, x.name), " ", h("span", {}, `${x.how}：${x.why}`)))));
+      h("ul", { class: "gaps", style: "margin-top:12px" }, C.components.map((x) => h("li", {}, h("b", {}, x.name), " ", h("span", {}, `${x.how}：${x.why}；截至 ${x.latest_at || "未提供"}`)))));
     g.append(gc.el);
     g.append(chartCard({
       key: "ov-composite", title: "指數走勢與歷史危機", span: 7, height: 330, area: true,
       sub: "陰影為歷史危機區間；±0.5 為狀態分界。",
-      series: [{ key: "composite", name: "資金風險偏好指數", color: "var(--s1)", values: C.values, fmt: (v) => (fin(v) ? fmtSigned(v, 2) : "—") }],
+      series: [{ key: "composite", name: "風險偏好代理指數", color: "var(--s1)", values: C.values, fmt: (v) => (fin(v) ? fmtSigned(v, 2) : "—") }],
       refs: [{ y: 0.5, label: "風險偏好 +0.5" }, { y: -0.5, label: "避險 −0.5" }], bands: EVENT_BANDS,
     }));
   }
 
-  const fc = card({ title: "資金流向地圖", span: 6, sub: "各類資產的報酬排行（月資料；商品為月均價）。" });
+  const fc = card({ title: "跨資產相對強弱", span: 6, sub: "各資產月序列的價格變動百分比排行；基金採還原權息資料。", note: "價格上漲不等於資金淨流入。各列截至月份與採樣口徑可能不同；此排行為歷史描述。" });
   let period = store.get("flowPeriod", "r3");
   const fchips = h("div", { class: "chips" });
   const fbody = h("div");
   const drawFlow = () => {
     fchips.replaceChildren(...[["r1", "1 個月"], ["r3", "3 個月"], ["r12", "12 個月"]].map(([k, l]) =>
       h("button", { class: "chip", type: "button", "aria-pressed": String(k === period), onclick: () => { period = k; store.set("flowPeriod", k); drawFlow(); } }, l)));
-    const rows = (A.flowmap || []).filter((r) => fin(r[period])).sort((a, b) => b[period] - a[period]).map((r) => ({ label: r.label, v: r[period] }));
-    fbody.replaceChildren(divBars(rows));
+    const ranked = (A.flowmap || []).filter((r) => fin(r[period])).sort((a, b) => b[period] - a[period]);
+    const rows = ranked.map((r) => ({ label: r.label, v: r[period] }));
+    const provenanceRows = ranked.map((r) => h("tr", {},
+      h("td", {}, r.label), h("td", {}, r.asof || "未提供"),
+      h("td", {}, r.source || (A.series[r.id] || {}).source || "請參閱資料來源",
+        h("span", { class: "sub" }, r.basis || (A.series[r.id] || {}).note || "未標示"))));
+    const provenanceTable = h("table", { class: "data" },
+      h("thead", {}, h("tr", {}, ["資產", "截至月份", "來源／口徑"].map((label) => h("th", {}, label)))),
+      h("tbody", {}, provenanceRows));
+    const provenance = h("details", {}, h("summary", {}, "查看來源、截至月份與口徑"),
+      h("div", { class: "tbl-wrap" }, provenanceTable));
+    fbody.replaceChildren(divBars(rows), provenance);
   };
   drawFlow();
   fc.tools.append(fchips);
@@ -128,7 +138,7 @@ TABS.overview = (root, redo) => {
   const own = findingsList("overview");
   if (own) oc.body.append(own);
   if (others.length) {
-    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", research: "30 年關聯" };
+    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", chains: "傳導鏈", research: "30 年關聯" };
     oc.body.append(h("ul", { class: "finds", style: "margin-top:12px" }, others.map((f) => h("li", { class: `t-${f.tone}` },
       h("b", {}, `【${tabName[f.tab] || f.tab}】${f.title}`), h("span", {}, f.text)))));
   }
@@ -144,7 +154,7 @@ TABS.overview = (root, redo) => {
 /* ── 匯市 ── */
 TABS.fx = (root, redo) => {
   root.replaceChildren(tabHead("匯市：美元、人民幣、日圓、新台幣、歐元",
-    "以「美元/該貨幣」報價時，線往上代表該貨幣貶值、資金流出；歐元/美元相反。30 年匯率取自台灣央行月均值，美元指數為月底值。", true, redo));
+    "以「美元/該貨幣」報價時，線往上代表該貨幣貶值；歐元/美元相反。匯率不是資金流量。30 年匯率取自台灣央行月均值，美元指數為月底值。", true, redo));
   const g = h("div", { class: "grid" });
   root.append(g);
   const f = findingsCard("fx");
