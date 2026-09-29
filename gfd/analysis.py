@@ -6,6 +6,7 @@ import pathlib
 
 import numpy as np
 
+from . import analogs as AN
 from . import cascade as CA
 from . import chains as CH
 from . import config as C
@@ -523,6 +524,9 @@ def run(log=print):
                 if best else "事件後沒有任何資產通過穩健檢驗（事件數、前後半期一致、位移檢定）。"))
         chain_findings.append(dict(tab="playbook", tone="alert" if best else "neutral",
                                    title=f"訊號成立中：{t['label']}", text=txt))
+    cas = CA.build(log=log)
+    if cas:
+        cas["analogs"] = AN.build(cas, log=log)
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
@@ -530,7 +534,7 @@ def run(log=print):
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),
-        chains=chain_block, playbook=play, cascade=CA.build(log=log),
+        chains=chain_block, playbook=play, cascade=cas,
         findings=findings(series, comp, pr, flow, vix, tic_blk, res) + chain_findings,
         coverage=(_load("coverage.json") or {}).get("items", []),
         gaps=[dict(item=a, reason=b, proxy=c) for a, b, c in C.GAPS],

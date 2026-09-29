@@ -153,6 +153,57 @@ function cascadeCompare(win) {
 // 不同單位的超額要排在一起比較時，以該標的「平常」變動幅度的尺度做粗略標準化（至少 1）
 function scaleOf(x) { return x.unit === "%" ? 1 : x.unit === "bp" ? 10 : 2; }
 
+/* 現在像哪次：今天的市場狀態 vs 88 個事件發生時的狀態，最像的 5 次，見報之後錢往哪流 */
+const csFmtFeat = (v, unit) => (!fin(v) ? "—" : unit === "σ" ? fmtSigned(v, 1, "σ") : unit === "pp" ? `${v.toFixed(2)}`
+  : unit === "bp" ? fmtSigned(v, 0, "bp") : fmtSigned(v, 1, "%"));
+function cascadeNow(win) {
+  const AN = A.cascade.analogs;
+  if (!AN) return [h("p", { class: "empty" }, "尚未產生相似事件分析")];
+  const bt = AN.backtest, wl = (w) => (w === 10 ? "兩週" : w === 21 ? "一個月" : "兩個月");
+  const cells = (m) => AN.windows.map((w) => `${wl(w)} ${bt[m][w].hit}%`).join("、");
+  const verdict = h("div", { class: "cs-warn" },
+    h("b", {}, "先講結論：相似的歷史不能拿來預測接下來。"),
+    ` 回測方法：對每個歷史事件假裝不知道結果，用「狀態最像的 ${AN.k} 次其他事件」預測它事後比平常漲多還跌多。`
+    + `命中率 ${cells("analog")}；隨機挑 ${AN.k} 次事件 ${cells("random")}`
+    + `（隨機 300 輪的 90% 區間 ${AN.windows.map((w) => `${bt.random[w].p5}–${bt.random[w].p95}%`).join("、")}）；`
+    + `用同類型事件預測 ${cells("category")}。`
+    + `隨機 300 輪中，命中率不輸相似事件法的輪次占 ${AN.windows.map((w) => `${wl(w)} ${Math.round(100 * bt.analog[w].p_vs_random)}%`).join("、")}`
+    + "（要低於 5% 才能說相似事件法比運氣好）。"
+    + "所以下面只是「歷史上狀態像現在的時候，事後發生過什麼」的對照，不是買賣訊號。");
+
+  // 狀態比較
+  const an = AN.analogs;
+  const fhead = h("tr", {}, h("th", {}, "狀態"), h("th", { class: "n" }, `現在（${AN.today}）`),
+    ...an.map((a) => h("th", { class: "n" }, `${a.date.slice(0, 7)}`, h("span", { class: "sub" }, a.name))));
+  const frows = AN.features.map((f) => {
+    const v = AN.now[f.id], p = AN.pct[f.id];
+    const extreme = fin(p) && (p <= 10 || p >= 90);
+    return h("tr", {}, h("th", { scope: "row", style: "text-align:left;white-space:nowrap" }, f.label),
+      h("td", { class: "n", style: extreme ? "background:var(--warn-soft)" : null },
+        csFmtFeat(v, f.unit), fin(p) ? h("span", { class: "sub" }, `歷史第 ${p} 百分位`) : h("span", { class: "sub" }, "今天無資料")),
+      ...an.map((a) => h("td", { class: "n" }, csFmtFeat(a.state[f.id], f.unit))));
+  });
+  const ftable = h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, fhead), h("tbody", {}, frows)));
+
+  // 見報之後的結果
+  const ohead = h("tr", {}, h("th", {}, "標的"),
+    ...an.map((a) => h("th", { class: "n" }, a.date.slice(0, 7), h("span", { class: "sub" }, `距離 ${a.dist}`))),
+    h("th", { class: "n" }, "中位數"), h("th", { class: "n" }, "平常"));
+  const orows = AN.assets.map((r) => h("tr", {}, h("th", { scope: "row", style: "text-align:left;white-space:nowrap" }, r.name),
+    ...r[`w${win}`].map((v) => h("td", { class: "n" }, h("span", { class: dirClass(v) }, csUnit(v, r.unit)))),
+    h("td", { class: "n" }, h("b", { class: dirClass(r[`med${win}`]) }, csUnit(r[`med${win}`], r.unit)),
+      fin(r[`up${win}`]) ? h("span", { class: "sub" }, `${r[`n${win}`]} 次中上漲 ${r[`up${win}`]}%`) : null),
+    h("td", { class: "n muted" }, csUnit(r[`base${win}`], r.unit))));
+  const otable = h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, ohead), h("tbody", {}, orows)));
+
+  return [verdict,
+    h("h4", { class: "sub-h" }, `狀態比較：把最新一個收盤（${AN.today}）當成「事件第一天」。黃底＝現在處於歷史前後 10% 的極端`), ftable,
+    h("h4", { class: "sub-h" }, `這 ${an.length} 次事件「見報之後」${wl(win)}的變動（從事件第一天收盤起算，看到新聞才進場也做得到）`), otable,
+    h("p", { class: "note" }, `最不像現在的事件：${AN.farthest.map((a) => `${a.date.slice(0, 7)} ${a.name}`).join("、")}。`
+      + "距離＝各項狀態換成標準分數後的均方根差，越小越像；兩個狀態至少要有六成項目都有資料才比。"
+      + `今天的資料：${Object.entries(AN.last_dates).map(([k, d]) => `${k} ${d}`).join("、")}（期貨與美元在台北早上還沒收盤，會停在前一個交易日）。`)];
+}
+
 TABS.cascade = (root) => {
   const CA = A.cascade;
   root.replaceChildren(tabHead("事件衝擊鏈：一個事件，兩週到兩個月內怎麼一層一層傳下去",
@@ -174,7 +225,7 @@ TABS.cascade = (root) => {
   const btn = (label, on, fn) => h("button", { class: "chip", type: "button", "aria-pressed": String(on), onclick: fn }, label);
 
   const draw = () => {
-    const modeChips = [["event", "單一事件"], ["cat", "分類彙總"], ["compare", "類型比較"]].map(([k, l]) =>
+    const modeChips = [["event", "單一事件"], ["cat", "分類彙總"], ["compare", "類型比較"], ["now", "現在像哪次"]].map(([k, l]) =>
       btn(l, k === mode, () => { mode = k; store.set("csMode", k); draw(); }));
     chips2.replaceChildren();
     if (mode === "event") {
@@ -191,7 +242,7 @@ TABS.cascade = (root) => {
       if (!CA.categories.some((c) => c.id === fcat)) fcat = CA.categories[0].id;
       chips.replaceChildren(...modeChips, h("span", { class: "lab", style: "margin-left:10px" }, "選分類"),
         ...CA.categories.map((c) => btn(`${c.name}（${c.n} 次）`, c.id === fcat, () => { fcat = c.id; store.set("csCat", fcat); draw(); })));
-    } else {
+    } else {   // compare 與 now 都用期間切換
       chips.replaceChildren(...modeChips, h("span", { class: "lab", style: "margin-left:10px" }, "期間"),
         ...CA.windows.map((w) => btn(w === 10 ? "兩週" : w === 21 ? "一個月" : "兩個月", w === win,
           () => { win = w; store.set("csWin", w); draw(); })));
@@ -241,6 +292,15 @@ TABS.cascade = (root) => {
       mount(host, () => cascadeTimeline(host, cat.assets.filter((r) => fin(r.half_day) && r.half_n >= 2)
         .map((r) => Object.assign({}, r, { peak_move: r.w21 })), CA.max_days));
       c.body.append(h("h4", { class: "sub-h" }, "逐層明細"), cascadeTable(cat.assets, true));
+      body.append(c.el);
+    } else if (mode === "now") {
+      const AN = CA.analogs;
+      const c = card({ title: AN ? `現在最像哪幾次事件：${AN.analogs.map((a) => a.name).join("、")}` : "現在最像哪幾次事件", span: 12,
+        sub: "今天的市場環境（股市、回檔、波動、利率、殖利率曲線、美元、黃金、原油、高收益債）加上最新一天的反應幅度，"
+          + "和 88 個歷史事件發生時比對。",
+        note: "回測是留一法：預測某個事件時，把它前後 60 天內的事件排除，避免視窗重疊洩漏答案。"
+          + "命中＝預測「比平常漲多／跌多」的方向對了；平常＝該標的全部歷史中任意一天起算同樣天數的中位數。" });
+      c.body.append(...cascadeNow(win));
       body.append(c.el);
     } else {
       const c = card({ title: `不同類型的事件，錢往哪裡流（事件後${win === 10 ? "兩週" : win === 21 ? "一個月" : "兩個月"}）`, span: 12,
