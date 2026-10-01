@@ -52,7 +52,8 @@
     const btn = tabBtns.find((x) => x.dataset.tab === id);
     if (btn && tabBar && tabBar.scrollWidth > tabBar.clientWidth) {
       const left = btn.offsetLeft - (tabBar.clientWidth - btn.offsetWidth) / 2;
-      tabBar.scrollTo({ left: Math.max(0, left), behavior: first ? "auto" : "smooth" });
+      const calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+      tabBar.scrollTo({ left: Math.max(0, left), behavior: first || calm ? "auto" : "smooth" });
     }
     const root = document.getElementById("tab-" + id);
     if (root.dataset.range !== state.range || !root.childElementCount) render(id);

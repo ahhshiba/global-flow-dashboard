@@ -274,16 +274,17 @@ TABS.cascade = (root) => {
         count.textContent = `${shown.length} / ${evs.length}`;
         list.replaceChildren(...(shown.length ? shown.map((e) => btn(`${e.date.slice(0, 7)}　${e.name}`, e.id === sel,
           () => { sel = e.id; store.set("csSel", sel); draw(); })) : [h("span", { class: "muted" }, "沒有符合的事件")]));
+        // 清單換了內容（第一次畫、清掉搜尋字）就把選中的事件捲回看得見的位置
+        requestAnimationFrame(() => {
+          const on = list.querySelector('[aria-pressed="true"]');
+          if (on) list.scrollTop = Math.max(0, on.offsetTop - list.clientHeight / 2 + on.offsetHeight / 2);
+        });
       };
       const input = h("input", { class: "gl-search ev-search", type: "search", placeholder: "搜尋事件，例：雷曼、1997、關稅", "aria-label": "搜尋事件" });
       input.value = evQ;
       input.addEventListener("input", () => { evQ = input.value; fill(); });
       chips2.replaceChildren(h("div", { class: "ev-bar" }, h("span", { class: "lab" }, "選事件"), input, count), list);
       fill();
-      requestAnimationFrame(() => {
-        const on = list.querySelector('[aria-pressed="true"]');
-        if (on) list.scrollTop = Math.max(0, on.offsetTop - list.clientHeight / 2 + on.offsetHeight / 2);
-      });
     } else if (mode === "cat") {
       if (!CA.categories.some((c) => c.id === fcat)) fcat = CA.categories[0].id;
       chips.replaceChildren(...modeChips, h("span", { class: "lab", style: "margin-left:10px" }, "選分類"),
