@@ -159,7 +159,7 @@ ETF 與期貨大多 1999–2000 年才有日線，所以 1980–1999 的事件�
 
 ## 公開版的密碼門
 
-GitHub Pages 是靜態站，做不到伺服器端登入。`gfd.py build --public` 會把整頁 gzip 壓縮後用 PBKDF2（30 萬次）＋ AES-256-GCM 加密才寫進 `docs/index.html`，瀏覽器輸入密碼後在本機解密（`gfd/gate.py`）。密碼來自環境變數 `GFD_PUBLIC_PASSWORD` 或 `data/public_password.txt`（data/ 不進版控，換機器要自己放）。**沒有密碼時預設拒絕產出公開版**，排程的部署步驟會停下，不會悄悄發佈明文；真的要發佈明文版請設 `GFD_ALLOW_PLAINTEXT=1`。需要 `cryptography`（Ubuntu 的 `python3-cryptography`）。
+GitHub Pages 是靜態站，做不到伺服器端登入。`gfd.py build --public` 會把整頁 gzip 壓縮後用 PBKDF2（10 萬次；短密碼下次數高低對安全沒有實質差別，調高只會讓慢的電腦等更久）＋ AES-256-GCM 加密才寫進 `docs/index.html`，瀏覽器輸入密碼後在本機解密（`gfd/gate.py`）。密碼來自環境變數 `GFD_PUBLIC_PASSWORD` 或 `data/public_password.txt`（data/ 不進版控，換機器要自己放）。**沒有密碼時預設拒絕產出公開版**，排程的部署步驟會停下，不會悄悄發佈明文；真的要發佈明文版請設 `GFD_ALLOW_PLAINTEXT=1`。需要 `cryptography`（Ubuntu 的 `python3-cryptography`）。
 
 要知道的限制：
 - **簡單的密碼擋的是路人與爬蟲，不是有心人**：密文公開在網路上，可以離線一直猜，3 個字元的密碼幾秒就猜得到。

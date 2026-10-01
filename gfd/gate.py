@@ -3,7 +3,8 @@
 GitHub Pages 只能放靜態檔，所以「登入」做不到伺服器端驗證。這裡把整個頁面用密碼加密後才發佈：
 瀏覽器輸入密碼 → PBKDF2 導出金鑰 → AES-256-GCM 解密 → gzip 解壓 → 顯示頁面。新部署的 gh-pages 上只有密文，
 搜尋引擎也看不到內容。限制要講清楚：
-- 密文是公開的，可以離線一直猜密碼；短密碼（例如 123）幾秒就猜得到，30 萬次 PBKDF2 只是讓每次猜慢一點。
+- 密文是公開的，可以離線一直猜密碼；短密碼（例如 123）幾秒就猜得到。PBKDF2 次數只是讓每次猜慢一點，
+  對 3 個字元的密碼沒有實質差別，所以用 10 萬次（2026-10-02 由 30 萬次調低：慢的電腦按下「進入」後要等太久）。
   這道門擋的是路人與搜尋引擎，不是有心人。
 - 解開後密碼存在該分頁的 sessionStorage（重新整理不用再輸入），關掉分頁就清掉。
 - 2026-10-01 以前部署過的明文版本，GitHub 可能仍以 commit 雜湊保留一段時間，也可能被快取或轉存。
@@ -22,7 +23,7 @@ import secrets
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PASSWORD_FILE = ROOT / "data" / "public_password.txt"
-ITERATIONS = 300_000
+ITERATIONS = 100_000
 
 
 def password():
@@ -82,10 +83,15 @@ WRAPPER = """<!doctype html>
 <script>
 (function () {
   const P = JSON.parse(document.getElementById("payload").textContent);
-  const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  // 逐字迴圈解 base64：Uint8Array.from(atob(s), fn) 在 2 MB 的密文上慢一百倍（Node 實測 186 ms vs 2 ms）
+  const b64 = (s) => { const bin = atob(s), out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; };
   const form = document.getElementById("f"), pw = document.getElementById("pw"), err = document.getElementById("err"), go = document.getElementById("go");
+  // 讓按鈕上的進度字先畫出來，再做會卡住畫面的工作（背景分頁沒有 requestAnimationFrame，所以加計時器保底）
+  const paint = () => new Promise((r) => { let done = false; const f = () => { if (!done) { done = true; setTimeout(r, 0); } }; requestAnimationFrame(f); setTimeout(f, 60); });
+  const label = (t) => { go.textContent = t; };
   async function open(password) {
     if (!window.crypto || !crypto.subtle) throw new Error("no-subtle");   // 非 HTTPS 或太舊的瀏覽器沒有 WebCrypto
+    go.disabled = true; label("解密中…"); await paint();
     const enc = new TextEncoder();
     const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
     const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(P.salt), iterations: P.iter, hash: "SHA-256" },
@@ -100,11 +106,13 @@ WRAPPER = """<!doctype html>
       html = new TextDecoder().decode(plain);
     }
     try { sessionStorage.setItem("gfd:pw", password); } catch (e) { /* 無痕視窗 */ }
+    label("載入中…"); await paint();             // 接下來解析整頁，慢的電腦要一兩秒
     document.open(); document.write(html); document.close();
   }
   form.addEventListener("submit", async (e) => {
-    e.preventDefault(); err.textContent = ""; go.disabled = true;
+    e.preventDefault(); err.textContent = "";
     try { await open(pw.value); } catch (ex) {
+      label("進入");
       err.textContent = ex && ex.message === "old-browser" ? "這個瀏覽器太舊，無法解壓縮頁面；請更新瀏覽器。"
         : ex && ex.message === "no-subtle" ? "這個瀏覽器不能解密（需要 HTTPS 網址與較新的瀏覽器）。" : "密碼不對。";
       go.disabled = false; pw.select();
@@ -112,7 +120,7 @@ WRAPPER = """<!doctype html>
   });
   // 同一個分頁重新整理不用再輸入
   let saved = null; try { saved = sessionStorage.getItem("gfd:pw"); } catch (e) { /* 略過 */ }
-  if (saved) open(saved).catch(() => { try { sessionStorage.removeItem("gfd:pw"); } catch (e) { /* 略過 */ } });
+  if (saved) open(saved).catch(() => { label("進入"); go.disabled = false; try { sessionStorage.removeItem("gfd:pw"); } catch (e) { /* 略過 */ } });
 })();
 </script>
 </body>
