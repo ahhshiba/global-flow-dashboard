@@ -73,6 +73,12 @@ TABS.overview = (root, redo) => {
   const g = h("div", { class: "grid" });
   root.append(g);
   const C = A.composite;
+  // 最新收盤放最上面：打開網站第一眼要看的是今天的數字
+  g.append(kpiRow([["fx_dxy", "美元指數"], ["fx_usdtwd", "美元/新台幣"], ["b_us10y", "美 10 年殖利率"], ["v_vix", "VIX"],
+    ["eq_spx", "S&P 500"], ["eq_twii", "台灣加權"], ["c_gold", "黃金期貨"], ["c_brent", "布蘭特原油"]]));
+  // 左右兩欄各自往下堆，避免一列裡高矮差很多時留下大片空白
+  const colL = h("div", { class: "stack span-5" }), colR = h("div", { class: "stack span-7" });
+  g.append(colL, colR);
 
   if (C) {
     const tone = C.latest > 0.5 ? "up" : C.latest < -0.5 ? "down" : "neutral";
@@ -85,8 +91,8 @@ TABS.overview = (root, redo) => {
       h("h4", { class: "sub-h" }, "組成訊號（z 分數，已調整方向）"),
       divBars(C.components.map((x) => ({ label: x.name, v: x.latest })), { suffix: "", digits: 2 }),
       h("ul", { class: "gaps", style: "margin-top:12px" }, C.components.map((x) => h("li", {}, h("b", {}, x.name), " ", h("span", {}, `${x.how}：${x.why}；截至 ${x.latest_at || "未提供"}`)))));
-    g.append(gc.el);
-    g.append(chartCard({
+    colL.append(gc.el);
+    colR.append(chartCard({
       key: "ov-composite", title: "指數走勢與歷史危機", span: 7, height: 330, area: true,
       sub: "陰影為歷史危機區間；±0.5 為狀態分界。",
       series: [{ key: "composite", name: "風險偏好代理指數", color: "var(--s1)", values: C.values, fmt: (v) => (fin(v) ? fmtSigned(v, 2) : "—") }],
@@ -117,7 +123,7 @@ TABS.overview = (root, redo) => {
   drawFlow();
   fc.tools.append(fchips);
   fc.body.append(fbody);
-  g.append(fc.el);
+  colL.append(fc.el);
 
   if (C) {
     const tc = card({ title: "指數分區之後 3 個月的報酬", span: 6,
@@ -127,11 +133,8 @@ TABS.overview = (root, redo) => {
     const rows = C.forward.map((r) => h("tr", {}, h("td", {}, A.series[r.id] ? A.series[r.id].name : r.id),
       r.buckets.map((b) => h("td", { class: "n" }, b.n ? chg(b.median, 1) : "—", b.n ? h("span", { class: "sub" }, `${fmtNum(b.hit, 0)}%・n=${b.n}`) : null))));
     tc.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, head), h("tbody", {}, rows))));
-    g.append(tc.el);
+    colR.append(tc.el);
   }
-
-  g.append(kpiRow([["fx_dxy", "美元指數"], ["fx_usdtwd", "美元/新台幣"], ["b_us10y", "美 10 年殖利率"], ["v_vix", "VIX"],
-    ["eq_spx", "S&P 500"], ["eq_twii", "台灣加權"], ["c_gold", "黃金期貨"], ["c_brent", "布蘭特原油"]]));
 
   const others = (A.findings || []).filter((f) => f.tab !== "overview");
   const oc = card({ title: "各市場重點", span: 7, sub: "來自各分頁的自動敘述。" });
@@ -160,7 +163,7 @@ function strengthCard(S) {
   const head = ["GDP 排名", "國家", "GDP（十億美元）", "實質成長", "CPI 年增率", "政策利率", "實質利率", "經常帳／GDP", "外匯存底"];
   const yr = (y) => (y ? h("span", { class: "sub" }, y) : null);
   const rows = S.rows.map((r) => h("tr", {},
-    h("td", { class: "n muted" }, r.rank ? `#${r.rank}` : "—"),
+    h("td", { class: "rank" }, r.rank ? `#${r.rank}` : "—"),
     h("td", {}, r.name),
     h("td", { class: "n" }, fin(r.gdp) ? fmtNum(r.gdp, 0) : "—", yr(r.gdp_year)),
     h("td", { class: "n" }, fin(r.growth) ? h("span", { class: dirClass(r.growth) }, fmtSigned(r.growth, 1, "%")) : "—", yr(r.growth_year)),
@@ -182,7 +185,7 @@ function reservesTableCard(T) {
     note: T.note });
   const head = ["GDP 排名", "國家", "外匯存底", "一年變化", "可支應進口", "存底／GDP", "持有美債", "美債／存底"];
   const rows = T.rows.map((r) => h("tr", {},
-    h("td", { class: "n muted" }, r.rank ? `#${r.rank}` : "—"),
+    h("td", { class: "rank" }, r.rank ? `#${r.rank}` : "—"),
     h("td", {}, r.name, r.reserve_currency ? h("span", { class: "sub" }, "準備貨幣國，門檻不適用") : null),
     h("td", { class: "n" }, fin(r.reserves) ? fmtNum(r.reserves, 0) : "—", h("span", { class: "sub" }, r.reserves_year || "")),
     h("td", { class: "n" }, fin(r.c12) ? h("span", { class: dirClass(r.c12) }, fmtSigned(r.c12, 0)) : "—",

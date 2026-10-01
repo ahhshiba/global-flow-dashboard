@@ -3,7 +3,16 @@
 (function boot() {
   const tabBtns = [...document.querySelectorAll('.tabs [role="tab"]')];
   const ids = tabBtns.map((b) => b.dataset.tab);
-  let current = null;
+  const tabBar = document.querySelector(".tabs"), ink = document.querySelector(".tab-ink");
+  let current = null, viaKeyboard = false;
+
+  // 選中分頁下方的指示條：只用 transform 移動與伸縮（不觸發版面重排）
+  function placeInk(animate) {
+    const b = tabBtns.find((x) => x.dataset.tab === current);
+    if (!b || !ink) return;
+    ink.classList.toggle("no-anim", !animate);
+    ink.style.transform = `translateX(${b.offsetLeft + 12}px) scaleX(${Math.max(0.01, (b.offsetWidth - 24) / 100)})`;
+  }
 
   function render(id) {
     const root = document.getElementById("tab-" + id);
@@ -32,7 +41,19 @@
       b.setAttribute("aria-selected", String(on));
       b.tabIndex = on ? 0 : -1;
     }
-    for (const sec of document.querySelectorAll(".tab")) sec.hidden = sec.id !== "tab-" + id;
+    const first = ink && !ink.style.transform;
+    for (const sec of document.querySelectorAll(".tab")) {
+      sec.hidden = sec.id !== "tab-" + id;
+      // 鍵盤切換一秒可能按好幾次：不做進場動畫（動畫會讓連續操作變慢）
+      sec.classList.toggle("instant", viaKeyboard);
+    }
+    viaKeyboard = false;
+    placeInk(!first);
+    const btn = tabBtns.find((x) => x.dataset.tab === id);
+    if (btn && tabBar && tabBar.scrollWidth > tabBar.clientWidth) {
+      const left = btn.offsetLeft - (tabBar.clientWidth - btn.offsetWidth) / 2;
+      tabBar.scrollTo({ left: Math.max(0, left), behavior: first ? "auto" : "smooth" });
+    }
     const root = document.getElementById("tab-" + id);
     if (root.dataset.range !== state.range || !root.childElementCount) render(id);
     store.set("tab", id);
@@ -49,6 +70,7 @@
       e.preventDefault();
       const next = tabBtns[(i + d + tabBtns.length) % tabBtns.length];
       next.focus();
+      viaKeyboard = true;
       show(next.dataset.tab);
     });
   });
@@ -62,14 +84,31 @@
     window.scrollTo(0, 0);
   };
 
+  window.addEventListener("resize", () => placeInk(false));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => placeInk(false));
+
+  // 市場氣候：報頭上的風險偏好代理指數（點一下回總覽）
+  const CM = A.composite, climate = document.getElementById("climate");
+  if (CM && climate) {
+    const tone = CM.latest > 0.5 ? "up" : CM.latest < -0.5 ? "down" : "neutral";
+    climate.append(h("button", { class: `climate-btn t-${tone}`, type: "button",
+      title: `風險偏好代理指數 ${fmtSigned(CM.latest, 2)}（截至 ${CM.latest_at}，1995 年以來第 ${fmtNum(CM.percentile, 0)} 百分位）。點一下看總覽`,
+      onclick: () => show("overview") },
+      h("span", { class: "c-lab" }, "市場氣候"),
+      h("span", { class: "c-state" }, CM.state),
+      h("span", { class: "c-val" }, fmtSigned(CM.latest, 2)),
+      sparkline(CM.values.slice(-36), { w: 72, h: 20, color: "currentColor" })));
+  }
+
   // 報頭時間戳
   const latest = (GFD.daily || [])[0];
-  const stamp = (dt, dd) => [h("dt", {}, dt), h("dd", {}, dd)];
+  // 每組時間戳包一個 <div>（dl 允許），手機上才能整組換行；年份省略（就是今年）
+  const stamp = (dt, dd) => [h("div", {}, h("dt", {}, dt), h("dd", {}, dd))];
   document.getElementById("span-range").textContent = `${MONTHS[0]} → ${A.complete_end}`;
   document.getElementById("stamps").append(
-    ...stamp("歷史資料", (A.fetched_at || "—").replace("T", " ").slice(0, 16)),
-    ...stamp("鉅亨每日", latest ? latest.date : "尚未匯入"),
-    ...stamp("頁面產出", GFD.built_at.replace("T", " ").slice(0, 16)));
+    ...stamp("歷史資料", (A.fetched_at || "—").replace("T", " ").slice(5, 16)),
+    ...stamp("鉅亨每日", latest ? latest.date.slice(5) : "尚未匯入"),
+    ...stamp("頁面產出", GFD.built_at.replace("T", " ").slice(5, 16)));
 
   // 報價跑馬燈：最新一天的全部非個股報價＋台積電；內容複製一份接在後面做無縫循環
   const tape = document.getElementById("tape");

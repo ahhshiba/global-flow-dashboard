@@ -416,7 +416,7 @@ def strength_block(annual, series):
         py, pv = latest(blocks["policy"].get(C.BIS_POLICY_AREA.get(code)))
         rows.append(dict(code=code, name=name, rank=rank, gdp=num(gv / 1e9, 0) if gv else None, gdp_year=gy,
                          growth=num(grv, 1), growth_year=gry, cpi=num(cv, 1), cpi_year=cy,
-                         policy=num(pv, 2), policy_at=py, policy_src="ECB 存款機制利率" if C.BIS_POLICY_AREA.get(code) == "XM" else None,
+                         policy=num(pv, 2), policy_at=py, policy_src="ECB" if C.BIS_POLICY_AREA.get(code) == "XM" else None,
                          real=num(pv - cv, 1) if pv is not None and cv is not None else None,
                          ca_gdp=num(cav, 1), ca_year=cay, reserves=num(rv / 1e9, 0) if rv else None))
     tw_disc = (series.get("b_tw_disc") or {}).get("stats") or {}

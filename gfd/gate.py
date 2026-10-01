@@ -42,7 +42,13 @@ LOGIN = """<div id="gfd-login" role="dialog" aria-modal="true" aria-labelledby="
     background: var(--ground, #f5f6fa); color: var(--ink, #1d2130); }
   html:not(.gfd-locked) #gfd-login { display: none; }
   #gfd-login form { width: min(340px, 100%); display: flex; flex-direction: column; gap: 10px; }
-  #gfd-login h1 { font-size: 20px; margin: 0 0 4px; }
+  #gfd-login .gfd-login-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  #gfd-login .gfd-login-brand svg { width: 30px; height: 30px; fill: none; stroke: var(--accent, #2b3f8f); stroke-width: 2.4; stroke-linecap: round; }
+  #gfd-login .gfd-login-brand path:nth-child(2) { opacity: .6; } #gfd-login .gfd-login-brand path:nth-child(3) { opacity: .32; }
+  #gfd-login h1 { font: 700 22px/1.1 var(--f-disp, sans-serif); letter-spacing: .04em; margin: 0; }
+  #gfd-login button { transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1); }
+  #gfd-login button:active { transform: scale(0.97); }
+  #gfd-login input:focus { outline: none; box-shadow: 0 0 0 3px var(--accent-soft, #e3e7f6); border-color: var(--accent, #2b3f8f); }
   #gfd-login input { font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--line-strong, #c5cad6);
     border-radius: 6px; background: var(--surface, #fff); color: inherit; }
   #gfd-login button { font: inherit; font-size: 15px; padding: 9px 12px; border: 0; border-radius: 6px; cursor: pointer;
@@ -51,7 +57,10 @@ LOGIN = """<div id="gfd-login" role="dialog" aria-modal="true" aria-labelledby="
   #gfd-login .err { color: var(--up, #c8322f); font-size: 13px; min-height: 1.4em; }
 </style>
 <form id="gfd-login-form" autocomplete="off">
-  <h1 id="gfd-login-title">資金流向觀測台</h1>
+  <div class="gfd-login-brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 10c6-5 12 5 18 0s8-3 8-3" /><path d="M3 17c6-5 12 5 18 0s8-3 8-3" /><path d="M3 24c6-5 12 5 18 0s8-3 8-3" /></svg>
+    <h1 id="gfd-login-title">資金流向觀測台</h1>
+  </div>
   <input id="gfd-login-pw" type="password" placeholder="密碼" aria-label="密碼" required>
   <button type="submit">進入</button>
   <div class="err" id="gfd-login-err" role="alert"></div>

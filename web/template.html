@@ -8,13 +8,22 @@
 <div class="app">
   <header class="mast">
     <div class="brand">
-      <h1>資金流向觀測台</h1>
+      <div class="brand-row">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M3 10c6-5 12 5 18 0s8-3 8-3" /><path d="M3 17c6-5 12 5 18 0s8-3 8-3" /><path d="M3 24c6-5 12 5 18 0s8-3 8-3" />
+        </svg>
+        <h1>資金流向觀測台</h1>
+      </div>
       <p class="brand-sub">匯市・債市・股市・商品・現金流・VIX　<span class="mono" id="span-range">1995 →</span></p>
     </div>
-    <dl class="stamps" id="stamps"></dl>
+    <div class="mast-side">
+      <div class="climate" id="climate"></div>
+      <dl class="stamps" id="stamps"></dl>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="分頁">
+    <span class="tab-ink" aria-hidden="true"></span>
     <button role="tab" id="t-overview" data-tab="overview" aria-controls="tab-overview">總覽</button>
     <button role="tab" id="t-fx" data-tab="fx" aria-controls="tab-fx">匯市</button>
     <button role="tab" id="t-bond" data-tab="bond" aria-controls="tab-bond">債市</button>

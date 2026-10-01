@@ -599,7 +599,7 @@ function yearChange(sid, L) {
 function watchBadge(sid) {
   const w = (A.observe || {})[sid];
   if (!w) return null;
-  return h("span", { class: "k-watch", title: w.text }, w.kind === "managed" ? "觀察用・不建議操作" : "觀察用");
+  return h("span", { class: `k-watch${w.kind === "managed" ? " k-managed" : ""}`, title: w.text }, w.kind === "managed" ? "勿操作" : "觀察用");
 }
 function kpi(sid, name) {
   const s = A.series[sid];

@@ -36,7 +36,11 @@ function cascadeTimeline(host, rows, maxDays) {
   const pw = W - ml - mr;
   const X = (d) => ml + ((d - 1) / Math.max(1, maxDays - 1)) * pw;
   const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "事件後傳導時間軸" });
+  // 刻度彼此至少隔 44px，窄螢幕上自動略過擠在一起的（例：手機上「第 5 天」和「2 週」會疊在一起）
+  let lastX = -Infinity;
   for (const d of [1, 5, 10, 21, 42].filter((d) => d <= maxDays)) {
+    if (X(d) - lastX < 44 && d !== maxDays) continue;
+    lastX = X(d);
     svg.append(sv("line", { x1: X(d), x2: X(d), y1: mt - 8, y2: H - 12, style: "stroke:var(--grid)" }));
     svg.append(sv("text", { x: X(d), y: mt - 12, "text-anchor": "middle" },
       d === 10 ? "2 週" : d === 21 ? "1 個月" : d === 42 ? "2 個月" : `第 ${d} 天`));
@@ -245,6 +249,7 @@ TABS.cascade = (root) => {
   let win = store.get("csWin", 21);
   const chips = h("div", { class: "chips" });
   const chips2 = h("div", { class: "chips", style: "margin-top:8px" });
+  let evQ = "";       // 事件搜尋字（不記住：每次打開都從完整清單開始）
   const body = h("div", { class: "grid", style: "margin-top:16px" });
   const btn = (label, on, fn) => h("button", { class: "chip", type: "button", "aria-pressed": String(on), onclick: fn }, label);
 
@@ -260,8 +265,25 @@ TABS.cascade = (root) => {
         btn(`全部（${CA.events.length}）`, fcat === "all", () => { fcat = "all"; store.set("csCat", fcat); draw(); }),
         ...CA.categories.map((c) => btn(`${c.name}（${CA.events.filter((e) => e.cat === c.id).length}）`, fcat === c.id,
           () => { fcat = c.id; store.set("csCat", fcat); draw(); })));
-      chips2.replaceChildren(h("span", { class: "lab" }, "選事件"),
-        ...evs.map((e) => btn(`${e.date.slice(0, 7)}　${e.name}`, e.id === sel, () => { sel = e.id; store.set("csSel", sel); draw(); })));
+      // 88 個事件的按鈕牆改成：搜尋框＋固定高度可捲動的清單，選中的捲到看得見的位置
+      const list = h("div", { class: "ev-list" });
+      const count = h("span", { class: "muted gl-count" });
+      const fill = () => {
+        const needle = evQ.trim().toLowerCase();
+        const shown = evs.filter((e) => !needle || `${e.date} ${e.name} ${e.note || ""}`.toLowerCase().includes(needle));
+        count.textContent = `${shown.length} / ${evs.length}`;
+        list.replaceChildren(...(shown.length ? shown.map((e) => btn(`${e.date.slice(0, 7)}　${e.name}`, e.id === sel,
+          () => { sel = e.id; store.set("csSel", sel); draw(); })) : [h("span", { class: "muted" }, "沒有符合的事件")]));
+      };
+      const input = h("input", { class: "gl-search ev-search", type: "search", placeholder: "搜尋事件，例：雷曼、1997、關稅", "aria-label": "搜尋事件" });
+      input.value = evQ;
+      input.addEventListener("input", () => { evQ = input.value; fill(); });
+      chips2.replaceChildren(h("div", { class: "ev-bar" }, h("span", { class: "lab" }, "選事件"), input, count), list);
+      fill();
+      requestAnimationFrame(() => {
+        const on = list.querySelector('[aria-pressed="true"]');
+        if (on) list.scrollTop = Math.max(0, on.offsetTop - list.clientHeight / 2 + on.offsetHeight / 2);
+      });
     } else if (mode === "cat") {
       if (!CA.categories.some((c) => c.id === fcat)) fcat = CA.categories[0].id;
       chips.replaceChildren(...modeChips, h("span", { class: "lab", style: "margin-left:10px" }, "選分類"),
