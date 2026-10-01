@@ -80,7 +80,7 @@ function cascadeTable(rows, isCat) {
   for (const l of A.cascade.layers) {
     const inLayer = rows.filter((r) => r.layer === l.id);
     if (!inLayer.length) continue;
-    body.push(h("tr", {}, h("td", { colspan: head.length, style: "background:var(--surface-2);font-weight:600" }, l.name)));
+    body.push(h("tr", {}, h("td", { colspan: head.length, style: "background:var(--surface-2);font-weight:600" }, h("span", { class: "grp-name" }, l.name))));
     for (const r of inLayer) {
       body.push(h("tr", {},
         h("td", {}, r.name, !fin(r.half_day) ? h("span", { class: "sub" }, "無實質反應") : null,

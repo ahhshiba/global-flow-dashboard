@@ -435,6 +435,16 @@ table.data tr.sel td { background: var(--accent-soft); }
 .faq-item.open { border-left: 3px solid var(--warn); }
 
 .bar-track.mono .bar-fill.exempt { left: 0; right: auto; background: var(--line-strong); }
+/* 進口月數橫條：各列共用同一組欄寬（橫條要等長才能比），數值欄依最長的字決定、不換行。
+   顏色是警戒語意：門檻線＝紅（圖例寫紅線）、達標＝主色、低於門檻＝紅 */
+.bars.bars-months { grid-template-columns: max-content minmax(0, 1fr) max-content; column-gap: 10px; row-gap: 5px; align-items: center; }
+.bars-months .bar-row { display: contents; }
+.bars-months .bar-row .n { white-space: nowrap; }
+.bars-months .bar-ref { background: var(--up); }
+.bar-track.mono .bar-fill.ok, .bar-track.mono .bar-fill.low { left: 0; right: auto; }
+.bars-months .bar-fill.ok { background: color-mix(in srgb, var(--accent) 70%, var(--surface)); }
+.bars-months .bar-fill.low { background: var(--up); }
+.bars-months .n.low { color: var(--up); font-weight: 600; }
 .gl-views { margin: 4px 0 14px; }
 
 /* ── 設計層（2026-10-02）：按壓回饋、提示框進場、市場氣候、手機細節 ── */
@@ -462,6 +472,11 @@ table.data tr.sel td { background: var(--accent-soft); }
 
 /* 表格：列 hover 只在有滑鼠時出現 */
 @media (hover: hover) and (pointer: fine) { table.data tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); } }
+/* 窄視窗的固定標籤欄：滑過時的底色要不透明，否則捲到下面的數字會透出來 */
+@media (hover: hover) and (pointer: fine) and (max-width: 720px) {
+  table.data tbody tr:hover > :first-child:not(.rank):not([colspan]), table.data tbody tr:hover > .rank + * {
+    background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
+}
 table.data td { transition: background-color var(--dur-fast) ease; }
 
 @media (max-width: 720px) {
@@ -504,9 +519,23 @@ table.data td { transition: background-color var(--dur-fast) ease; }
   mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 22px), transparent); padding-top: 8px; }
 /* 排名欄：靠左、等寬數字、不搶眼 */
 table.data td.rank { width: 3.2em; color: var(--muted); font: 12px var(--f-mono); }
+/* 資料表的文字欄（2026-10-02）：中文預設任兩字之間都能換行，數字欄又不換行，表格一窄文字欄就被擠成一兩個字寬
+   （手機上「美國」「台灣加權」一字一行）。改成整個詞不拆、只在空白與標點換行，標籤欄再給最小寬度；
+   表格本來就包在可橫捲的 .tbl-wrap 裡，放不下就橫捲。標籤下方的小字註記照常換行。標籤欄最小寬度只在手機（見 ≤720px）。 */
+table.data td:not(.n), table.data th:not(.n) { word-break: keep-all; }
+table.data td .sub, table.data th .sub { word-break: normal; }
+table.data td .sub.keep { word-break: keep-all; }   /* 短註記：只在標點換行（「準備貨幣國，／門檻不適用」） */
 #span-range { white-space: nowrap; }
 
 @media (max-width: 720px) {
+  /* 文字標籤欄給最小寬度（數字欄、跨欄分組列不套），整個詞放得下、不被擠成一兩個字寬 */
+  table.data td:first-child:not(.rank):not(.heatcell):not(.n):not([colspan]), table.data td.rank + td { min-width: 8.5em; }
+  /* 寬表格橫捲時，標籤欄（有排名欄的表是國家欄）固定在左邊；排名欄捲到它下面。背景一定要不透明 */
+  table.data tr > :first-child:not(.rank):not([colspan]), table.data tr > .rank + * {
+    position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: inset -1px 0 0 var(--line); }
+  table.data tr.sel > :first-child:not(.rank):not([colspan]), table.data tr.sel > .rank + * { background: var(--accent-soft); }
+  /* 跨欄的分組列（事件衝擊的「上游／中游…」）：組名自己固定在左邊，橫捲時不會捲出畫面 */
+  table.data td[colspan] > .grp-name { position: sticky; left: 8px; display: inline-block; }
   /* 卡片右上的工具列（模式、分類膠囊）在手機上排成一列、可橫向滑，不堆成十幾行 */
   .card-h .tools { max-width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
     -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent); }

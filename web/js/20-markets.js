@@ -154,6 +154,9 @@ TABS.overview = (root, redo) => {
   g.append(gap.el);
 };
 
+// 有排名欄的表：第 0 欄排名、第 1 欄國家（靠左）、其餘數字（靠右）
+const rankHeadClass = (i) => (i === 0 ? "rank" : i === 1 ? null : "n");
+
 /* 國力面板：GDP、成長、CPI、政策利率、實質利率、經常帳、存底（2026-10-01 課堂：貨幣反映國力） */
 function strengthCard(S) {
   const c = card({ title: "國力面板：GDP 前十大國家＋台灣", span: 12,
@@ -173,7 +176,7 @@ function strengthCard(S) {
     h("td", { class: "n" }, fin(r.ca_gdp) ? h("span", { class: dirClass(r.ca_gdp) }, fmtSigned(r.ca_gdp, 1, "%")) : "—", yr(r.ca_year)),
     h("td", { class: "n" }, fin(r.reserves) ? fmtNum(r.reserves, 0) : "—")));
   c.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
-    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows))));
+    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: rankHeadClass(i) }, t)))), h("tbody", {}, rows))));
   return c.el;
 }
 
@@ -186,7 +189,7 @@ function reservesTableCard(T) {
   const head = ["GDP 排名", "國家", "外匯存底", "一年變化", "可支應進口", "存底／GDP", "持有美債", "美債／存底"];
   const rows = T.rows.map((r) => h("tr", {},
     h("td", { class: "rank" }, r.rank ? `#${r.rank}` : "—"),
-    h("td", {}, r.name, r.reserve_currency ? h("span", { class: "sub" }, "準備貨幣國，門檻不適用") : null),
+    h("td", {}, r.name, r.reserve_currency ? h("span", { class: "sub keep" }, "準備貨幣國，門檻不適用") : null),
     h("td", { class: "n" }, fin(r.reserves) ? fmtNum(r.reserves, 0) : "—", h("span", { class: "sub" }, r.reserves_year || "")),
     h("td", { class: "n" }, fin(r.c12) ? h("span", { class: dirClass(r.c12) }, fmtSigned(r.c12, 0)) : "—",
       fin(r.c12_pct) ? h("span", { class: "sub" }, fmtSigned(r.c12_pct, 1, "%")) : null),
@@ -198,20 +201,20 @@ function reservesTableCard(T) {
     h("td", { class: "n" }, fin(r.ust_pct) ? `${r.ust_pct}%` : "—",
       fin(r.ust_pct) && r.ust_pct > 100 ? h("span", { class: "sub" }, "含民間與託管部位") : null)));
   c.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
-    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows))));
+    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: rankHeadClass(i) }, t)))), h("tbody", {}, rows))));
   const bars = T.rows.filter((r) => fin(r.months)).map((r) => ({ label: r.name, v: r.months, exempt: r.reserve_currency }));
-  c.body.append(h("h4", { class: "sub-h" }, `可支應進口月數（紅線＝${T.months_min} 個月；灰色＝準備貨幣國，門檻不適用）`), monthsBars(bars, T.months_min));
+  c.body.append(h("h4", { class: "sub-h" }, `可支應進口月數（紅線＝${T.months_min} 個月，低於紅線的標紅；灰色＝準備貨幣國，門檻不適用）`), monthsBars(bars, T.months_min));
   return c.el;
 }
-/* 單向橫條（進口月數），帶一條門檻線 */
+/* 單向橫條（進口月數），帶一條門檻線。顏色是「警戒」語意，不是漲跌：達標＝主色、低於門檻＝紅、準備貨幣國＝灰 */
 function monthsBars(rows, min) {
   const max = Math.max(min * 1.2, ...rows.map((r) => r.v));
-  return h("div", { class: "bars" }, rows.map((r) => h("div", { class: "bar-row" },
+  return h("div", { class: "bars bars-months" }, rows.map((r) => h("div", { class: "bar-row" },
     h("span", {}, r.label),
     h("div", { class: "bar-track mono", role: "img", "aria-label": `${r.label} ${r.v.toFixed(1)} 個月${r.exempt ? "（準備貨幣國，門檻不適用）" : ""}` },
-      h("div", { class: `bar-fill ${r.exempt ? "exempt" : r.v < min ? "neg" : "pos"}`, style: `width:${(r.v / max) * 100}%` }),
+      h("div", { class: `bar-fill ${r.exempt ? "exempt" : r.v < min ? "low" : "ok"}`, style: `width:${(r.v / max) * 100}%` }),
       h("i", { class: "bar-ref", style: `left:${(min / max) * 100}%` })),
-    h("span", { class: `n ${r.v < min && !r.exempt ? "down" : ""}` }, `${r.v.toFixed(1)} 個月${r.exempt ? "・不適用" : ""}`))));
+    h("span", { class: `n${r.v < min && !r.exempt ? " low" : ""}` }, `${r.v.toFixed(1)} 個月${r.exempt ? "・不適用" : ""}`))));
 }
 
 /* ── 匯市 ── */
