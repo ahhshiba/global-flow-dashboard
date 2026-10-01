@@ -151,6 +151,28 @@ TABS.overview = (root, redo) => {
   g.append(gap.el);
 };
 
+/* 國力面板：GDP、成長、CPI、政策利率、實質利率、經常帳、存底（2026-10-01 課堂：貨幣反映國力） */
+function strengthCard(S) {
+  const c = card({ title: "國力面板：GDP 前十大國家＋台灣", span: 12,
+    sub: "課堂：貨幣長期反映國力（GDP、利率、CPI），利率高但國力弱只會吸到短期套利的錢。實質利率＝政策利率 − CPI，是費雪方程式的粗略版：為負代表錢放著在變薄。",
+    note: S.note });
+  const head = ["GDP 排名", "國家", "GDP（十億美元）", "實質成長", "CPI 年增率", "政策利率", "實質利率", "經常帳／GDP", "外匯存底"];
+  const yr = (y) => (y ? h("span", { class: "sub" }, y) : null);
+  const rows = S.rows.map((r) => h("tr", {},
+    h("td", { class: "n muted" }, r.rank ? `#${r.rank}` : "—"),
+    h("td", {}, r.name),
+    h("td", { class: "n" }, fin(r.gdp) ? fmtNum(r.gdp, 0) : "—", yr(r.gdp_year)),
+    h("td", { class: "n" }, fin(r.growth) ? h("span", { class: dirClass(r.growth) }, fmtSigned(r.growth, 1, "%")) : "—", yr(r.growth_year)),
+    h("td", { class: "n" }, fin(r.cpi) ? `${r.cpi.toFixed(1)}%` : "—", yr(r.cpi_year)),
+    h("td", { class: "n" }, fin(r.policy) ? `${r.policy.toFixed(2)}%` : "—", r.policy_at ? h("span", { class: "sub" }, `${r.policy_at}${r.policy_src ? "・" + r.policy_src : ""}`) : null),
+    h("td", { class: "n" }, fin(r.real) ? h("span", { class: dirClass(r.real) }, fmtSigned(r.real, 1, "%")) : "—"),
+    h("td", { class: "n" }, fin(r.ca_gdp) ? h("span", { class: dirClass(r.ca_gdp) }, fmtSigned(r.ca_gdp, 1, "%")) : "—", yr(r.ca_year)),
+    h("td", { class: "n" }, fin(r.reserves) ? fmtNum(r.reserves, 0) : "—")));
+  c.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
+    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows))));
+  return c.el;
+}
+
 /* 外匯存底總表：GDP 前十大＋台灣（2026-10-01 課堂的作業：存底、進口月數、持有美債比例） */
 function reservesTableCard(T) {
   const c = card({ title: "外匯存底總表：GDP 前十大國家＋台灣", span: 12,
@@ -190,18 +212,19 @@ function monthsBars(rows, min) {
 
 /* ── 匯市 ── */
 TABS.fx = (root, redo) => {
-  root.replaceChildren(tabHead("匯市：美元、人民幣、日圓、新台幣、歐元",
+  root.replaceChildren(tabHead("匯市：美元、日圓、新台幣、歐元、英鎊、澳幣、人民幣",
     "以「美元/該貨幣」報價時，線往上代表該貨幣貶值；歐元/美元相反。匯率不是資金流量。30 年匯率取自台灣央行月均值，美元指數為月底值。"
     + "人民幣中間價由政策引導，本站只當觀察指標、不列入可投資標的。", true, redo));
   const g = h("div", { class: "grid" });
   root.append(g);
   const f = findingsCard("fx");
   if (f) g.append(f);
-  g.append(kpiRow([["fx_dxy", "美元指數"], ["fx_usdtwd", "美元/新台幣"], ["fx_usdjpy", "美元/日圓"], ["fx_usdcny", "美元/人民幣"], ["fx_eurusd", "歐元/美元"]]));
+  g.append(kpiRow([["fx_dxy", "美元指數"], ["fx_usdtwd", "美元/新台幣"], ["fx_usdjpy", "美元/日圓"], ["fx_eurusd", "歐元/美元"], ["fx_gbpusd", "英鎊/美元"], ["fx_audusd", "澳幣/美元"], ["fx_usdcny", "美元/人民幣"]]));
+  if (A.strength) g.append(strengthCard(A.strength));
   g.append(chartCard({
     key: "fx-index", title: "主要匯率（期間起點＝100）", span: 12, mode: "index", height: 300, bands: EVENT_BANDS,
-    series: [ser("fx_dxy", 1), ser("fx_usdtwd", 2), ser("fx_usdjpy", 3), ser("fx_usdcny", 4), ser("fx_eurusd", 5)],
-    note: "歐元 1999 年才誕生，全期檢視時以它自己的第一筆為 100。",
+    series: [ser("fx_dxy", 1), ser("fx_usdtwd", 2), ser("fx_usdjpy", 3), ser("fx_eurusd", 4), ser("fx_gbpusd", 5), ser("fx_audusd", 6), ser("fx_usdcny", 7)],
+    note: "歐元 1999 年才誕生，全期檢視時以它自己的第一筆為 100。英鎊、澳幣、歐元是「1 單位外幣換多少美元」，線往上＝該貨幣升值；其餘相反。",
   }));
   const R = A.reserves;
   if (R) {
@@ -222,8 +245,40 @@ TABS.fx = (root, redo) => {
     }));
   }
   for (const p of (A.pairs || []).filter((x) => [x.a, x.b].some((s) => s.startsWith("fx_")))) g.append(pairCard(p, 6));
-  g.append(statsTable(["fx_dxy", "fx_usdtwd", "fx_usdjpy", "fx_usdcny", "fx_eurusd"]));
+  g.append(statsTable(["fx_dxy", "fx_usdtwd", "fx_usdjpy", "fx_eurusd", "fx_gbpusd", "fx_audusd", "fx_usdcny"]));
 };
+
+/* 殖利率曲線形狀：今天 vs 1／3／10／20 年前（2026-10-01 課堂作業：短天期 vs 長天期） */
+function curveShapeCard(CV) {
+  const series = CV.snapshots.map((s, i) => ({ key: s.key, name: `${s.label}${s.as_of ? "（" + s.as_of + "）" : ""}`,
+    color: i === 0 ? "var(--accent)" : `var(--s${i + 1})`, values: s.values, fmt: (v) => (fin(v) ? `${v.toFixed(2)}%` : "—") }));
+  const inverted = fin(CV.latest) && CV.latest < 0;
+  return xCard({ key: "bond-shape", title: "殖利率曲線形狀：短天期到長天期", span: 6, height: 240,
+    xs: CV.tenors.map((t) => t.x), labels: CV.tenors.map((t) => t.label), xName: "天期", series, direct: true,
+    yFmt: (v) => `${+v.toFixed(1)}%`,
+    sub: `今天 10 年 − 3 個月 ＝ ${fin(CV.latest) ? fmtSigned(CV.latest, 2) + " 個百分點" : "—"}${inverted ? "（倒掛中）" : "（正常，往上斜）"}。`
+      + "往上斜＝借越久要求越高；平或倒掛＝市場預期降息、景氣轉弱。",
+    note: CV.note });
+}
+/* 1995 年以來的倒掛期間，以及之後股市與衰退怎麼走 */
+function curveEpisodesCard(CV) {
+  const c = card({ title: "倒掛期間與之後發生的事", span: 6,
+    sub: `10 年 − 3 個月 的月均值 < 0 的期間；衰退起點取 NBER 認定（${CV.recessions.join("、")}）。`,
+    note: "倒掛領先衰退的時間從幾個月到兩年都有，也有倒掛後沒衰退的（2022–2024 那次至今沒有）。它是警訊，不是時機訊號。" });
+  const head = ["倒掛期間", "月數", "最深", "S&P 500 之後 12 個月", "之後 24 個月", "下一次衰退"];
+  const rows = CV.episodes.map((e) => h("tr", {},
+    h("td", {}, `${e.start} → ${e.end}`, e.ongoing ? h("span", { class: "sub" }, "進行中") : null),
+    h("td", { class: "n" }, e.months),
+    h("td", { class: "n down" }, `${e.min.toFixed(2)}`, h("span", { class: "sub" }, e.min_at)),
+    h("td", { class: "n" }, fin(e.spx12) ? h("span", { class: dirClass(e.spx12) }, fmtSigned(e.spx12, 1, "%")) : "—"),
+    h("td", { class: "n" }, fin(e.spx24) ? h("span", { class: dirClass(e.spx24) }, fmtSigned(e.spx24, 1, "%")) : "—"),
+    h("td", { class: "n" }, e.recession ? `${e.recession}` : h("span", { class: "muted" }, "24 個月內沒有"),
+      e.recession ? h("span", { class: "sub" }, `倒掛後 ${e.recession_lag} 個月`) : null)));
+  c.body.append(rows.length
+    ? h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows)))
+    : h("p", { class: "empty" }, "1995 年以來沒有倒掛期間"));
+  return c.el;
+}
 
 /* ── 債市 ── */
 TABS.bond = (root, redo) => {
@@ -245,6 +300,7 @@ TABS.bond = (root, redo) => {
     refs: [{ y: 0, label: "倒掛線" }], yFmt: (v) => `${+v.toFixed(1)}`,
     note: "跌破 0＝曲線倒掛；1995 年以來數次都領先美國衰退，但領先時間長短不一。",
   }));
+  if (A.curve) { g.append(curveShapeCard(A.curve)); g.append(curveEpisodesCard(A.curve)); }
   g.append(chartCard({
     key: "bond-credit", title: "公債與公司債（總報酬，期間起點＝100）", span: 6, height: 240, mode: "index", logToggle: true,
     series: [ser("b_ust_long", 1), ser("b_ig", 2), ser("b_hy", 3), ser("b_lqd", 4), ser("b_hyg", 5)],
@@ -351,18 +407,28 @@ TABS.commodity = (root, redo) => {
   root.append(g);
   const f = findingsCard("commodity");
   if (f) g.append(f);
-  g.append(kpiRow([["c_gold", "黃金"], ["c_silver", "白銀"], ["c_copper", "銅"], ["c_brent", "布蘭特原油"], ["c_maize", "玉米"], ["c_soy", "大豆"]]));
-  const idx = (key, title, ids) => chartCard({ key, title, span: 6, height: 260, mode: "index", log: true, logToggle: true, bands: EVENT_BANDS,
-    series: ids.map((id, i) => ser(id, i + 1)) });
-  g.append(idx("cm-metal", "貴金屬與工業金屬（起點＝100）", ["c_gold", "c_silver", "c_platinum", "c_copper", "c_alu", "c_iron"]));
-  g.append(idx("cm-energy", "能源（起點＝100）", ["c_brent", "c_wti", "c_natgas"]));
+  g.append(kpiRow([["c_gold", "黃金"], ["c_copper", "銅"], ["c_brent", "布蘭特原油"], ["c_natgas_eu", "歐洲天然氣"], ["c_urea", "尿素"], ["c_maize", "玉米"]]));
+  const idx = (key, title, ids, extra) => chartCard(Object.assign({ key, title, span: 6, height: 260, mode: "index", log: true, logToggle: true, bands: EVENT_BANDS,
+    series: ids.map((id, i) => ser(id, i + 1)) }, extra || {}));
+  // 金屬依 2026-10-01 課堂的分類：保值／電子與基礎建設／戰略與電池
+  g.append(idx("cm-metal-store", "保值金屬（起點＝100）", ["c_gold", "c_silver", "c_platinum"],
+    { sub: "黃金看美元與實質利率；白銀、白金有工業用途，課堂認為次要。" }));
+  g.append(idx("cm-metal-ind", "電子與基礎建設金屬（起點＝100）", ["c_copper", "c_alu", "c_iron", "c_nickel"],
+    { sub: "銅：電網、AI 資料中心、電動車；鋁、鐵：基礎建設；鎳：不鏽鋼與電池。" }));
+  g.append(idx("cm-metal-strat", "戰略與電池金屬 ETF（起點＝100）", ["c_lithium_etf", "c_rareearth_etf"],
+    { sub: "鋰與稀土沒有免費的長期現貨價，用 2010 年起的 ETF 代替——那是股票籃子，不是商品價格。" }));
+  g.append(idx("cm-energy", "能源（起點＝100）", ["c_brent", "c_wti", "c_natgas", "c_natgas_eu"],
+    { sub: "天然氣是獨立的地區市場，不是石油的副產品：美國與歐洲價格可以差好幾倍。" }));
+  g.append(idx("cm-fert", "肥料（起點＝100）", ["c_urea", "c_dap", "c_potash", "ci_fert"],
+    { sub: "課堂的「油漲 → 肥料漲 → 農產品漲」：氮肥用天然氣製造；鉀肥主要來自俄羅斯與白俄羅斯。檢驗結果見「傳導鏈」的肥料鏈。" }));
   g.append(idx("cm-agri", "農產品（起點＝100）", ["c_maize", "c_soy", "c_wheat"]));
-  g.append(idx("cm-wbidx", "世界銀行商品指數（起點＝100）", ["ci_energy", "ci_nonenergy", "ci_agri", "ci_metals", "ci_precious"]));
+  g.append(idx("cm-wbidx", "世界銀行商品指數（起點＝100）", ["ci_energy", "ci_nonenergy", "ci_agri", "ci_metals", "ci_precious", "ci_fert"]));
   g.append(chartCard({ key: "cm-cuau", title: "銅/黃金 比值", span: 6, height: 230, area: true, bands: EVENT_BANDS, series: [ser("d_cu_au", 1, { fmt: (v) => fmtNum(v, 3) })],
     sub: "銅代表景氣實需、黃金代表避險，比值上升＝資金偏向景氣循環。" }));
   g.append(chartCard({ key: "cm-oilau", title: "原油/黃金 比值", span: 6, height: 230, area: true, bands: EVENT_BANDS, series: [ser("d_oil_au", 1, { fmt: (v) => fmtNum(v, 4) })],
     sub: "比值上升＝通膨與景氣動能強於避險需求。" }));
   for (const p of (A.pairs || []).filter((x) => x.a.startsWith("c_"))) g.append(pairCard(p, 6));
-  g.append(statsTable(["c_gold", "c_silver", "c_platinum", "c_copper", "c_alu", "c_iron", "c_brent", "c_wti", "c_natgas", "c_maize", "c_soy", "c_wheat",
-    "ci_energy", "ci_nonenergy", "ci_agri", "ci_metals", "ci_precious"]));
+  g.append(statsTable(["c_gold", "c_silver", "c_platinum", "c_copper", "c_alu", "c_iron", "c_nickel", "c_lithium_etf", "c_rareearth_etf",
+    "c_brent", "c_wti", "c_natgas", "c_natgas_eu", "c_urea", "c_dap", "c_potash", "c_maize", "c_soy", "c_wheat",
+    "ci_energy", "ci_nonenergy", "ci_agri", "ci_metals", "ci_precious", "ci_fert"]));
 };

@@ -24,6 +24,7 @@ function glossaryLinkLabel(link, events) {
 
 TABS.glossary = (root) => {
   const G = GFD.glossary;
+  const pendingTerm = window.glPending; window.glPending = null;
   root.replaceChildren(tabHead("名詞解釋",
     "本站與課堂用到的專有名詞：一句話定義、怎麼看、在本站哪裡看得到。標「10/1 課堂」的是 2026-10-01 討論提到的名詞。"
     + "標「約」的數字是量級，不是精確統計。", false));
@@ -107,4 +108,5 @@ TABS.glossary = (root) => {
   controls.body.append(h("div", { class: "gl-controls" }, input, count), chips);
   root.append(h("div", { class: "grid" }, controls.el), body);
   draw();
+  if (pendingTerm) setTimeout(() => jump(pendingTerm), 0);
 };

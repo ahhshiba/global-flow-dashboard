@@ -5,6 +5,18 @@ function csUnit(v, unit, d) {
   return fmtSigned(v, d ?? (unit === "bp" ? 0 : unit === "pt" ? 1 : 1), unit === "%" ? "%" : unit === "bp" ? "bp" : " pt");
 }
 const csLayerName = (id) => (A.cascade.layers.find((l) => l.id === id) || {}).name || id;
+const CS_WIN = { 10: "兩週", 21: "一個月", 42: "兩個月", 126: "半年", 252: "一年" };
+const csWin = (w) => CS_WIN[w] || `${w} 日`;
+const csPersist = (k) => (A.cascade.persist_labels || {})[k] || k;
+/* 持續性分布：短暫／長期／一年以上 的小橫條（有反應的標的數） */
+function persistBar(dist, n) {
+  const keys = ["transient", "persistent", "lasting", "unknown"];
+  const total = keys.reduce((s, k) => s + (dist[k] || 0), 0);
+  if (!total) return h("span", { class: "muted" }, "沒有標的出現實質反應");
+  return h("div", { class: "pbar" }, keys.filter((k) => dist[k]).map((k) =>
+    h("div", { class: `pbar-seg pb-${k}`, style: `flex:${dist[k]}`, title: `${csPersist(k)} ${dist[k]}` },
+      `${csPersist(k)} ${dist[k]}`)));
+}
 
 /* 傳導時間軸：每個有反應的標的，點在「走完一半」的那一天 */
 function cascadeTimeline(host, rows, maxDays) {
@@ -50,9 +62,9 @@ function cascadeTimeline(host, rows, maxDays) {
 }
 
 function cascadeTable(rows, isCat) {
-  const head = isCat
-    ? ["標的", "傳導速度（半程）", "有反應次數", "事件前 10 天", "兩週", "一個月", "兩個月"]
-    : ["標的", "傳導速度（半程）", "最大反應", "事件前 10 天", "兩週", "一個月", "兩個月"];
+  const head = (isCat
+    ? ["標的", "傳導速度（半程）", "有反應次數", "事件前 10 天"]
+    : ["標的", "傳導速度（半程）", "最大反應", "事件前 10 天"]).concat(A.cascade.windows.map(csWin), isCat ? [] : ["持續性"]);
   const body = [];
   for (const l of A.cascade.layers) {
     const inLayer = rows.filter((r) => r.layer === l.id);
@@ -71,7 +83,9 @@ function cascadeTable(rows, isCat) {
         ...A.cascade.windows.map((w) => h("td", { class: "n" },
           h("span", { class: dirClass(r[`w${w}`]) }, csUnit(r[`w${w}`], r.unit)),
           isCat && fin(r[`p${w}`]) && r[`p${w}`] <= 0.05 ? h("b", { class: "cs-sig", "aria-label": "p≤0.05" }, " ●") : null,
-          isCat && fin(r[`agree${w}`]) ? h("span", { class: "sub" }, `同向 ${r[`agree${w}`]}%｜平常 ${csUnit(r[`base${w}`], r.unit)}`) : null))));
+          isCat && fin(r[`agree${w}`]) ? h("span", { class: "sub" }, `同向 ${r[`agree${w}`]}%｜平常 ${csUnit(r[`base${w}`], r.unit)}`) : null)),
+        isCat ? null : h("td", { class: "n" }, r.responded ? h("span", { class: `pb-tag pb-${r.persist}` }, csPersist(r.persist)) : h("span", { class: "muted" }, "—"),
+          r.still_growing ? h("span", { class: "sub" }, "半年後比兩個月的峰值更大") : null)));
     }
   }
   return h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
@@ -159,7 +173,7 @@ const csFmtFeat = (v, unit) => (!fin(v) ? "—" : unit === "σ" ? fmtSigned(v, 1
 function cascadeNow(win) {
   const AN = A.cascade.analogs;
   if (!AN) return [h("p", { class: "empty" }, "尚未產生相似事件分析")];
-  const bt = AN.backtest, wl = (w) => (w === 10 ? "兩週" : w === 21 ? "一個月" : "兩個月");
+  const bt = AN.backtest, wl = csWin;
   const cells = (m) => AN.windows.map((w) => `${wl(w)} ${bt[m][w].hit}%`).join("、");
   const verdict = h("div", { class: "cs-warn" },
     h("b", {}, "先講結論：相似的歷史不能拿來預測接下來。"),
@@ -247,7 +261,7 @@ TABS.cascade = (root) => {
         ...CA.categories.map((c) => btn(`${c.name}（${c.n} 次）`, c.id === fcat, () => { fcat = c.id; store.set("csCat", fcat); draw(); })));
     } else {   // compare 與 now 都用期間切換
       chips.replaceChildren(...modeChips, h("span", { class: "lab", style: "margin-left:10px" }, "期間"),
-        ...CA.windows.map((w) => btn(w === 10 ? "兩週" : w === 21 ? "一個月" : "兩個月", w === win,
+        ...CA.windows.map((w) => btn(csWin(w), w === win,
           () => { win = w; store.set("csWin", w); draw(); })));
     }
 
@@ -267,6 +281,12 @@ TABS.cascade = (root) => {
         c.body.append(h("p", { class: "cs-info" }, "當時 ETF／期貨尚未上市，部分標的改用代理序列：", ev.proxies.join("、"),
           "。代理與原標的並非完全相同的資產，明細中逐筆標註。"));
       }
+      const P = ev.persist;
+      c.body.append(h("div", { class: "cs-persist" },
+        h("b", {}, "持續性："), P.verdict ? `多數有反應的標的屬於「${csPersist(P.verdict)}」衝擊` : "無法判定",
+        h("span", { class: "muted" }, "　尺＝兩個月內的最大反應：半年後還保有一半以上才算長期，一年後還保有一半以上才算一年以上"),
+        persistBar(P.dist, P.n),
+        fin(ev.growing_share) ? h("span", { class: "muted" }, `有反應的標的中 ${ev.growing_share}% 在半年後比兩個月的峰值更大（事件過了兩個月還在擴大）${ev.region === "cn" ? "；這是中國事件" : ""}`) : null));
       const host = h("div", { class: "chart" });
       c.body.append(h("h4", { class: "sub-h" }, "傳導時間軸：點的位置＝走完一半反應的那一天，大小＝反應幅度"), host);
       mount(host, () => cascadeTimeline(host, ev.assets.filter((a) => a.responded), CA.max_days));
@@ -290,6 +310,7 @@ TABS.cascade = (root) => {
         c.body.append(h("p", { class: "cs-warn" }, "以下事件與同類前一個事件相隔太近，彙總時不重複計算：",
           cat.skipped.map((s) => `${s.name}（${s.after}後 ${s.days} 天）`).join("、")));
       }
+      c.body.append(h("div", { class: "cs-persist" }, h("b", {}, "這類事件的持續性（所有事件、有反應的標的合計）："), persistBar(cat.persist, 0)));
       const host = h("div", { class: "chart" });
       c.body.append(h("h4", { class: "sub-h" }, "傳導時間軸（各標的的中位數）"), host);
       mount(host, () => cascadeTimeline(host, cat.assets.filter((r) => fin(r.half_day) && r.half_n >= 2)
@@ -306,13 +327,23 @@ TABS.cascade = (root) => {
       c.body.append(...cascadeNow(win));
       body.append(c.el);
     } else {
-      const c = card({ title: `不同類型的事件，錢往哪裡流（事件後${win === 10 ? "兩週" : win === 21 ? "一個月" : "兩個月"}）`, span: 12,
+      const c = card({ title: `不同類型的事件，錢往哪裡流（事件後${csWin(win)}）`, span: 12,
         sub: "每格是該類事件後的中位數變動，下方小字是該標的「平常」同樣天數的中位數。"
           + "只有上漲比例和平常明顯不同（二項檢定 p≤0.10）的格子才上色：紅＝比平常漲得多、綠＝比平常跌得多；● ＝p≤0.05。",
         note: "每類事件只有 4～14 次，且早期事件很多標的沒有資料（格內標示次數）。這是歷史上的中位數，不是預測；"
           + "同一類事件的起因不同（例：1990 年伊拉克入侵科威特與 2023 年哈瑪斯攻擊以色列都是地緣衝突，對油價的衝擊差很多），"
           + "看同向比例比看中位數重要。" + CA.note });
       c.body.append(...cascadeCompare(win));
+      const L = CA.cn_lag;
+      if (L && L.cn_n) {
+        const ok = fin(L.cn_median) && fin(L.other_median) && L.cn_median > L.other_median;
+        c.body.append(h("h4", { class: "sub-h" }, "課堂假說檢驗：中國事件是不是「半年後才浮現」"),
+          h("p", { class: ok ? "cs-info" : "cs-warn" },
+            `量法：事件後兩個月內有實質反應的標的中，半年後的變動比兩個月的峰值更大（＝事件過了兩個月還在擴大）的比例。`
+            + `中國事件（${L.cn_n} 次）中位數 ${L.cn_median}%，其他事件（${L.other_n} 次）${L.other_median}%。`
+            + (ok ? "方向和課堂說法一致，但只有幾次事件，不能當定論。" : "資料不支持「中國事件比較晚浮現」；可能是這幾次事件本身的性質，或半年尺度太短。")
+            + `　逐一：${L.cn_events.map((e) => `${e.name} ${fin(e.share) ? e.share + "%" : "—"}`).join("、")}`));
+      }
       body.append(c.el);
     }
   };

@@ -18,6 +18,9 @@ import numpy as np
 
 from . import config as C
 
+WINDOWS = C.CASCADE_WINDOWS + C.CASCADE_LONG_WINDOWS   # 表格與比較用的全部視窗
+PERSIST_LABELS = {"transient": "短暫", "persistent": "長期", "lasting": "一年以上", "unknown": "資料不足", "none": "無反應"}
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
 
@@ -93,13 +96,38 @@ def event_response(rec, sym, event_date):
     # 事件視窗（含事前 60 天的波動估計）有任何一段落在代理序列上，就標出代理名稱
     px = rec.get("proxy")
     proxy = px["name"] if px and dates[i0 - 60] <= px["until"] else None
+    # 半年、一年：資料不到就留空（不要因此丟掉整個事件）
+    longv = {w: (_change(closes, i0, w, unit) if i0 + w < len(closes) else None) for w in C.CASCADE_LONG_WINDOWS}
+    persist, still_growing = persistence(responded, peak_move, peak_abs, longv)
     out = dict(id=sym, name=rec["name"], layer=rec["layer"], unit=unit, base_date=dates[i0], proxy=proxy,
                sigma=r(sigma, 3), react=react, react_move=r(react_move), half_day=half_day,
                peak_day=peak_day if responded else None, peak_move=r(peak_move) if responded else None,
-               responded=responded, z1=z1, pre=r(pre), path=[r(v, 2) for v in path])
+               responded=responded, z1=z1, pre=r(pre), path=[r(v, 2) for v in path],
+               persist=persist, still_growing=still_growing)
     for w in C.CASCADE_WINDOWS:
         out[f"w{w}"] = r(path[w - 1]) if len(path) >= w else None
+    for w in C.CASCADE_LONG_WINDOWS:
+        out[f"w{w}"] = r(longv[w])
     return out
+
+
+def persistence(responded, peak_move, peak_abs, longv):
+    """課堂的三分法，用「兩個月內的最大反應」當尺：半年後還保有一半以上（同方向）才算長期，
+    一年後還保有一半以上才算「一年以上」（課堂說的永久衝擊，這裡只量到一年，不用「永久」這個詞）。
+    另外回傳「半年後比兩個月的峰值還大」＝事件過了兩個月還在擴大（課堂說中國事件常這樣）。"""
+    if not responded:
+        return "none", None
+    h = peak_abs / 2
+    same = lambda v: v is not None and (v > 0) == (peak_move > 0)  # noqa: E731
+    v6, v12 = longv.get(126), longv.get(252)
+    growing = bool(same(v6) and abs(v6) > peak_abs)
+    if v6 is None:
+        return "unknown", growing
+    if not same(v6) or abs(v6) < h:
+        return "transient", growing
+    if v12 is None:
+        return "persistent", growing
+    return ("lasting" if same(v12) and abs(v12) >= h else "persistent"), growing
 
 
 def binom_p(k, n, p0, upper):
@@ -115,7 +143,7 @@ def baseline(rec, sym):
     c = np.asarray(rec["closes"], dtype=float)
     unit = _unit(sym)
     out = {}
-    for w in C.CASCADE_WINDOWS:
+    for w in WINDOWS:
         a, b = c[:-w], c[w:]
         with np.errstate(all="ignore"):
             if unit == "%":
@@ -146,13 +174,13 @@ def _categories(events, universe, base):
             continue
         rows = []
         for u in universe:
-            vals = {w: [] for w in C.CASCADE_WINDOWS}
+            vals = {w: [] for w in WINDOWS}
             reacts, pres, halves = [], [], []
             for e in evs:
                 a = next((x for x in e["assets"] if x["id"] == u["id"]), None)
                 if not a:
                     continue
-                for w in C.CASCADE_WINDOWS:
+                for w in WINDOWS:
                     if a[f"w{w}"] is not None:
                         vals[w].append(a[f"w{w}"])
                 if a["react"]:
@@ -168,7 +196,7 @@ def _categories(events, universe, base):
                        react=r(float(np.median(reacts)), 1) if reacts else None, react_n=len(reacts),
                        half_day=r(float(np.median(halves)), 1) if halves else None, half_n=len(halves),
                        pre=r(float(np.median(pres))) if pres else None)
-            for w in C.CASCADE_WINDOWS:
+            for w in WINDOWS:
                 v = vals[w]
                 row[f"w{w}"] = r(float(np.median(v))) if v else None
                 row[f"agree{w}"] = r(100 * max(np.mean(np.array(v) > 0), np.mean(np.array(v) < 0)), 0) if v else None
@@ -188,14 +216,16 @@ def _categories(events, universe, base):
         for x in rows:
             x["resp_rate"] = r(100 * x["half_n"] / x["n"], 0) if x["n"] else None
         rows.sort(key=lambda x: (x["half_n"] < 2, x["half_day"] is None, x["half_day"] or 99, -(x["half_n"] or 0)))
-        cats.append(dict(id=cid, name=cname, n=len(evs), events=[e["id"] for e in evs], skipped=skipped,
+        # 虛無校準的假事件沒有 persist（只需要視窗報酬），所以用 get
+        pdist = {k: sum(e.get("persist", {}).get("dist", {}).get(k, 0) for e in evs) for k in ("transient", "persistent", "lasting", "unknown")}
+        cats.append(dict(id=cid, name=cname, n=len(evs), events=[e["id"] for e in evs], skipped=skipped, persist=pdist,
                          first=evs[0]["date"], last=evs[-1]["date"], assets=rows))
 
     return cats
 
 
 def _count(cats, alpha):
-    return sum(1 for c in cats for x in c["assets"] for w in C.CASCADE_WINDOWS
+    return sum(1 for c in cats for x in c["assets"] for w in WINDOWS
                if x.get(f"p{w}") is not None and (alpha is None or x[f"p{w}"] <= alpha))
 
 
@@ -256,7 +286,15 @@ def build(log=print):
                            for o in C.SHOCK_EVENTS if o["id"] != ev["id"]
                            and abs((evdate[o["id"]] - evdate[ev["id"]]).days) <= C.CASCADE_OVERLAP_DAYS),
                           key=lambda x: x["days"])
+        resp = [a for a in assets if a["responded"]]
+        dist = {k: sum(1 for a in resp if a["persist"] == k) for k in ("transient", "persistent", "lasting", "unknown")}
+        known = dist["transient"] + dist["persistent"] + dist["lasting"]
+        verdict = max(("transient", "persistent", "lasting"), key=lambda k: dist[k]) if known else None
+        grow_n = [a["still_growing"] for a in resp if a["still_growing"] is not None]
         events.append(dict(id=ev["id"], name=ev["name"], date=ev["date"], cat=ev["cat"], note=ev.get("note", ""),
+                           region="cn" if ev["id"] in C.CASCADE_CN_EVENTS else None,
+                           persist=dict(dist=dist, n=len(resp), verdict=verdict),
+                           growing_share=r(100 * sum(grow_n) / len(grow_n), 0) if grow_n else None,
                            approx=bool(ev.get("approx")), assets=assets, coverage=len(assets),
                            proxies=sorted({a["proxy"] for a in assets if a["proxy"]}), overlaps=overlaps,
                            order=[a["id"] for a in order],
@@ -272,7 +310,7 @@ def build(log=print):
     stats = dict(tests=_count(cats, None), p05=_count(cats, 0.05), p10=_count(cats, 0.10))
     # 結果只取決於日線與事件清單，排程每天 analyze 不必重跑（約 40 秒）
     key = hashlib.sha1(json.dumps([raw_meta.get("fetched_at"), C.SHOCK_EVENTS, C.SHOCK_CATS, C.CASCADE_UNIVERSE,
-                                   C.CASCADE_WINDOWS, C.CASCADE_DEDUP_DAYS, C.CASCADE_NULL_ROUNDS, C.CASCADE_NULL_SPAN,
+                                   WINDOWS, C.CASCADE_DEDUP_DAYS, C.CASCADE_NULL_ROUNDS, C.CASCADE_NULL_SPAN,
                                    C.CASCADE_REACT_SIGMA, C.CASCADE_PRE, C.CASCADE_MAX_DAYS, C.CASCADE_START],
                                   ensure_ascii=False, sort_keys=True).encode()).hexdigest()
     cache_p = RAW / "cascade_null.json"
@@ -286,11 +324,18 @@ def build(log=print):
                  fdr05=r(min(100.0, 100 * float(np.mean(null)) / stats["p05"]), 0) if stats["p05"] else None)
     log(f"[cascade] 分類檢定 {stats['tests']} 格；p≤0.05 實際 {stats['p05']} 格、隨機事件日平均 {stats['null05_mean']} 格"
         f"（估計偽發現率 {stats['fdr05']}%）")
+    # 課堂假說：中國事件被政策壓住、半年後才浮現 → 中國事件「兩個月後還在擴大」的標的比例應該比其他事件高
+    cn = [e["growing_share"] for e in events if e["region"] == "cn" and e["growing_share"] is not None]
+    other = [e["growing_share"] for e in events if e["region"] != "cn" and e["growing_share"] is not None]
+    cn_lag = dict(cn_n=len(cn), other_n=len(other), cn_median=r(float(np.median(cn)), 0) if cn else None,
+                  other_median=r(float(np.median(other)), 0) if other else None,
+                  cn_events=[dict(id=e["id"], name=e["name"], share=e["growing_share"]) for e in events if e["region"] == "cn"])
     missing = [e["id"] for e in C.SHOCK_EVENTS if e["id"] not in {x["id"] for x in events}]
     log(f"[cascade] {len(events)} 個事件、{len(universe)} 個標的、{len(cats)} 個分類"
         + (f"；資料不足略過：{', '.join(missing)}" if missing else ""))
     return dict(events=events, categories=cats, layers=layers, universe=universe, compare=C.CASCADE_COMPARE, stats=stats,
-                windows=C.CASCADE_WINDOWS, pre=C.CASCADE_PRE, max_days=C.CASCADE_MAX_DAYS,
+                windows=WINDOWS, short_windows=C.CASCADE_WINDOWS, pre=C.CASCADE_PRE, max_days=C.CASCADE_MAX_DAYS,
+                persist_labels=PERSIST_LABELS, cn_lag=cn_lag,
                 sigma_mult=C.CASCADE_REACT_SIGMA, fetched_at=raw_meta.get("fetched_at"),
                 note=("傳導順序以「走完一半」的天數排序＝累積變動第一次達到兩個月總變動一半的那天；"
                       "「有實質反應」＝期間內最大累積變動超過該標的自身 2σ×√天數（σ 取事件前 60 個交易日的日波動）；"

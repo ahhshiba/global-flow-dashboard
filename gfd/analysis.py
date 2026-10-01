@@ -1,4 +1,5 @@
 """30 年關聯研究：讀 data/raw → 寫 data/analysis.json。純本地計算、零網路。"""
+import bisect
 import datetime as dt
 import json
 import math
@@ -395,6 +396,104 @@ def reserves_ca(g, annual):
     return res, ca
 
 
+def strength_block(annual, series):
+    """國力面板：GDP、成長、CPI、政策利率（與扣掉通膨的實質利率）、經常帳／GDP、外匯存底。
+    課堂：貨幣長期反映國力，利率只決定短期套利；費雪方程式把名目利率拆成實質利率＋預期通膨，這裡用最近一年 CPI 近似。"""
+    if not annual:
+        return None
+    blocks = {k: annual.get(k) or {} for k in ("gdp", "gdp_growth", "cpi", "ca_gdp", "reserves", "policy")}
+
+    def latest(d):
+        return (max(d), d[max(d)]) if d else (None, None)
+
+    rows = []
+    for rank, (code, name) in enumerate(C.RESERVE_COUNTRIES, start=1):
+        gy, gv = latest(blocks["gdp"].get(code))
+        gry, grv = latest(blocks["gdp_growth"].get(code))
+        cy, cv = latest(blocks["cpi"].get(code))
+        cay, cav = latest(blocks["ca_gdp"].get(code))
+        ry, rv = latest(blocks["reserves"].get(code))
+        py, pv = latest(blocks["policy"].get(C.BIS_POLICY_AREA.get(code)))
+        rows.append(dict(code=code, name=name, rank=rank, gdp=num(gv / 1e9, 0) if gv else None, gdp_year=gy,
+                         growth=num(grv, 1), growth_year=gry, cpi=num(cv, 1), cpi_year=cy,
+                         policy=num(pv, 2), policy_at=py, policy_src="ECB" if C.BIS_POLICY_AREA.get(code) == "XM" else None,
+                         real=num(pv - cv, 1) if pv is not None and cv is not None else None,
+                         ca_gdp=num(cav, 1), ca_year=cay, reserves=num(rv / 1e9, 0) if rv else None))
+    tw_disc = (series.get("b_tw_disc") or {}).get("stats") or {}
+    tw = annual.get("tw_reserves") or {}
+    rows.append(dict(code="TWN", name="台灣", rank=None, gdp=None, gdp_year=None, growth=None, growth_year=None,
+                     cpi=None, cpi_year=None, policy=tw_disc.get("value"), policy_at=tw_disc.get("last"), policy_src="央行重貼現率",
+                     real=None, ca_gdp=None, ca_year=None, reserves=num(tw[max(tw)] / 1000, 0) if tw else None))
+    return dict(rows=rows, note="GDP、成長率、CPI 年增率、經常帳／GDP：世界銀行年資料；政策利率：國際清算銀行月底值（德、法、義為歐洲央行）；"
+                                "台灣：央行重貼現率，其餘欄位世界銀行沒有台灣。實質利率＝政策利率 − 最近一年 CPI 年增率，是費雪方程式的粗略版。")
+
+
+def curve_block(g, detail):
+    """殖利率曲線的形狀（今天 vs 1／3／10／20 年前）與 1995 年以來的倒掛期間，附倒掛後股市與衰退怎麼走。"""
+    items = (detail or {}).get("items") or {}
+    if not all(sid in items for sid, _t, _l in C.CURVE_TENORS):
+        return None
+    epoch = dt.date(1970, 1, 1)
+    today_days = (dt.date.today() - epoch).days
+
+    def value_at(part, day):
+        """part＝[天數[], 值[]]：取 ≤ day 的最後一筆。"""
+        days, vals = part
+        i = bisect.bisect_right(days, day) - 1
+        return (vals[i], days[i]) if i >= 0 else (None, None)
+
+    snapshots = []
+    for years, label in C.CURVE_SNAPSHOTS:
+        target = today_days - round(365.25 * years)
+        vals, dates = [], []
+        for sid, _tenor, _l in C.CURVE_TENORS:
+            it = items[sid]
+            part = it["d"] if years == 0 else it["w"] if years <= 12 else it["m"]
+            v, d = value_at(part, target)
+            vals.append(num(v, 2))
+            dates.append((epoch + dt.timedelta(days=d)).isoformat() if d is not None else None)
+        snapshots.append(dict(key=f"y{years}", label=label, values=vals, as_of=max(x for x in dates if x) if any(dates) else None))
+
+    # 倒掛期間：月資料（1995 起），連續 <0 的月份算一段
+    curve = g.arr.get("d_curve")
+    spx = g.arr.get("eq_spx")
+    episodes = []
+    if curve is not None:
+        i = 0
+        n = g.end + 1
+        while i < n:
+            if np.isfinite(curve[i]) and curve[i] < 0:
+                j = i
+                while j + 1 < n:
+                    # 連續 <0 就延伸；中間最多 3 個月回正（例：2007-05～06）仍算同一段，和傳導鏈的事件合併規則一致
+                    nxt = next((k for k in range(j + 1, min(j + 4, n)) if np.isfinite(curve[k]) and curve[k] < 0), None)
+                    if nxt is None:
+                        break
+                    j = nxt
+                seg = curve[i:j + 1]
+                k = int(np.nanargmin(seg))
+                rec = next((r for r in C.NBER_RECESSION_STARTS if g.months[i] <= r <= g.months[min(j + 24, n - 1)]), None)
+                rec_lag = (int(rec[:4]) * 12 + int(rec[5:7])) - (int(g.months[i][:4]) * 12 + int(g.months[i][5:7])) if rec else None
+
+                def fwd(m):
+                    if spx is None or i + m >= n or not (np.isfinite(spx[i]) and np.isfinite(spx[i + m])) or spx[i] <= 0:
+                        return None
+                    return num(100 * (spx[i + m] / spx[i] - 1), 1)
+                episodes.append(dict(start=g.months[i], end=g.months[j], months=j - i + 1, min=num(float(seg[k]), 2),
+                                     min_at=g.months[i + k], ongoing=j == n - 1, spx12=fwd(12), spx24=fwd(24),
+                                     recession=rec, recession_lag=rec_lag))
+                i = j + 1
+            else:
+                i += 1
+    latest_curve, latest_day = value_at(items["d_curve"]["d"], today_days) if "d_curve" in items else (None, None)
+    return dict(tenors=[dict(sid=s, x=t, label=l) for s, t, l in C.CURVE_TENORS], snapshots=snapshots, episodes=episodes,
+                latest=num(latest_curve, 2), latest_at=(epoch + dt.timedelta(days=latest_day)).isoformat() if latest_day else None,
+                recessions=C.NBER_RECESSION_STARTS,
+                note="短天期（3 個月）貼著政策利率；長天期（10、30 年）反映長期成長與通膨預期加期限溢酬。"
+                     "正常是往上斜；倒掛＝短率高於長率，市場預期未來降息。倒掛期間用月均值判定（10 年 − 3 個月 < 0），"
+                     "「之後」欄是從倒掛起算月的 S&P 500 價格變動與 NBER 認定的下一次衰退起點。")
+
+
 def reserves_table(annual, tic_blk):
     """GDP 前十大國家＋台灣：外匯存底、可支應進口月數、存底／GDP、持有美債與其占存底比例。
     1997 年的教訓：存底不足（常用門檻＝三個月進口）又釘住匯率的國家最容易被攻擊；
@@ -569,6 +668,8 @@ def run(log=print):
     tic_blk = tic(annual)
     if res:
         res["table"] = reserves_table(annual, tic_blk)
+    curve = curve_block(g, _load("detail.json"))
+    strength = strength_block(annual, series)
     chain_block, chain_findings = CH.build(g, series, g.months, log=log)
     play = PB.build(g, series, g.months, log=log)
     for t in [x for x in play["triggers"] if x["active"]][:6]:
@@ -586,7 +687,7 @@ def run(log=print):
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
         months=g.months, complete_end=g.months[g.end],
-        observe=C.OBSERVE_REASONS,
+        observe=C.OBSERVE_REASONS, curve=curve, strength=strength,
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),

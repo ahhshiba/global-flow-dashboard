@@ -1,7 +1,7 @@
 /* 分頁：現金流、VIX、30 年關聯 */
 
 const SHORT = {
-  fx_dxy: "美元指數", fx_usdtwd: "美元/台幣", fx_usdjpy: "美元/日圓", fx_usdcny: "美元/人民幣", fx_eurusd: "歐元/美元",
+  fx_dxy: "美元指數", fx_usdtwd: "美元/台幣", fx_usdjpy: "美元/日圓", fx_usdcny: "美元/人民幣", fx_eurusd: "歐元/美元", fx_gbpusd: "英鎊/美元", fx_audusd: "澳幣/美元",
   b_us3m: "美 3 月殖利率", b_us10y: "美 10 年殖利率", b_jp10y: "日 10 年殖利率", b_ust_long: "美長債基金", b_ig: "投資級債",
   b_hy: "高收益債", b_brk: "波克夏", eq_spx: "S&P 500", eq_ndx: "那斯達克 100", eq_sox: "費城半導體", eq_hsi: "恆生指數",
   eq_twii: "台灣加權", eq_n225: "日經 225", eq_sse: "上證", c_gold: "黃金", c_copper: "銅", c_brent: "布蘭特原油",

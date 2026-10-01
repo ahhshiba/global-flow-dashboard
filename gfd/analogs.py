@@ -238,7 +238,7 @@ def build(cascade, log=print):
     ev = {e["id"]: e for e in C.SHOCK_EVENTS}
     base = {u["id"]: u["base"] for u in cascade["universe"]}
     targets = [s for s in cascade["compare"] if s in data]
-    wins = C.CASCADE_WINDOWS
+    wins = list(cascade["windows"])
 
     states = {e["id"]: _z(state(data, e["date"]), norm) for e in C.SHOCK_EVENTS}
     raw_states = {e["id"]: state(data, e["date"]) for e in C.SHOCK_EVENTS}

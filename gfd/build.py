@@ -9,6 +9,7 @@ import json
 import pathlib
 
 from . import config as C
+from . import faq as FQ
 from . import glossary as GL
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -40,7 +41,7 @@ def run(log=print, public=False):
     payload = dict(built_at=dt.datetime.now(TPE).isoformat(timespec="seconds"), analysis=analysis, daily=daily,
                    sections=[dict(id=a, label=b) for a, b in C.SECTIONS],
                    detail=detail.get("items", {}), detail_fetched_at=detail.get("fetched_at"), public=public,
-                   glossary=GL.payload())
+                   glossary=GL.payload(), faq=FQ.payload())
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     js = "\n;\n".join(p.read_text(encoding="utf-8") for p in sorted((WEB / "js").glob("*.js")))
 
@@ -55,9 +56,15 @@ def run(log=print, public=False):
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n'
             + body + "\n</body>\n</html>\n")
     if public:
+        from . import gate
         OUT_PUBLIC.parent.mkdir(parents=True, exist_ok=True)
-        _write(OUT_PUBLIC, full)
-        log(f"[build] 公開版 {OUT_PUBLIC}（{OUT_PUBLIC.stat().st_size / 1024:.0f} KB，新聞不含摘要）")
+        pw = gate.password()
+        if pw:
+            _write(OUT_PUBLIC, gate.wrap(full, pw))
+            log(f"[build] 公開版 {OUT_PUBLIC}（{OUT_PUBLIC.stat().st_size / 1024:.0f} KB，已用密碼加密；新聞不含摘要）")
+        else:
+            _write(OUT_PUBLIC, full)
+            log(f"[build] 公開版 {OUT_PUBLIC}（{OUT_PUBLIC.stat().st_size / 1024:.0f} KB，未加密：沒有設定 GFD_PUBLIC_PASSWORD 或 data/public_password.txt；新聞不含摘要）")
         return OUT_PUBLIC
     _write(OUT, full)
     _write(OUT_ARTIFACT, body)

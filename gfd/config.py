@@ -26,6 +26,11 @@ SERIES = [
          src=("cbc", "BP01M01", "人民幣CNY/USD"), note="月均匯率；上升＝人民幣貶值。中間價由政策引導，本站只當觀察指標"),
     dict(id="fx_eurusd", group="fx", name="歐元/美元", kind="price", unit="USD",
          src=("cbc", "BP01M01", "歐元USD/EUR"), note="月均匯率，1999 年歐元誕生起；上升＝歐元升值"),
+    # 2026-10-01 課堂：看歐元要把英鎊放進來（脫歐後兩者脫鉤）；澳幣反映礦產需求與移民資金
+    dict(id="fx_gbpusd", group="fx", name="英鎊/美元", kind="price", unit="USD",
+         src=("cbc", "BP01M01", "英鎊USD/GBP"), note="月均匯率；上升＝英鎊升值"),
+    dict(id="fx_audusd", group="fx", name="澳幣/美元", kind="price", unit="USD",
+         src=("cbc", "BP01M01", "澳幣USD/AUD"), note="月均匯率；上升＝澳幣升值。礦產出口國，跟著銅、鐵礦砂與中國需求走"),
 
     # ── 債市 ──
     dict(id="b_us3m", group="bond", name="美國 3 個月國庫券", kind="yield", unit="%",
@@ -91,6 +96,22 @@ SERIES = [
          src=("wb_pink", "Monthly Prices", "Crude oil, WTI"), note="月均價"),
     dict(id="c_natgas", group="commodity", name="美國天然氣", kind="price", unit="$/mmbtu",
          src=("wb_pink", "Monthly Prices", "Natural gas, US"), note="月均價"),
+    dict(id="c_natgas_eu", group="commodity", name="歐洲天然氣", kind="price", unit="$/mmbtu",
+         src=("wb_pink", "Monthly Prices", "Natural gas, Europe"), note="月均價；氮肥的主要原料，2022 年危機的核心"),
+    # 肥料（2026-10-01 課堂：油／氣 → 肥料 → 農產品 → 通膨 的傳導鏈）
+    dict(id="c_urea", group="commodity", name="尿素（氮肥）", kind="price", unit="$/mt",
+         src=("wb_pink", "Monthly Prices", "Urea"), note="月均價；用天然氣製造"),
+    dict(id="c_dap", group="commodity", name="磷酸二銨 DAP（磷肥）", kind="price", unit="$/mt",
+         src=("wb_pink", "Monthly Prices", "DAP"), note="月均價"),
+    dict(id="c_potash", group="commodity", name="氯化鉀（鉀肥）", kind="price", unit="$/mt",
+         src=("wb_pink", "Monthly Prices", "Potassium chloride"), note="月均價；俄羅斯與白俄羅斯是主要出口國"),
+    dict(id="c_nickel", group="commodity", name="鎳", kind="price", unit="$/mt",
+         src=("wb_pink", "Monthly Prices", "Nickel"), note="月均價；不鏽鋼與電池"),
+    # 鋰與稀土沒有免費的長期現貨價，用 ETF 代替（2010 年起；是股票籃子，不是商品價格）
+    dict(id="c_lithium_etf", group="commodity", name="鋰與電池 ETF（LIT）", kind="price", unit="USD",
+         src=("yahoo", "LIT"), note="2010 年起；鋰礦與電池供應鏈股票，不是鋰價"),
+    dict(id="c_rareearth_etf", group="commodity", name="稀土與戰略金屬 ETF（REMX）", kind="price", unit="USD",
+         src=("yahoo", "REMX"), note="2010 年起；稀土與戰略金屬股票，不是稀土價格"),
     dict(id="c_maize", group="commodity", name="玉米", kind="price", unit="$/mt",
          src=("wb_pink", "Monthly Prices", "Maize"), note="月均價"),
     dict(id="c_soy", group="commodity", name="大豆", kind="price", unit="$/mt",
@@ -99,6 +120,8 @@ SERIES = [
          src=("wb_pink", "Monthly Prices", "Wheat, US HRW"), note="月均價"),
     dict(id="ci_energy", group="commodity_index", name="能源指數", kind="price", unit="2010=100",
          src=("wb_pink", "Monthly Indices", "Energy"), note="世界銀行商品指數"),
+    dict(id="ci_fert", group="commodity_index", name="肥料指數", kind="price", unit="2010=100",
+         src=("wb_pink", "Monthly Indices", "Fertilizers"), note="世界銀行商品指數"),
     dict(id="ci_agri", group="commodity_index", name="農產品指數", kind="price", unit="2010=100",
          src=("wb_pink", "Monthly Indices", "Agriculture"), note="世界銀行商品指數"),
     dict(id="ci_metals", group="commodity_index", name="金屬與礦產指數", kind="price", unit="2010=100",
@@ -165,6 +188,9 @@ CURRENT_ACCOUNT_COUNTRIES = RESERVE_COUNTRIES
 RESERVE_TIC_KEY = {"JPN": "japan", "CHN": "china", "GBR": "united kingdom", "CAN": "canada", "IND": "india",
                    "FRA": "france", "DEU": "germany", "ITA": "italy", "TWN": "taiwan"}
 RESERVE_IMPORT_MONTHS_MIN = 3     # 常用經驗法則：外匯存底至少要能支付三個月進口
+# 國力面板（2026-10-01 課堂：貨幣反映國力，看 GDP、利率、CPI）。政策利率取 BIS；歐元區三國共用 ECB
+BIS_POLICY_AREA = {"USA": "US", "CHN": "CN", "DEU": "XM", "JPN": "JP", "IND": "IN", "GBR": "GB", "FRA": "XM",
+                   "ITA": "XM", "CAN": "CA", "RUS": "RU"}
 
 # 美國財政部 TIC：主要外國持有美債
 TIC_HOLDERS = [("japan", "日本"), ("china", "中國大陸"), ("united kingdom", "英國"), ("canada", "加拿大"),
@@ -183,6 +209,12 @@ EVENTS = [
     ("covid", "新冠疫情", "2020-02", "2020-03"),
     ("hike22", "通膨與暴力升息", "2022-01", "2022-10"),
 ]
+
+# 殖利率曲線分析（2026-10-01 課堂作業：短天期 vs 長天期）
+CURVE_TENORS = [("b_us3m", 0.25, "3 個月"), ("b_us5y", 5, "5 年"), ("b_us10y", 10, "10 年"), ("b_us30y", 30, "30 年")]
+CURVE_SNAPSHOTS = [(0, "今天"), (1, "1 年前"), (3, "3 年前"), (10, "10 年前"), (20, "20 年前")]   # 年
+# NBER 認定的美國衰退起點（景氣高峰的下一個月），用來標「倒掛後多久衰退」
+NBER_RECESSION_STARTS = ["2001-04", "2008-01", "2020-03"]
 
 # 關聯熱圖使用的核心標的
 CORE_IDS = ["fx_dxy", "fx_usdtwd", "fx_usdjpy", "fx_usdcny", "fx_eurusd",
@@ -290,6 +322,23 @@ CHAINS = [
              dict(id="gold", sid="c_gold", op="chg6", cmp=">=", thr=5.0,
                   label="黃金 6 個月漲 ≥ 5%", why="實質利率見頂後避險與抗通膨需求轉向黃金"),
          ]),
+    dict(id="fertilizer", name="肥料傳導鏈（課堂）", tab="chains",
+         thesis="2026-10-01 課堂：油漲 → 肥料漲 → 農產品漲 → 通膨 → 經濟下降 → 可能升息。更精確的起點是天然氣："
+                "氮肥用天然氣製造。這裡逐段檢驗它在 1995 年以來的月資料裡成不成立。",
+         nodes=[
+             dict(id="gas", sid="c_natgas_eu", op="chg6", cmp=">=", thr=30.0,
+                  label="歐洲天然氣 6 個月漲 ≥ 30%", why="氮肥（尿素、氨）的主要原料"),
+             dict(id="urea", sid="c_urea", op="chg6", cmp=">=", thr=20.0,
+                  label="尿素 6 個月漲 ≥ 20%", why="肥料廠成本轉嫁"),
+             dict(id="agri", sid="ci_agri", op="chg6", cmp=">=", thr=8.0,
+                  label="農產品指數 6 個月漲 ≥ 8%", why="肥料貴 → 減量施肥或成本轉嫁到糧價"),
+             dict(id="ust10", sid="b_us10y", op="chg6", cmp=">=", thr=40.0,
+                  label="美 10 年殖利率 6 個月上升 ≥ 40bp", why="糧價推高通膨預期（本站沒有 CPI 月資料，用長率代表）"),
+             dict(id="ust3m", sid="b_us3m", op="chg6", cmp=">=", thr=50.0,
+                  label="美 3 個月利率 6 個月上升 ≥ 50bp", why="央行升息壓通膨（費雪方程式：名目利率跟著預期通膨走）"),
+             dict(id="spx", sid="eq_spx", op="chg3", cmp="<=", thr=-3.0,
+                  label="S&P 500 3 個月跌 ≥ 3%", why="升息對經濟與評價的衝擊"),
+         ]),
     dict(id="cycle", name="景氣擴張鏈", tab="chains",
          thesis="銅相對黃金走強代表實體需求回來。半導體是製造業景氣的前緣，接著是台股，外資匯入推升台幣，最後風險偏好擴散到信用債。",
          nodes=[
@@ -332,7 +381,11 @@ CHAINS = [
 
 # ── 事件衝擊鏈（真實事件 → 兩週／一個月／兩個月的逐層傳導）──
 # 這裡用「日線」而不是月資料，因為兩週的尺度用月資料做不出來。
-CASCADE_WINDOWS = [10, 21, 42]     # 交易日：約兩週、一個月、兩個月
+CASCADE_WINDOWS = [10, 21, 42]     # 交易日：約兩週、一個月、兩個月（傳導順序只看這兩個月）
+# 2026-10-01 課堂：事件要分「短暫／長期／永久衝擊」。多量半年與一年，判定規則在 cascade.py persistence()。
+CASCADE_LONG_WINDOWS = [126, 252]  # 交易日：約半年、一年
+# 課堂說中國的事件常被政策壓住、約半年後才浮現：事件標 region="cn" 的，和其他事件比較「兩個月後還在擴大」的比例
+CASCADE_CN_EVENTS = {"hk97", "china07", "cny815", "china15", "covid_early20", "evergrande21", "deepseek25"}
 CASCADE_PRE = 10                   # 事件前先看幾個交易日（判斷有沒有提前反映）
 CASCADE_REACT_SIGMA = 2.0          # 首次反應門檻：累積變動 ≥ 2σ×√天數（σ 為事件前 60 日的日波動）
 CASCADE_MAX_DAYS = 42
@@ -565,6 +618,7 @@ DETAIL_KEEP_YEARS = {"d": 3, "w": 15}
 # 注意期貨的報價單位和世界銀行月均價不同（例：玉米 美分/蒲式耳 vs 美元/公噸）。
 DETAIL = {
     "fx_dxy": ("yahoo", "DX-Y.NYB", "指數"), "fx_usdtwd": ("yahoo", "TWD=X", "TWD"),
+    "fx_gbpusd": ("yahoo", "GBPUSD=X", "USD"), "fx_audusd": ("yahoo", "AUDUSD=X", "USD"),
     "fx_usdjpy": ("yahoo", "JPY=X", "JPY"), "fx_usdcny": ("yahoo", "CNY=X", "CNY"),
     "fx_eurusd": ("yahoo", "EURUSD=X", "USD"),
     "b_us3m": ("yahoo", "^IRX", "%"), "b_us5y": ("yahoo", "^FVX", "%"), "b_us10y": ("yahoo", "^TNX", "%"),
@@ -598,6 +652,8 @@ DAILY_QUOTES = [
     ("fx", "匯率", "cnyes", "FX:USDTWD:FOREX", "美元/新台幣", "pct"),
     ("fx", "匯率", "cnyes", "FX:USDJPY:FOREX", "美元/日圓", "pct"),
     ("fx", "匯率", "cnyes", "FX:USDCNY:FOREX", "美元/人民幣", "pct"),
+    ("fx", "匯率", "cnyes", "FX:GBPUSD:FOREX", "英鎊/美元", "pct"),
+    ("fx", "匯率", "cnyes", "FX:AUDUSD:FOREX", "澳幣/美元", "pct"),
     ("fx", "匯率", "cnyes", "FX:USDCNH:FOREX", "美元/離岸人民幣", "pct"),
     ("fx", "匯率", "cnyes", "FX:EURUSD:FOREX", "歐元/美元", "pct"),
     ("bond", "殖利率", "yahoo", "^IRX", "美 3 個月", "bp"),

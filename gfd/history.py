@@ -145,6 +145,10 @@ def fetch_annual(log):
         ("current_account", "世界銀行 BN.CAB.XOKA.CD", lambda: S.worldbank("BN.CAB.XOKA.CD", codes)),
         ("reserves_months", "世界銀行 FI.RES.TOTL.MO", lambda: S.worldbank("FI.RES.TOTL.MO", codes)),
         ("gdp", "世界銀行 NY.GDP.MKTP.CD", lambda: S.worldbank("NY.GDP.MKTP.CD", codes)),
+        ("gdp_growth", "世界銀行 NY.GDP.MKTP.KD.ZG", lambda: S.worldbank("NY.GDP.MKTP.KD.ZG", codes)),
+        ("cpi", "世界銀行 FP.CPI.TOTL.ZG", lambda: S.worldbank("FP.CPI.TOTL.ZG", codes)),
+        ("ca_gdp", "世界銀行 BN.CAB.XOKA.GD.ZS", lambda: S.worldbank("BN.CAB.XOKA.GD.ZS", codes)),
+        ("policy", "國際清算銀行 WS_CBPOL", lambda: S.bis_policy_rates(C.BIS_POLICY_AREA.values())),
         ("tw_reserves", "台灣央行 EF07M01", lambda: S.cbc_series("EF07M01", "外匯存底")),
         ("tic", "美國財政部 TIC", lambda: S.tic_holders([k for k, _ in C.TIC_HOLDERS])),
     ]

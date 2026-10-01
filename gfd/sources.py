@@ -419,6 +419,26 @@ def twse_taiex_month(year, month):
     return out
 
 
+def bis_policy_rates(areas):
+    """國際清算銀行 WS_CBPOL 月底政策利率 → {REF_AREA: {"YYYY-MM": value}}。CSV 的 TITLE 欄含逗號，要用 csv 模組。"""
+    import csv
+    url = (f"https://stats.bis.org/api/v2/data/dataflow/BIS/WS_CBPOL/1.0/M.{'+'.join(sorted(set(areas)))}"
+           "?format=csv&startPeriod=1995-01")
+    rows = list(csv.reader(http_get(url, timeout=60).decode("utf-8", "ignore").splitlines()))
+    hdr = rows[0]
+    ia, it, iv = hdr.index("REF_AREA"), hdr.index("TIME_PERIOD"), hdr.index("OBS_VALUE")
+    out = {}
+    for row in rows[1:]:
+        if len(row) <= max(ia, it, iv):
+            continue
+        v = _f(row[iv])
+        if v is not None and re.fullmatch(r"\d{4}-\d{2}", row[it]):
+            out.setdefault(row[ia], {})[row[it]] = v
+    if not out:
+        raise RuntimeError("BIS 政策利率沒有資料")
+    return out
+
+
 # ── 鉅亨網 ──
 CNYES_HEADERS = {"Referer": "https://www.cnyes.com/", "Origin": "https://www.cnyes.com"}
 
