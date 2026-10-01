@@ -47,6 +47,14 @@
     });
   });
   window.addEventListener("hashchange", () => { const id = location.hash.slice(1); if (id && id !== current) show(id); });
+  // 從別的分頁跳過來（例：名詞解釋 → 事件衝擊的某個事件）：先讓 prep 寫好選擇，再強制重畫目標分頁
+  window.gotoTab = (id, prep) => {
+    if (prep) prep();
+    const root = document.getElementById("tab-" + id);
+    if (root) root.replaceChildren();
+    show(id);
+    window.scrollTo(0, 0);
+  };
 
   // 報頭時間戳
   const latest = (GFD.daily || [])[0];

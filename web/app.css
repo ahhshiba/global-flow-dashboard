@@ -344,3 +344,25 @@ table.data tr.sel td { background: var(--accent-soft); }
 .cs-info { background: var(--surface-2); color: var(--muted); }
 .flow-item { white-space: nowrap; }
 .cs-sig { color: var(--warn-ink); font-size: 10px; }
+/* 名詞解釋 */
+.gl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.gl-search { flex: 1 1 260px; max-width: 420px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px 10px;
+  background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; }
+.gl-search:focus { outline: none; border-color: var(--accent); }
+.gl-count { font-size: 12px; }
+.gl-cat { margin: 22px 0 10px; font-size: 15px; }
+.gl-entry { display: flex; flex-direction: column; gap: 6px; scroll-margin-top: 80px; }
+.gl-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.gl-title h3 { margin: 0; font-size: 16px; }
+.gl-en { color: var(--muted); font-size: 12px; }
+.gl-badge { font-size: 11px; }
+.gl-short { margin: 0; font-weight: 600; line-height: 1.6; }
+.gl-read { margin: 0; color: var(--ink-2); line-height: 1.7; font-size: 13.5px; }
+.gl-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 2px; }
+.gl-lab { font-size: 11.5px; color: var(--muted); margin-right: 2px; }
+.gl-link { font-size: 12px; }
+.gl-rel { border: none; background: none; padding: 0 4px; color: var(--accent); font: inherit; font-size: 12.5px;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.gl-flash { animation: gl-flash 1.2s ease-out; }
+@keyframes gl-flash { 0% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .gl-flash { animation: none; } }

@@ -9,6 +9,7 @@ import json
 import pathlib
 
 from . import config as C
+from . import glossary as GL
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
@@ -38,7 +39,8 @@ def run(log=print, public=False):
     detail = json.loads(detail_path.read_text(encoding="utf-8")) if detail_path.exists() else {}
     payload = dict(built_at=dt.datetime.now(TPE).isoformat(timespec="seconds"), analysis=analysis, daily=daily,
                    sections=[dict(id=a, label=b) for a, b in C.SECTIONS],
-                   detail=detail.get("items", {}), detail_fetched_at=detail.get("fetched_at"), public=public)
+                   detail=detail.get("items", {}), detail_fetched_at=detail.get("fetched_at"), public=public,
+                   glossary=GL.payload())
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     js = "\n;\n".join(p.read_text(encoding="utf-8") for p in sorted((WEB / "js").glob("*.js")))
 
