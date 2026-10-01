@@ -31,7 +31,8 @@ function applyLazy(key, v) {
     for (const k of Object.keys(INSTR_CACHE)) delete INSTR_CACHE[k];
   }
 }
-const prefetch = (keys) => { for (const k of keys) needData(k).catch(() => {}); };
+// 預先下載只對公開版的網址有意義；本機版的資料就在頁面裡，預先解析只會讓滑過按鈕時卡一下
+const prefetch = (keys) => { for (const k of keys) if (LAZY[k] && LAZY[k][0] !== "#") needData(k).catch(() => {}); };
 /* 分頁需要的大塊資料：還沒到就先顯示載入中，到了再畫；滑過分頁鈕就先開始下載 */
 const TAB_NEEDS = { cascade: ["cascade"], playbook: ["playbook"], daily: ["daily_latest"] };
 function loadingNote(text) { return h("p", { class: "empty loading", role: "status" }, h("span", { class: "spin", "aria-hidden": "true" }), text); }
@@ -47,12 +48,15 @@ function lazyTab(id, draw) {
     const ticket = root._lazyTicket = {};          // 等待期間又被要求重畫（例如換了期間）：只讓最後一次生效
     Promise.all(keys.map(needData)).then(() => {
       if (root._lazyTicket !== ticket) return;
+      root.dataset.range = state.range;            // 和啟動程式的重畫判斷對齊（失敗後按「再試一次」成功時也要補回）
       try { draw(root, redo); } catch (err) {
         root.replaceChildren(h("p", { class: "empty" }, `這個分頁繪製失敗：${err.message}`));
         console.error(err);
       }
     }, (err) => {
-      if (root._lazyTicket === ticket) root.replaceChildren(loadFailed(err, () => lazyTab(id, draw)(root, redo)));
+      if (root._lazyTicket !== ticket) return;
+      root.replaceChildren(loadFailed(err, () => lazyTab(id, draw)(root, redo)));
+      delete root.dataset.range;                   // 啟動程式看到範圍標記不符就會重畫：切走再切回來會自動再試一次
     });
   };
 }
@@ -496,6 +500,7 @@ function singleEngine(key, getSeries, redraw) {
   let pick = store.get("pick:" + key, null);
   let res = store.get("res:" + key, "d");
   let rng = store.get("rng:" + key, null);
+  let waiting = false;                      // 等完整日線時只掛一次「到了就重畫」
   const save = () => { store.set("pick:" + key, pick); store.set("res:" + key, res); store.set("rng:" + key, rng); };
   const seg = (label, items, current, onPick) => h("div", { class: "seg", role: "group", "aria-label": label }, items.map(([k, text, disabled]) => {
     const b = h("button", { type: "button", "aria-pressed": String(k === current), disabled: disabled || null,
@@ -509,8 +514,11 @@ function singleEngine(key, getSeries, redraw) {
       const box = table ? tbl : host;
       ctl.replaceChildren();
       box.replaceChildren(loadingNote("載入日線資料中…"));
-      needData("detail").then(() => { if (box.isConnected) redraw(); },
-        (err) => { if (box.isConnected) box.replaceChildren(loadFailed(err, redraw)); });
+      if (!waiting) {
+        waiting = true;
+        needData("detail").then(() => { waiting = false; if (box.isConnected) redraw(); },
+          (err) => { waiting = false; if (box.isConnected) box.replaceChildren(loadFailed(err, redraw)); });
+      }
       return;
     }
     const series = getSeries();

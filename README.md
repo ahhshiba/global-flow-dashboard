@@ -266,7 +266,7 @@ gfd/sources.py      各資料來源轉接
 gfd/history.py      抓 30 年資料 → data/raw/
 gfd/analysis.py     統計與關聯研究 → data/analysis.json
 gfd/daily.py        鉅亨每日 → data/daily/YYYY-MM-DD.json
-gfd/build.py        內嵌資料 → dashboard.html、dashboard.artifact.html
+gfd/build.py        內嵌資料 → dashboard.html、dashboard.artifact.html；--public → docs/index.html＋docs/data/*.json
 web/                版面、樣式、前端程式（純 SVG 圖表，無外部函式庫）
 ```
 

@@ -9,7 +9,7 @@
 占了頁面資料的八成以上。這幾塊拆出來（LAZY_KEYS），用到才拿：
   公開版   放成 docs/data/<鍵>.json，網址帶內容雜湊（?v=），頁面用到才下載
   本機版   仍是單一檔案（file:// 不能 fetch），但放在另外的 <script type="application/json">，用到才解析
-頁面內嵌的日線只留總覽 KPI 用得到的尾巴（DETAIL_TAIL），完整日線在單一標的檢視打開時才載入。
+頁面內嵌的日線只留總覽 KPI 用得到的尾巴（DETAIL_TAIL_D、DETAIL_TAIL_W_DAYS），完整日線在單一標的檢視打開時才載入。
 """
 import datetime as dt
 import hashlib
@@ -27,8 +27,10 @@ OUT_ARTIFACT = ROOT / "dashboard.artifact.html"
 OUT_PUBLIC = ROOT / "docs" / "index.html"
 OUT_PUBLIC_DATA = ROOT / "docs" / "data"
 LAZY_KEYS = ("cascade", "playbook", "detail", "daily_latest", "daily")
-# 總覽 KPI 用到的日線尾巴：走勢小圖取最後 120 個交易日；「12 月」漲跌往回找一年前的週收盤（60 週 > 一年＋落差）
-DETAIL_TAIL = {"d": 130, "w": 60}
+# 總覽 KPI 用到的日線尾巴：走勢小圖取日線最後 120 點（留 130）；「12 月」漲跌往回找「最新收盤日 − 365 天」以前
+# 最後一個週收盤，所以週線依日期截：最後一週往前 450 天，再多留一點在那之前（週線有缺口也找得到同一點）
+DETAIL_TAIL_D = 130
+DETAIL_TAIL_W_DAYS = 450
 TPE = dt.timezone(dt.timedelta(hours=8))
 
 
@@ -43,13 +45,18 @@ def _json(obj):
 
 
 def _detail_tail(items):
-    """每個標的只留 DETAIL_TAIL 的日／週線尾巴與中繼資料；月／年線與更早的日線等打開單一標的檢視時再載入。"""
+    """每個標的只留日／週線尾巴與中繼資料；月／年線與更早的日線等打開單一標的檢視時再載入。"""
     out = {}
     for sid, D in items.items():
         t = {k: v for k, v in D.items() if k not in ("d", "w", "m", "y")}
-        for r, n in DETAIL_TAIL.items():
-            if D.get(r):
-                t[r] = [D[r][0][-n:], D[r][1][-n:]]
+        if D.get("d"):
+            t["d"] = [D["d"][0][-DETAIL_TAIL_D:], D["d"][1][-DETAIL_TAIL_D:]]
+        if D.get("w"):
+            days = D["w"][0]
+            cut = days[-1] - DETAIL_TAIL_W_DAYS
+            i = next((k for k, n in enumerate(days) if n >= cut), len(days))
+            i = max(0, i - 1)
+            t["w"] = [days[i:], D["w"][1][i:]]
         out[sid] = t
     return out
 
