@@ -14,7 +14,7 @@ while read -r ref; do
   f="docs/${ref%%\?v=*}"; want="${ref##*\?v=}"
   [ -f "$f" ] || { echo "頁面引用了 $f 但檔案不存在，先重跑：python3 gfd.py build --public"; exit 1; }
   [ "$(sha256sum "$f" | cut -c1-10)" = "$want" ] || { echo "$f 和頁面引用的版本不符，先重跑：python3 gfd.py build --public"; exit 1; }
-done < <(grep -o 'data/[a-z_]*\.json?v=[0-9a-f]*' docs/index.html | sort -u)
+done < <(grep -o 'data/[A-Za-z0-9_-]*\.json?v=[0-9a-f]*' docs/index.html | sort -u)
 
 PAGE=$(git hash-object -w docs/index.html)
 NOJEKYLL=$(printf '' | git hash-object -w --stdin)

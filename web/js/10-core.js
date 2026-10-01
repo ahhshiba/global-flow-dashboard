@@ -500,7 +500,7 @@ function singleEngine(key, getSeries, redraw) {
   let pick = store.get("pick:" + key, null);
   let res = store.get("res:" + key, "d");
   let rng = store.get("rng:" + key, null);
-  let waiting = false;                      // 等完整日線時只掛一次「到了就重畫」
+  let waiting = false, waitBox = null;      // 等完整日線時只掛一次「到了就重畫」；waitBox＝目前看得見的那一格（線圖或表格）
   const save = () => { store.set("pick:" + key, pick); store.set("res:" + key, res); store.set("rng:" + key, rng); };
   const seg = (label, items, current, onPick) => h("div", { class: "seg", role: "group", "aria-label": label }, items.map(([k, text, disabled]) => {
     const b = h("button", { type: "button", "aria-pressed": String(k === current), disabled: disabled || null,
@@ -511,13 +511,13 @@ function singleEngine(key, getSeries, redraw) {
 
   function render(host, tbl, table, useLog) {
     if (!dataReady("detail")) {             // 頁面只內嵌日線尾巴；完整日／週／月／年線第一次打開才載入
-      const box = table ? tbl : host;
+      waitBox = table ? tbl : host;            // 等待中切換線圖／表格：失敗訊息要畫在當下看得見的那一格
       ctl.replaceChildren();
-      box.replaceChildren(loadingNote("載入日線資料中…"));
+      waitBox.replaceChildren(loadingNote("載入日線資料中…"));
       if (!waiting) {
         waiting = true;
-        needData("detail").then(() => { waiting = false; if (box.isConnected) redraw(); },
-          (err) => { waiting = false; if (box.isConnected) box.replaceChildren(loadFailed(err, redraw)); });
+        needData("detail").then(() => { waiting = false; if (waitBox.isConnected) redraw(); },
+          (err) => { waiting = false; if (waitBox.isConnected) waitBox.replaceChildren(loadFailed(err, redraw)); });
       }
       return;
     }
