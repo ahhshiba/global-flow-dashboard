@@ -330,11 +330,19 @@ def fetch_cascade_daily(log=print):
             if sym in C.CASCADE_PROXY:
                 kind, pid, pname = C.CASCADE_PROXY[sym]
                 try:
-                    rows, until = _splice(rows, _proxy_rows(kind, pid, log))
-                    if until:
-                        proxy = dict(id=pid, name=pname, until=until)
-                except Exception as e:  # noqa: BLE001 - 代理失敗就只用主序列
+                    prows, stale = _proxy_rows(kind, pid, log), False
+                except Exception as e:  # noqa: BLE001
                     errors.append(f"{sym} 代理 {pid}：{_err(e)}")
+                    # 代理來源抓不到（例：2026-10-01 LBMA 對本機回 403）：沿用上次已接好的序列當代理，
+                    # 否則 1999 年以前的歷史會整段消失，早期事件就少了這個標的
+                    prev = old.get(sym) or {}
+                    prows = ([(dt.date.fromisoformat(d), v) for d, v in zip(prev["dates"], prev["closes"])]
+                             if prev.get("proxy") else None)
+                    stale = True
+                if prows:
+                    rows, until = _splice(rows, prows)
+                    if until:
+                        proxy = dict(id=pid, name=pname, until=until, **({"stale": True} if stale else {}))
             rows = [(d.isoformat(), v) for d, v in rows if d.isoformat() >= C.CASCADE_START]
             out[sym] = dict(name=name, layer=layer, dates=[d for d, _ in rows],
                             closes=[float(f"{v:.6g}") for _, v in rows], proxy=proxy)
