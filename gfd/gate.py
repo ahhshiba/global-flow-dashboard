@@ -47,7 +47,8 @@ LOGIN = """<div id="gfd-login" role="dialog" aria-modal="true" aria-labelledby="
     border-radius: 6px; background: var(--surface, #fff); color: inherit; }
   #gfd-login button { font: inherit; font-size: 15px; padding: 9px 12px; border: 0; border-radius: 6px; cursor: pointer;
     background: var(--accent, #2b3f8f); color: var(--on-accent, #fff); }
-  #gfd-login .err { color: var(--down, #b3261e); font-size: 13px; min-height: 1.4em; }
+  /* 台灣慣例 --up 是紅、--down 是綠；錯誤訊息要紅色，所以用 --up */
+  #gfd-login .err { color: var(--up, #c8322f); font-size: 13px; min-height: 1.4em; }
 </style>
 <form id="gfd-login-form" autocomplete="off">
   <h1 id="gfd-login-title">資金流向觀測台</h1>
