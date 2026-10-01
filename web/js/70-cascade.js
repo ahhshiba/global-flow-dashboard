@@ -229,7 +229,7 @@ function cascadeNow(win) {
       + `今天的資料：${Object.entries(AN.last_dates).map(([k, d]) => `${k} ${d}`).join("、")}（期貨與美元在台北早上還沒收盤，會停在前一個交易日）。`)];
 }
 
-TABS.cascade = (root) => {
+TABS.cascade = lazyTab("cascade", (root) => {
   const CA = A.cascade;
   root.replaceChildren(tabHead("事件衝擊鏈：一個事件，兩週到兩個月內怎麼一層一層傳下去",
     "用日線做事件研究。事件是真的發生過的事（戰爭、央行轉向、匯率危機、崩盤、疫情、天災…），不是價格門檻。"
@@ -388,4 +388,4 @@ TABS.cascade = (root) => {
   g.append(holder.el);
   root.append(body);
   draw();
-};
+});

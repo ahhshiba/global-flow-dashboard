@@ -2,7 +2,9 @@
 <meta name="description" content="1995 年以來匯市、債市、股市、商品與資金流的關聯研究，搭配鉅亨網每日重點。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<!-- 字型樣式表不擋第一次繪製：先用系統字顯示，字型到了再換上（display=swap） -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"></noscript>
 <style>/*__CSS__*/</style>
 
 <div class="app">
@@ -63,4 +65,5 @@
 <div class="tip" id="tip" role="status" hidden></div>
 
 <script id="gfd-data" type="application/json">/*__DATA__*/</script>
+<!--__LAZY__-->
 <script>/*__JS__*/</script>

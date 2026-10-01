@@ -54,11 +54,12 @@ crontab 每天跑兩次（安裝前的備份：`~/crontab.bak_20260915_223816_pr
 
 ## 發佈到 GitHub Pages
 
-- 原始碼在 `main`，網頁在 `gh-pages` 分支（每次部署都是**單一 commit 強制覆蓋**，所以約 5 MB 的 HTML 不會天天累積在 repo 裡）。
+- 原始碼在 `main`，網頁在 `gh-pages` 分支（每次部署都是**單一 commit 強制覆蓋**，所以每天的頁面與資料不會累積在 repo 裡）。
 - `python3 gfd.py build --public` 產生 `docs/index.html`：和本機版相同，但**新聞只留標題與原文連結、不含摘要**，避免公開轉載鉅亨網內文；頁尾會標示這是公開示範版。
-- `./deploy_pages.sh` 把 `docs/index.html` 推上 `gh-pages`；`run_daily.sh` 每天更新完會自動呼叫它，所以 demo 跟著本機一起更新（電腦關機那天就不會更新）。
+- 公開版另外產生 `docs/data/*.json`：事件衝擊、訊號劇本、完整日線、鉅亨每日（最新一天／全部）這幾塊占了資料的八成以上，拆出來**用到才下載**，頁面本身約 0.9 MB（gzip 後約 0.27 MB）。頁面裡的資料網址帶內容雜湊（`?v=`），內容沒變就沿用瀏覽器快取。頁面畫好、瀏覽器閒下來後，會在背景先下載事件衝擊、訊號劇本、最新一天的鉅亨每日（省流量模式與 2G／3G 連線不會）；完整日線在打開「單一標的」時才下載。本機版 `dashboard.html` 仍是單一檔案（file:// 不能下載其他檔），同樣的資料放在頁面裡另外的 JSON 區塊，用到才解析。
+- `./deploy_pages.sh` 把 `docs/index.html` 與 `docs/data/*.json` 推上 `gh-pages`（推之前檢查頁面引用的資料檔都在、雜湊對得上，不對就不推）；`run_daily.sh` 每天更新完會自動呼叫它，所以 demo 跟著本機一起更新（電腦關機那天就不會更新）。
 - 推送用 `gh` 的 git credential helper，不需要另外存 token。要停止公開更新：刪掉 `run_daily.sh` 裡呼叫 `deploy_pages.sh` 那段，或在 GitHub 設定關掉 Pages。
-- `data/`、`logs/`、`docs/` 都不進版控，repo 只有原始碼（19 個檔案）。
+- `data/`、`logs/`、`docs/` 都不進版控，repo 只有原始碼（31 個檔案）。
 
 ## 報價跑馬燈與單一標的線圖
 

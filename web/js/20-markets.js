@@ -382,7 +382,7 @@ function leadersCard() {
     lineChart(host, { series: pairSeries(), mode: "index", log: true, start: Math.max(rangeStart(), first), height: 260, bands: EVENT_BANDS, label: `${it.name} 與指數` });
   }
   build();
-  c.tools.append(chips, toolButton("單一標的", single, (v) => { single = v; store.set("single:leaders", v); draw(); }));
+  c.tools.append(chips, warmDetail(toolButton("單一標的", single, (v) => { single = v; store.set("single:leaders", v); draw(); })));
   c.body.append(eng.ctl, host, tblWrap);
   mount(host, draw);
   return c.el;

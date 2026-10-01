@@ -65,6 +65,14 @@
 
   tabBtns.forEach((b, i) => {
     b.addEventListener("click", () => show(b.dataset.tab));
+    // 要另外下載資料的分頁（事件衝擊、訊號劇本、鉅亨每日）：滑過或按下就先開始下載，點下去時多半已經到了
+    const needs = TAB_NEEDS[b.dataset.tab];
+    if (needs && !needs.every(dataReady)) {
+      const go = () => prefetch(needs);
+      b.addEventListener("pointerenter", go, { once: true });
+      b.addEventListener("pointerdown", go, { once: true });
+      b.addEventListener("focus", go, { once: true });
+    }
     b.addEventListener("keydown", (e) => {
       const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
       if (!d) return;
@@ -87,6 +95,8 @@
 
   window.addEventListener("resize", () => placeInk(false));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => placeInk(false));
+  // 字型樣式表改成不擋繪製，字型可能在 fonts.ready 之後才到：每批字型載完都重新對齊分頁指示條
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", () => placeInk(false));
 
   // 市場氣候：報頭上的風險偏好代理指數（點一下回總覽）
   const CM = A.composite, climate = document.getElementById("climate");
@@ -102,7 +112,7 @@
   }
 
   // 報頭時間戳
-  const latest = (GFD.daily || [])[0];
+  const latest = GFD.latest;      // 最新一天的收盤與重點則數（完整每日資料在鉅亨每日分頁才載入）
   // 每組時間戳包一個 <div>（dl 允許），手機上才能整組換行；年份省略（就是今年）
   const stamp = (dt, dd) => [h("div", {}, h("dt", {}, dt), h("dd", {}, dd))];
   document.getElementById("span-range").textContent = `${MONTHS[0]} → ${A.complete_end}`;
@@ -144,7 +154,7 @@
       const w = track.firstChild.getBoundingClientRect().width;
       tape.style.setProperty("--tape-dur", `${Math.max(30, Math.round(w / 55))}s`);  // 約每秒 55px
     });
-    if (latest.news.some((n) => n.highlight)) document.getElementById("daily-dot").hidden = false;
+    if (latest.highlights) document.getElementById("daily-dot").hidden = false;
   } else {
     tape.hidden = true;
   }
@@ -157,4 +167,15 @@
     h("span", {}, "更新：在專案資料夾執行 python3 gfd.py all（歷史資料超過 7 天才會重抓）。"));
 
   show(location.hash.slice(1) || store.get("tab", "overview"));
+
+  // 公開版：頁面畫好、瀏覽器閒下來之後，在背景先下載幾個分頁的資料（約 400 KB），之後切過去就不用等。
+  // 完整日線與全部每日（較大、較少用）不預先下載；省流量模式或 2G／3G 連線也不預先下載。
+  const conn = navigator.connection;
+  const frugal = conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || ""));
+  const remote = Object.values(TAB_NEEDS).flat().filter((k) => LAZY[k] && LAZY[k][0] !== "#");
+  if (remote.length && !frugal) {
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
+    const warm = () => idle(() => prefetch(remote), { timeout: 4000 });
+    if (document.readyState === "complete") warm(); else window.addEventListener("load", warm, { once: true });
+  }
 })();

@@ -1,7 +1,9 @@
 /* 分頁：鉅亨每日 */
 
-TABS.daily = (root) => {
-  const days = GFD.daily || [];
+TABS.daily = lazyTab("daily", (root) => {
+  // 日期清單在頁面裡（day_index）；內容先只有最新一天，選了別的日期才下載全部
+  const days = GFD.day_index || [];
+  const dayData = (i) => (GFD.daily ? GFD.daily[i] : i === 0 ? GFD.daily_latest : null);
   root.replaceChildren(tabHead("鉅亨每日：各市場重點",
     "每天從鉅亨網匯入頭條與各市場新聞，以及指數、匯率、龍頭股收盤；鉅亨沒有提供的期貨、VIX、公債殖利率改用 Yahoo Finance 與日本財務省，逐列標註來源。「重點」由規則自動標註，不是人工編輯。", false));
   if (!days.length) {
@@ -20,8 +22,13 @@ TABS.daily = (root) => {
   root.append(bar, tiles, g);
 
   const select = h("select", { id: "daily-date", "aria-label": "選擇日期" },
-    days.map((d, i) => h("option", { value: String(i) }, `${d.date}（重點 ${d.news.filter((n) => n.highlight).length} 則）`)));
+    days.map((d, i) => h("option", { value: String(i) }, `${d.date}（重點 ${d.highlights} 則）`)));
   select.addEventListener("change", () => { dayIdx = Number(select.value); renderDay(); });
+  if (days.length > 1 && !dataReady("daily")) {   // 碰到日期選單就先在背景下載其他日期
+    const go = () => prefetch(["daily"]);
+    select.addEventListener("pointerdown", go, { once: true });
+    select.addEventListener("focus", go, { once: true });
+  }
   const meta = h("span", { class: "muted", style: "font-size:12.5px" });
   bar.append(h("label", { for: "daily-date", class: "muted", style: "font-size:12.5px" }, "日期"), select, meta);
 
@@ -51,7 +58,16 @@ TABS.daily = (root) => {
   }
 
   function renderDay() {
-    const D = days[dayIdx];
+    const D = dayData(dayIdx);
+    if (!D) {
+      const want = dayIdx;
+      meta.textContent = "";
+      tiles.replaceChildren();
+      g.replaceChildren(h("div", { class: "span-12" }, loadingNote("載入這一天的資料中…")));
+      needData("daily").then(() => { if (dayIdx === want && g.isConnected) renderDay(); },
+        (err) => { if (dayIdx === want && g.isConnected) g.replaceChildren(h("div", { class: "span-12" }, loadFailed(err, renderDay))); });
+      return;
+    }
     meta.textContent = `匯入時間 ${D.generated_at.replace("T", " ").slice(0, 16)}・重點門檻 分數 ≥ ${D.rules.highlight_score}・異常波動 |z| ≥ ${D.rules.mover_z}`;
 
     tiles.replaceChildren(
@@ -120,4 +136,4 @@ TABS.daily = (root) => {
   }
 
   renderDay();
-};
+});

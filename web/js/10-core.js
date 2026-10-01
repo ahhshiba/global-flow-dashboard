@@ -3,6 +3,59 @@
 
 const GFD = JSON.parse(document.getElementById("gfd-data").textContent);
 const A = GFD.analysis;
+
+/* 用到才載入的大塊資料（build.py LAZY_KEYS）：事件衝擊、訊號劇本、完整日線、鉅亨每日（最新一天／全部）。
+   GFD.lazy[鍵] 是網址（公開版，docs/data/*.json）或 "#元素 id"（本機單檔版，同頁另一個 JSON 區塊）。
+   沒有 GFD.lazy 的舊頁面＝資料都已內嵌，一律視為已就緒。 */
+const LAZY = GFD.lazy || {};
+const LAZY_DONE = {}, LAZY_PENDING = {};
+const dataReady = (key) => !LAZY[key] || !!LAZY_DONE[key];
+function needData(key) {
+  if (dataReady(key)) return Promise.resolve();
+  if (!LAZY_PENDING[key]) {
+    const src = LAZY[key];
+    const get = src[0] === "#"
+      ? new Promise((ok) => setTimeout(ok, 0)).then(() => JSON.parse(document.getElementById(src.slice(1)).textContent))
+      : fetch(src).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+    LAZY_PENDING[key] = get.then((v) => { applyLazy(key, v); LAZY_DONE[key] = true; },
+      (err) => { delete LAZY_PENDING[key]; throw err; });   // 失敗不記住，下次再試
+  }
+  return LAZY_PENDING[key];
+}
+function applyLazy(key, v) {
+  if (key === "cascade" || key === "playbook") A[key] = v;
+  else if (key === "daily") GFD.daily = v;
+  else if (key === "daily_latest") GFD.daily_latest = v;
+  else if (key === "detail") {
+    Object.assign(DETAIL, v);                        // DETAIL 和 GFD.detail 是同一個物件：尾巴換成完整日線
+    for (const k of Object.keys(INSTR_CACHE)) delete INSTR_CACHE[k];
+  }
+}
+const prefetch = (keys) => { for (const k of keys) needData(k).catch(() => {}); };
+/* 分頁需要的大塊資料：還沒到就先顯示載入中，到了再畫；滑過分頁鈕就先開始下載 */
+const TAB_NEEDS = { cascade: ["cascade"], playbook: ["playbook"], daily: ["daily_latest"] };
+function loadingNote(text) { return h("p", { class: "empty loading", role: "status" }, h("span", { class: "spin", "aria-hidden": "true" }), text); }
+function loadFailed(err, retry) {
+  return h("div", { class: "empty" }, `資料載入失敗（${err.message}）。`,
+    h("button", { class: "tool", type: "button", onclick: retry }, "再試一次"));
+}
+function lazyTab(id, draw) {
+  return (root, redo) => {
+    const keys = TAB_NEEDS[id] || [];
+    if (keys.every(dataReady)) { root._lazyTicket = null; return draw(root, redo); }
+    root.replaceChildren(loadingNote("載入資料中…"));
+    const ticket = root._lazyTicket = {};          // 等待期間又被要求重畫（例如換了期間）：只讓最後一次生效
+    Promise.all(keys.map(needData)).then(() => {
+      if (root._lazyTicket !== ticket) return;
+      try { draw(root, redo); } catch (err) {
+        root.replaceChildren(h("p", { class: "empty" }, `這個分頁繪製失敗：${err.message}`));
+        console.error(err);
+      }
+    }, (err) => {
+      if (root._lazyTicket === ticket) root.replaceChildren(loadFailed(err, () => lazyTab(id, draw)(root, redo)));
+    });
+  };
+}
 const MONTHS = A.months;
 const XS = MONTHS.map((m) => { const [y, mo] = m.split("-").map(Number); return y + (mo - 1) / 12; });
 const SVGNS = "http://www.w3.org/2000/svg";
@@ -341,6 +394,15 @@ function card({ title, sub, span = 12, note }) {
     body, note ? h("p", { class: "note" }, note) : null);
   return { el, body, tools };
 }
+// 滑鼠移到／手指按到會打開單一標的檢視的按鈕上，就先在背景下載完整日線
+function warmDetail(btn) {
+  if (dataReady("detail")) return btn;
+  const go = () => prefetch(["detail"]);
+  btn.addEventListener("pointerenter", go, { once: true });
+  btn.addEventListener("pointerdown", go, { once: true });
+  btn.addEventListener("focus", go, { once: true });
+  return btn;
+}
 function toolButton(label, pressed, onclick) {
   const b = h("button", { class: "tool", type: "button", "aria-pressed": String(pressed) }, label);
   b.addEventListener("click", () => { const now = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(now)); onclick(now); });
@@ -443,6 +505,14 @@ function singleEngine(key, getSeries, redraw) {
   }));
 
   function render(host, tbl, table, useLog) {
+    if (!dataReady("detail")) {             // 頁面只內嵌日線尾巴；完整日／週／月／年線第一次打開才載入
+      const box = table ? tbl : host;
+      ctl.replaceChildren();
+      box.replaceChildren(loadingNote("載入日線資料中…"));
+      needData("detail").then(() => { if (box.isConnected) redraw(); },
+        (err) => { if (box.isConnected) box.replaceChildren(loadFailed(err, redraw)); });
+      return;
+    }
     const series = getSeries();
     if (!series.length) { ctl.replaceChildren(); host.replaceChildren(h("p", { class: "empty" }, "沒有可單獨檢視的標的")); return; }
     if (!series.some((s) => s.key === pick)) pick = series[0].key;
@@ -522,7 +592,7 @@ function chartCard(o) {
   const viewable = () => series.filter((s) => instrument(s.key));
   const eng = o.single !== false && viewable().length ? singleEngine(o.key, viewable, () => draw()) : null;
   let single = !!eng && store.get("single:" + o.key, false);
-  if (eng) c.tools.append(toolButton(series.length > 1 ? "單一標的" : "日／週／月／年", single, (v) => { single = v; store.set("single:" + o.key, v); draw(); }));
+  if (eng) c.tools.append(warmDetail(toolButton(series.length > 1 ? "單一標的" : "日／週／月／年", single, (v) => { single = v; store.set("single:" + o.key, v); draw(); })));
   if (o.logToggle) c.tools.append(toolButton("對數刻度", useLog, (v) => { useLog = v; store.set("log:" + o.key, v); draw(); }));
   c.tools.append(toolButton("表格", false, (v) => { table = v; host.hidden = v; tbl.hidden = !v; draw(); }));
   function draw() {
@@ -568,7 +638,7 @@ const KPI_QUOTE = {
   eq_twii: "TWS:TSE01:INDEX", eq_sse: "GI:SSEC:INDEX", c_gold: "GC=F", c_silver: "SI=F", c_copper: "HG=F", c_brent: "BZ=F",
   c_wti: "CL=F", c_natgas: "NG=F", c_maize: "ZC=F", c_soy: "ZS=F", v_vix: "^VIX",
 };
-const LATEST_QUOTES = Object.fromEntries((((GFD.daily || [])[0]) || { quotes: [] }).quotes.map((q) => [q.symbol, q]));
+const LATEST_QUOTES = Object.fromEntries((GFD.latest || { quotes: [] }).quotes.map((q) => [q.symbol, q]));
 
 function latestClose(sid) {
   const D = (GFD.detail || {})[sid];

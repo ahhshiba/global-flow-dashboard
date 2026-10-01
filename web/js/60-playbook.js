@@ -87,7 +87,7 @@ function pbTriggerCard(t, P) {
   return c.el;
 }
 
-TABS.playbook = (root) => {
+TABS.playbook = lazyTab("playbook", (root) => {
   const P = A.playbook;
   root.replaceChildren(tabHead("訊號劇本：事件的前兆與之後該看哪些資產",
     "每個事件先找前兆（哪些訊號常在它之前出現，含誤報率），再把 37 個資產在事件後 3／6／12 個月的表現全部排名。排名看的是「超額」＝事件後表現減掉該資產自己的平常水準，否則長期上漲的資產會一路排在前面。這些是歷史統計，不是建議，也沒有計入交易成本。", false));
@@ -177,4 +177,4 @@ TABS.playbook = (root) => {
   g.append(holder.el);
   root.append(body);
   draw();
-};
+});

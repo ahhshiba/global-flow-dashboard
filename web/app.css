@@ -310,6 +310,13 @@ table.data .heatcell { text-align: center; font-family: var(--f-mono); font-size
 .gaps b { font-weight: 600; }
 .gaps span { color: var(--ink-2); }
 .empty { color: var(--muted); padding: 18px 0; }
+/* 載入中：多數情況幾百毫秒內就到，前 200ms 不顯示，避免一閃而過 */
+.empty.loading { display: flex; align-items: center; gap: 10px; opacity: 0; animation: load-in var(--dur-fast) var(--ease-out) 200ms forwards; }
+.spin { width: 14px; height: 14px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); border-top-color: var(--accent);
+  animation: spin 800ms linear infinite; }
+.chart > .empty.loading { min-height: 280px; justify-content: center; }   /* 先佔住單一標的線圖的高度，資料到了版面不跳 */
+@keyframes load-in { to { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 .foot { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; display: grid; gap: 4px; }
 
 /* hidden 屬性一律生效（否則設了 display 的元素會無視 hidden） */
@@ -373,9 +380,11 @@ table.data tr.sel td { background: var(--accent-soft); }
   .tab-ink { transition: none; }
   /* 跑馬燈在少動模式下不動、改成可手動橫捲（原本靠全域 animation:none 擋，拿掉全域規則後要明寫） */
   .tape-track { animation: none; transform: none; }
+  .spin { animation: spin-pulse 1s ease-in-out infinite alternate; }   /* 不旋轉，改成明暗呼吸 */
   .chip:active, .tool:active, .seg button:active, .sec-tile:active, .climate-btn:active, .chain-arrow:active, .tape-btn:active { transform: none !important; }
 }
 @keyframes tab-fade { from { opacity: 0; } }
+@keyframes spin-pulse { from { opacity: 1; } to { opacity: 0.35; } }
 @media (forced-colors: active) { .bar-fill, .lg i, .tip .tip-r i { forced-color-adjust: none; } }
 /* 事件衝擊：視窗重疊警示、代理序列說明、類型比較 */
 .cs-warn, .cs-info { margin: 8px 0 0; padding: 7px 10px; border-radius: 6px; font-size: 12.5px; line-height: 1.55; }
