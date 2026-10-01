@@ -1,16 +1,15 @@
-/* 分頁：FAQ——老師的提問與交辦（內容在 gfd/faq.py） */
+/* 名詞解釋分頁裡的「老師的提問（FAQ）」檢視（內容在 gfd/faq.py）。
+   名詞連結在同一個分頁內切回名詞檢視並捲到那一條（jumpTerm），其他連結照常換分頁。 */
 
-function faqGo(link) {
+function faqGo(link, jumpTerm) {
   const [kind, target] = link.split(":");
   if (kind === "cascade") return glossaryGo(link);
-  if (kind === "glossary") return window.gotoTab("glossary", () => { window.glPending = target; });
+  if (kind === "glossary") return jumpTerm(target);
   window.gotoTab(kind);
 }
 
-TABS.faq = (root) => {
+function faqView(root, jumpTerm) {
   const F = GFD.faq;
-  root.replaceChildren(tabHead("FAQ：老師的提問與交辦",
-    "每一題是課堂上老師要求搞懂或做到的事。「未答」的題目等學員回答後更新；每題附本站可以查的地方。", false));
   if (!F || !F.items.length) { root.append(h("p", { class: "empty" }, "沒有 FAQ 資料")); return; }
   let cat = store.get("faqCat", "all");
   let only = store.get("faqOpen", false);
@@ -31,7 +30,7 @@ TABS.faq = (root) => {
       h("h3", {}, i.q), h("span", { class: "muted faq-asked" }, `${i.asked} 課堂`)),
     i.answer ? h("p", { class: "faq-a" }, i.answer) : h("p", { class: "faq-a muted" }, "尚未回答。回答寫在 gfd/faq.py 的 answer 欄。"),
     i.links.length ? h("div", { class: "gl-row" }, h("span", { class: "gl-lab" }, "本站哪裡看"),
-      ...i.links.map((l) => h("button", { class: "chip gl-link", type: "button", onclick: () => faqGo(l) }, label(l) + " →"))) : null);
+      ...i.links.map((l) => h("button", { class: "chip gl-link", type: "button", onclick: () => faqGo(l, jumpTerm) }, label(l) + " →"))) : null);
   const draw = () => {
     chips.replaceChildren(
       h("button", { class: "chip", type: "button", "aria-pressed": String(cat === "all"), onclick: () => { cat = "all"; store.set("faqCat", cat); draw(); } }, `全部（${F.items.length}）`),
@@ -47,8 +46,9 @@ TABS.faq = (root) => {
       body.append(h("h3", { class: "gl-cat" }, c.name, h("span", { class: "muted" }, `　${items.length} 題`)), h("div", { class: "grid" }, items.map(item)));
     }
   };
-  const holder = card({ title: "題目", span: 12, sub: `${F.items.length} 題，未答 ${open} 題。` });
+  const holder = card({ title: "老師的提問與交辦", span: 12,
+    sub: `${F.items.length} 題，未答 ${open} 題。每一題是課堂上老師要求搞懂或做到的事，回答後在 gfd/faq.py 更新；每題附本站可以查的地方。` });
   holder.tools.append(chips);
   root.append(h("div", { class: "grid" }, holder.el), body);
   draw();
-};
+}

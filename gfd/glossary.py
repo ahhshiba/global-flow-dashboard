@@ -21,7 +21,7 @@ CATS = [
 ]
 
 TABS = {"overview", "fx", "bond", "equity", "commodity", "flow", "vol", "cascade", "chains", "playbook",
-        "research", "daily", "glossary", "faq"}
+        "research", "daily", "glossary"}
 
 
 def _e(id, term, en, cat, short, read, links=(), related=(), class_note=False):

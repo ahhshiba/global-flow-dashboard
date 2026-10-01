@@ -19,6 +19,12 @@
   }
 
   function show(id) {
+    if (id === "faq") {             // FAQ 併進名詞解釋分頁（2026-10-01）：舊連結照樣打得開
+      window.glView = "faq";
+      id = "glossary";
+      const g = document.getElementById("tab-glossary");
+      if (g) g.replaceChildren();
+    }
     if (!ids.includes(id)) id = "overview";
     current = id;
     for (const b of tabBtns) {

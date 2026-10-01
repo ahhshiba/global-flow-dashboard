@@ -22,13 +22,33 @@ function glossaryLinkLabel(link, events) {
   return btn ? btn.textContent.trim() : tab;
 }
 
-TABS.glossary = (root) => {
-  const G = GFD.glossary;
+TABS.glossary = (outer) => {
+  const G = GFD.glossary, F = GFD.faq;
   const pendingTerm = window.glPending; window.glPending = null;
-  root.replaceChildren(tabHead("名詞解釋",
-    "本站與課堂用到的專有名詞：一句話定義、怎麼看、在本站哪裡看得到。標「10/1 課堂」的是 2026-10-01 討論提到的名詞。"
+  // 從舊的 #faq 連結或其他地方指定要看哪個檢視（記憶體優先，用過即清）
+  let view = pendingTerm ? "terms" : (window.glView || store.get("glView", "terms"));
+  window.glView = null;
+  if (view !== "faq") view = "terms";
+  outer.replaceChildren(tabHead("名詞解釋與 FAQ",
+    "本站與課堂用到的專有名詞（一句話定義、怎麼看、在本站哪裡看），以及老師的提問與交辦。標「10/1 課堂」的是 2026-10-01 討論提到的。"
     + "標「約」的數字是量級，不是精確統計。", false));
-  if (!G || !G.entries.length) { root.append(h("p", { class: "empty" }, "沒有名詞資料")); return; }
+  if (!G || !G.entries.length) { outer.append(h("p", { class: "empty" }, "沒有名詞資料")); return; }
+  const faqOpen = F ? F.items.filter((i) => i.status === "open").length : 0;
+  const viewChips = h("div", { class: "chips gl-views" });
+  const root = h("div", {});              // 名詞檢視
+  const faqRoot = h("div", {});           // FAQ 檢視
+  outer.append(viewChips, root, faqRoot);
+  let faqDrawn = false;
+  const setView = (v) => {
+    view = v; store.set("glView", v);
+    viewChips.replaceChildren(
+      h("button", { class: "chip", type: "button", "aria-pressed": String(v === "terms"), onclick: () => setView("terms") }, `名詞解釋（${G.entries.length}）`),
+      F ? h("button", { class: "chip", type: "button", "aria-pressed": String(v === "faq"), onclick: () => setView("faq") },
+        `老師的提問 FAQ（${F.items.length}，未答 ${faqOpen}）`) : null);
+    root.hidden = v !== "terms";
+    faqRoot.hidden = v !== "faq";
+    if (v === "faq" && !faqDrawn) { faqDrawn = true; faqView(faqRoot, (id) => { setView("terms"); jump(id); }); }
+  };
 
   const byId = Object.fromEntries(G.entries.map((e) => [e.id, e]));
   let q = "";
@@ -108,5 +128,6 @@ TABS.glossary = (root) => {
   controls.body.append(h("div", { class: "gl-controls" }, input, count), chips);
   root.append(h("div", { class: "grid" }, controls.el), body);
   draw();
+  setView(view);
   if (pendingTerm) setTimeout(() => jump(pendingTerm), 0);
 };
