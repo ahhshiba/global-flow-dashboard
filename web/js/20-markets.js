@@ -154,7 +154,8 @@ TABS.overview = (root, redo) => {
 /* 國力面板：GDP、成長、CPI、政策利率、實質利率、經常帳、存底（2026-10-01 課堂：貨幣反映國力） */
 function strengthCard(S) {
   const c = card({ title: "國力面板：GDP 前十大國家＋台灣", span: 12,
-    sub: "課堂：貨幣長期反映國力（GDP、利率、CPI），利率高但國力弱只會吸到短期套利的錢。實質利率＝政策利率 − CPI，是費雪方程式的粗略版：為負代表錢放著在變薄。",
+    sub: "課堂：貨幣長期反映國力（GDP、利率、CPI），利率高但國力弱只會吸到短期套利的錢。實質利率＝政策利率 − CPI，是費雪方程式的粗略版：為負代表錢放著在變薄。"
+      + "排名固定用 2024 年名目 GDP，表中的 GDP 是各國最新年度，所以名次和數字可能對不上。",
     note: S.note });
   const head = ["GDP 排名", "國家", "GDP（十億美元）", "實質成長", "CPI 年增率", "政策利率", "實質利率", "經常帳／GDP", "外匯存底"];
   const yr = (y) => (y ? h("span", { class: "sub" }, y) : null);
@@ -195,8 +196,8 @@ function reservesTableCard(T) {
       fin(r.ust_pct) && r.ust_pct > 100 ? h("span", { class: "sub" }, "含民間與託管部位") : null)));
   c.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
     h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows))));
-  const bars = T.rows.filter((r) => fin(r.months)).map((r) => ({ label: r.name, v: r.months }));
-  c.body.append(h("h4", { class: "sub-h" }, `可支應進口月數（紅線＝${T.months_min} 個月）`), monthsBars(bars, T.months_min));
+  const bars = T.rows.filter((r) => fin(r.months)).map((r) => ({ label: r.name, v: r.months, exempt: r.reserve_currency }));
+  c.body.append(h("h4", { class: "sub-h" }, `可支應進口月數（紅線＝${T.months_min} 個月；灰色＝準備貨幣國，門檻不適用）`), monthsBars(bars, T.months_min));
   return c.el;
 }
 /* 單向橫條（進口月數），帶一條門檻線 */
@@ -204,10 +205,10 @@ function monthsBars(rows, min) {
   const max = Math.max(min * 1.2, ...rows.map((r) => r.v));
   return h("div", { class: "bars" }, rows.map((r) => h("div", { class: "bar-row" },
     h("span", {}, r.label),
-    h("div", { class: "bar-track mono", role: "img", "aria-label": `${r.label} ${r.v.toFixed(1)} 個月` },
-      h("div", { class: `bar-fill ${r.v < min ? "neg" : "pos"}`, style: `width:${(r.v / max) * 100}%` }),
+    h("div", { class: "bar-track mono", role: "img", "aria-label": `${r.label} ${r.v.toFixed(1)} 個月${r.exempt ? "（準備貨幣國，門檻不適用）" : ""}` },
+      h("div", { class: `bar-fill ${r.exempt ? "exempt" : r.v < min ? "neg" : "pos"}`, style: `width:${(r.v / max) * 100}%` }),
       h("i", { class: "bar-ref", style: `left:${(min / max) * 100}%` })),
-    h("span", { class: `n ${r.v < min ? "down" : ""}` }, `${r.v.toFixed(1)} 個月`))));
+    h("span", { class: `n ${r.v < min && !r.exempt ? "down" : ""}` }, `${r.v.toFixed(1)} 個月${r.exempt ? "・不適用" : ""}`))));
 }
 
 /* ── 匯市 ── */
@@ -263,17 +264,19 @@ function curveShapeCard(CV) {
 /* 1995 年以來的倒掛期間，以及之後股市與衰退怎麼走 */
 function curveEpisodesCard(CV) {
   const c = card({ title: "倒掛期間與之後發生的事", span: 6,
-    sub: `10 年 − 3 個月 的月均值 < 0 的期間；衰退起點取 NBER 認定（${CV.recessions.join("、")}）。`,
+    sub: `10 年 − 3 個月 的月底值 < 0 的期間（中間回正不超過 3 個月仍算同一段）；衰退起點取 NBER 認定的景氣高峰次月（${CV.recessions.join("、")}）。`
+      + "只倒掛 1 個月且最深不到 −0.25 的列為雜訊、不歸因衰退。",
     note: "倒掛領先衰退的時間從幾個月到兩年都有，也有倒掛後沒衰退的（2022–2024 那次至今沒有）。它是警訊，不是時機訊號。" });
   const head = ["倒掛期間", "月數", "最深", "S&P 500 之後 12 個月", "之後 24 個月", "下一次衰退"];
-  const rows = CV.episodes.map((e) => h("tr", {},
-    h("td", {}, `${e.start} → ${e.end}`, e.ongoing ? h("span", { class: "sub" }, "進行中") : null),
+  const rows = CV.episodes.map((e) => h("tr", { class: e.noise ? "muted" : null },
+    h("td", {}, `${e.start} → ${e.end}`, e.ongoing ? h("span", { class: "sub" }, "進行中") : null,
+      e.noise ? h("span", { class: "sub" }, "雜訊：只 1 個月、幅度很小") : null),
     h("td", { class: "n" }, e.months),
     h("td", { class: "n down" }, `${e.min.toFixed(2)}`, h("span", { class: "sub" }, e.min_at)),
     h("td", { class: "n" }, fin(e.spx12) ? h("span", { class: dirClass(e.spx12) }, fmtSigned(e.spx12, 1, "%")) : "—"),
     h("td", { class: "n" }, fin(e.spx24) ? h("span", { class: dirClass(e.spx24) }, fmtSigned(e.spx24, 1, "%")) : "—"),
-    h("td", { class: "n" }, e.recession ? `${e.recession}` : h("span", { class: "muted" }, "24 個月內沒有"),
-      e.recession ? h("span", { class: "sub" }, `倒掛後 ${e.recession_lag} 個月`) : null)));
+    h("td", { class: "n" }, e.noise ? h("span", { class: "muted" }, "不歸因") : e.recession ? `${e.recession}` : h("span", { class: "muted" }, "24 個月內沒有"),
+      e.recession && !e.noise ? h("span", { class: "sub" }, `倒掛後 ${e.recession_lag} 個月`) : null)));
   c.body.append(rows.length
     ? h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows)))
     : h("p", { class: "empty" }, "1995 年以來沒有倒掛期間"));
@@ -420,7 +423,7 @@ TABS.commodity = (root, redo) => {
   g.append(idx("cm-energy", "能源（起點＝100）", ["c_brent", "c_wti", "c_natgas", "c_natgas_eu"],
     { sub: "天然氣是獨立的地區市場，不是石油的副產品：美國與歐洲價格可以差好幾倍。" }));
   g.append(idx("cm-fert", "肥料（起點＝100）", ["c_urea", "c_dap", "c_potash", "ci_fert"],
-    { sub: "課堂的「油漲 → 肥料漲 → 農產品漲」：氮肥用天然氣製造；鉀肥主要來自俄羅斯與白俄羅斯。檢驗結果見「傳導鏈」的肥料鏈。" }));
+    { sub: "課堂的「油漲 → 肥料漲 → 農產品漲」：氮肥用天然氣製造；鉀肥的三大出口國是加拿大、俄羅斯、白俄羅斯。檢驗結果見「傳導鏈」的肥料鏈。" }));
   g.append(idx("cm-agri", "農產品（起點＝100）", ["c_maize", "c_soy", "c_wheat"]));
   g.append(idx("cm-wbidx", "世界銀行商品指數（起點＝100）", ["ci_energy", "ci_nonenergy", "ci_agri", "ci_metals", "ci_precious", "ci_fert"]));
   g.append(chartCard({ key: "cm-cuau", title: "銅/黃金 比值", span: 6, height: 230, area: true, bands: EVENT_BANDS, series: [ser("d_cu_au", 1, { fmt: (v) => fmtNum(v, 3) })],

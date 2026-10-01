@@ -149,8 +149,11 @@ TABS.playbook = (root) => {
   rc.body.append(h("h4", { class: "sub-h" }, "事件後表現優於自己平常（超額為正）"), mkList(up),
     h("h4", { class: "sub-h" }, "事件後表現劣於自己平常（超額為負，通常是該避開或反手的方向）"), mkList(down));
   if (P.robust_observe && P.robust_observe.length) {
-    const kinds = [...new Set(Object.values(A.observe || {}).map((w) => w.short))].join("、");
-    rc.body.append(h("details", { style: "margin-top:10px" }, h("summary", {}, `另有 ${P.robust_observe.length} 組落在觀察指標（${kinds}）——VIX、殖利率、利差的反應多半是機械性的，人民幣是政策引導的價格；都不能直接當部位`),
+    // 只列這份清單裡真的出現的觀察指標種類
+    const present = P.robust_observe.map((r) => (A.observe || {})[r.sid]).filter(Boolean);
+    const kinds = [...new Set(present.map((w) => w.short))].join("、");
+    const managed = present.some((w) => w.kind === "managed");
+    rc.body.append(h("details", { style: "margin-top:10px" }, h("summary", {}, `另有 ${P.robust_observe.length} 組落在觀察指標（${kinds}）——VIX、殖利率、利差的反應多半是機械性的${managed ? "，人民幣的方向受政策引導" : ""}；都不能直接當部位`),
       mkList(P.robust_observe.slice(0, 10))));
   }
   g.append(rc.el);

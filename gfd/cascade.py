@@ -247,6 +247,48 @@ def _null_calibration(daily, universe, base, rounds=C.CASCADE_NULL_ROUNDS, span=
     return out
 
 
+def persist_baseline(daily, n=200, seed=20261001):
+    """隨機日期當「假事件」時，持續性三分法的分布。半年、一年本來就比兩個月波動大、又有長期上漲的漂移，
+    所以就算沒有事件，也會有不少標的被判成「一年以上」——真實事件要跟這個比。"""
+    rng = np.random.default_rng(seed)
+    spx = daily.get("^GSPC")
+    if not spx:
+        return None
+    dates = spx["dates"]
+    lo = bisect.bisect_left(dates, (dt.date.fromisoformat(C.CASCADE_START) + dt.timedelta(days=400)).isoformat())
+    hi = len(dates) - 260                                     # 一年視窗要有資料
+    if hi <= lo:
+        return None
+    counts = {k: 0 for k in ("transient", "persistent", "lasting")}
+    growing, grow_n = [], 0
+    for idx in rng.integers(lo, hi, size=n):
+        d = dates[int(idx)]
+        resp = [x for x in (event_response(daily[s], s, d) for s, _n, _l in C.CASCADE_UNIVERSE if s in daily) if x and x["responded"]]
+        for x in resp:
+            if x["persist"] in counts:
+                counts[x["persist"]] += 1
+        g = [x["still_growing"] for x in resp if x["still_growing"] is not None]
+        if g:
+            growing.append(100 * sum(g) / len(g))
+    total = sum(counts.values())
+    return dict(n_dates=n, n_assets=total,
+                pct={k: r(100 * v / total, 0) for k, v in counts.items()} if total else None,
+                growing_median=r(float(np.median(growing)), 0) if growing else None)
+
+
+def _perm_p(a, b, rounds=5000, seed=20261001):
+    """兩組的中位數差，用標籤重排算單尾 p（a 比 b 大的機率是運氣）。"""
+    rng = np.random.default_rng(seed)
+    allv = np.array(a + b, dtype=float)
+    obs = np.median(a) - np.median(b)
+    hits = 0
+    for _ in range(rounds):
+        rng.shuffle(allv)
+        if np.median(allv[:len(a)]) - np.median(allv[len(a):]) >= obs:
+            hits += 1
+    return (hits + 1) / (rounds + 1)
+
+
 def build(log=print):
     path = RAW / "daily_cascade.json"
     if not path.exists():
@@ -329,13 +371,15 @@ def build(log=print):
     other = [e["growing_share"] for e in events if e["region"] != "cn" and e["growing_share"] is not None]
     cn_lag = dict(cn_n=len(cn), other_n=len(other), cn_median=r(float(np.median(cn)), 0) if cn else None,
                   other_median=r(float(np.median(other)), 0) if other else None,
+                  cn_mean=r(float(np.mean(cn)), 0) if cn else None, other_mean=r(float(np.mean(other)), 0) if other else None,
+                  p=r(_perm_p(cn, other), 3) if len(cn) >= 3 and len(other) >= 3 else None,
                   cn_events=[dict(id=e["id"], name=e["name"], share=e["growing_share"]) for e in events if e["region"] == "cn"])
     missing = [e["id"] for e in C.SHOCK_EVENTS if e["id"] not in {x["id"] for x in events}]
     log(f"[cascade] {len(events)} 個事件、{len(universe)} 個標的、{len(cats)} 個分類"
         + (f"；資料不足略過：{', '.join(missing)}" if missing else ""))
     return dict(events=events, categories=cats, layers=layers, universe=universe, compare=C.CASCADE_COMPARE, stats=stats,
                 windows=WINDOWS, short_windows=C.CASCADE_WINDOWS, pre=C.CASCADE_PRE, max_days=C.CASCADE_MAX_DAYS,
-                persist_labels=PERSIST_LABELS, cn_lag=cn_lag,
+                persist_labels=PERSIST_LABELS, cn_lag=cn_lag, persist_base=persist_baseline(daily),
                 sigma_mult=C.CASCADE_REACT_SIGMA, fetched_at=raw_meta.get("fetched_at"),
                 note=("傳導順序以「走完一半」的天數排序＝累積變動第一次達到兩個月總變動一半的那天；"
                       "「有實質反應」＝期間內最大累積變動超過該標的自身 2σ×√天數（σ 取事件前 60 個交易日的日波動）；"

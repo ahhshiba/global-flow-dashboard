@@ -1,12 +1,19 @@
 """公開版的密碼門（2026-10-01 課堂：網站要有一層簡單的防護）。
 
 GitHub Pages 只能放靜態檔，所以「登入」做不到伺服器端驗證。這裡把整個頁面用密碼加密後才發佈：
-瀏覽器輸入密碼 → PBKDF2 導出金鑰 → AES-256-GCM 解密 → 顯示頁面。GitHub 上只有密文，搜尋引擎也看不到內容。
-限制要講清楚：密碼簡單（例如 123）就擋不住有心人試，這道門擋的是路人與搜尋引擎，不是攻擊者。
+瀏覽器輸入密碼 → PBKDF2 導出金鑰 → AES-256-GCM 解密 → gzip 解壓 → 顯示頁面。新部署的 gh-pages 上只有密文，
+搜尋引擎也看不到內容。限制要講清楚：
+- 密文是公開的，可以離線一直猜密碼；短密碼（例如 123）幾秒就猜得到，30 萬次 PBKDF2 只是讓每次猜慢一點。
+  這道門擋的是路人與搜尋引擎，不是有心人。
+- 解開後密碼存在該分頁的 sessionStorage（重新整理不用再輸入），關掉分頁就清掉。
+- 2026-10-01 以前部署過的明文版本，GitHub 可能仍以 commit 雜湊保留一段時間，也可能被快取或轉存。
 
-密碼從環境變數 GFD_PUBLIC_PASSWORD 或 data/public_password.txt 讀（data/ 不進版控）；沒有設定就不加密。
+密碼從環境變數 GFD_PUBLIC_PASSWORD 或 data/public_password.txt 讀（data/ 不進版控）。沒有密碼時 build --public
+預設拒絕產出（不會悄悄發佈明文）；真的要發佈明文版，設 GFD_ALLOW_PLAINTEXT=1。
+需要 `cryptography`（Ubuntu 的 python3-cryptography 套件已內建）。
 """
 import base64
+import gzip
 import hashlib
 import json
 import os
@@ -27,14 +34,21 @@ def password():
     return None
 
 
+def allow_plaintext():
+    return os.environ.get("GFD_ALLOW_PLAINTEXT") == "1"
+
+
 def encrypt(html, pw):
-    """整頁 HTML → 密文（base64）＋鹽、IV；用 cryptography 的 AES-GCM（瀏覽器端 WebCrypto 能解）。"""
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    """整頁 HTML → gzip → AES-GCM 密文（base64）＋鹽、IV。先壓縮：密文無法再壓縮，壓縮後頁面約小四倍。"""
+    try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    except ImportError as e:  # 沒裝就明講，不要讓排程只看到 traceback
+        raise SystemExit("公開版加密需要 cryptography 套件（sudo apt install python3-cryptography）") from e
     salt, iv = secrets.token_bytes(16), secrets.token_bytes(12)
     key = hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt, ITERATIONS, dklen=32)
-    ct = AESGCM(key).encrypt(iv, html.encode("utf-8"), None)
+    ct = AESGCM(key).encrypt(iv, gzip.compress(html.encode("utf-8"), compresslevel=9, mtime=0), None)
     return dict(salt=base64.b64encode(salt).decode(), iv=base64.b64encode(iv).decode(),
-                data=base64.b64encode(ct).decode(), iter=ITERATIONS)
+                data=base64.b64encode(ct).decode(), iter=ITERATIONS, z="gzip")
 
 
 WRAPPER = """<!doctype html>
@@ -60,7 +74,7 @@ WRAPPER = """<!doctype html>
 <body>
 <form id="f" autocomplete="off">
   <h1>資金流向觀測台</h1>
-  <p>這個網站需要密碼。內容在你的瀏覽器裡解密，伺服器上只有密文。</p>
+  <p>這個網站需要密碼。內容在你的瀏覽器裡解密，網站上只放密文。</p>
   <input id="pw" type="password" placeholder="密碼" autofocus required aria-label="密碼">
   <button id="go" type="submit">進入</button>
   <div class="err" id="err" role="alert"></div>
@@ -77,13 +91,23 @@ WRAPPER = """<!doctype html>
     const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(P.salt), iterations: P.iter, hash: "SHA-256" },
       base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
     const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(P.iv) }, key, b64(P.data));
-    const html = new TextDecoder().decode(plain);
+    let html;
+    if (P.z === "gzip") {
+      if (typeof DecompressionStream !== "function") throw new Error("old-browser");
+      const stream = new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"));
+      html = await new Response(stream).text();
+    } else {
+      html = new TextDecoder().decode(plain);
+    }
     try { sessionStorage.setItem("gfd:pw", password); } catch (e) { /* 無痕視窗 */ }
     document.open(); document.write(html); document.close();
   }
   form.addEventListener("submit", async (e) => {
     e.preventDefault(); err.textContent = ""; go.disabled = true;
-    try { await open(pw.value); } catch (ex) { err.textContent = "密碼不對，或這個瀏覽器不支援解密。"; go.disabled = false; pw.select(); }
+    try { await open(pw.value); } catch (ex) {
+      err.textContent = ex && ex.message === "old-browser" ? "這個瀏覽器太舊，無法解壓縮頁面；請更新瀏覽器。" : "密碼不對。";
+      go.disabled = false; pw.select();
+    }
   });
   // 同一個分頁重新整理不用再輸入
   let saved = null; try { saved = sessionStorage.getItem("gfd:pw"); } catch (e) { /* 略過 */ }

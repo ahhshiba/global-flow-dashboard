@@ -13,4 +13,7 @@ NOJEKYLL=$(printf '' | git hash-object -w --stdin)
 TREE=$(printf '100644 blob %s\tindex.html\n100644 blob %s\t.nojekyll\n' "$PAGE" "$NOJEKYLL" | git mktree)
 COMMIT=$(git commit-tree "$TREE" -m "deploy: $(date '+%Y-%m-%d %H:%M') 資金流向觀測台公開示範版")
 git push -q --force origin "$COMMIT":refs/heads/gh-pages
+# 每次部署都在本機 .git 寫一份新的頁面 blob，舊的部署 commit 推上去後就不再被任何分支引用；
+# 清掉三天以上的無引用物件（git gc 預設要等兩週），避免 .git 每天長十幾 MB
+git prune --expire=3.days.ago 2>/dev/null || true
 echo "已部署 gh-pages（commit ${COMMIT:0:7}，$(du -h docs/index.html | cut -f1)）"

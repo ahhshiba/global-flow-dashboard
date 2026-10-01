@@ -416,7 +416,7 @@ def strength_block(annual, series):
         py, pv = latest(blocks["policy"].get(C.BIS_POLICY_AREA.get(code)))
         rows.append(dict(code=code, name=name, rank=rank, gdp=num(gv / 1e9, 0) if gv else None, gdp_year=gy,
                          growth=num(grv, 1), growth_year=gry, cpi=num(cv, 1), cpi_year=cy,
-                         policy=num(pv, 2), policy_at=py, policy_src="ECB" if C.BIS_POLICY_AREA.get(code) == "XM" else None,
+                         policy=num(pv, 2), policy_at=py, policy_src="ECB 存款機制利率" if C.BIS_POLICY_AREA.get(code) == "XM" else None,
                          real=num(pv - cv, 1) if pv is not None and cv is not None else None,
                          ca_gdp=num(cav, 1), ca_year=cay, reserves=num(rv / 1e9, 0) if rv else None))
     tw_disc = (series.get("b_tw_disc") or {}).get("stats") or {}
@@ -424,7 +424,7 @@ def strength_block(annual, series):
     rows.append(dict(code="TWN", name="台灣", rank=None, gdp=None, gdp_year=None, growth=None, growth_year=None,
                      cpi=None, cpi_year=None, policy=tw_disc.get("value"), policy_at=tw_disc.get("last"), policy_src="央行重貼現率",
                      real=None, ca_gdp=None, ca_year=None, reserves=num(tw[max(tw)] / 1000, 0) if tw else None))
-    return dict(rows=rows, note="GDP、成長率、CPI 年增率、經常帳／GDP：世界銀行年資料；政策利率：國際清算銀行月底值（德、法、義為歐洲央行）；"
+    return dict(rows=rows, note="GDP、成長率、CPI 年增率、經常帳／GDP：世界銀行年資料；政策利率：國際清算銀行月底值（德、法、義為歐洲央行存款機制利率）；"
                                 "台灣：央行重貼現率，其餘欄位世界銀行沒有台灣。實質利率＝政策利率 − 最近一年 CPI 年增率，是費雪方程式的粗略版。")
 
 
@@ -479,7 +479,9 @@ def curve_block(g, detail):
                     if spx is None or i + m >= n or not (np.isfinite(spx[i]) and np.isfinite(spx[i + m])) or spx[i] <= 0:
                         return None
                     return num(100 * (spx[i + m] / spx[i] - 1), 1)
-                episodes.append(dict(start=g.months[i], end=g.months[j], months=j - i + 1, min=num(float(seg[k]), 2),
+                # 只倒掛 1 個月且很淺（例：2020-02 −0.10、2025-04 −0.01）視為雜訊，不歸因衰退
+                noise = (j - i + 1) == 1 and float(seg[k]) > -0.25
+                episodes.append(dict(start=g.months[i], end=g.months[j], months=j - i + 1, min=num(float(seg[k]), 2), noise=noise,
                                      min_at=g.months[i + k], ongoing=j == n - 1, spx12=fwd(12), spx24=fwd(24),
                                      recession=rec, recession_lag=rec_lag))
                 i = j + 1
@@ -490,8 +492,9 @@ def curve_block(g, detail):
                 latest=num(latest_curve, 2), latest_at=(epoch + dt.timedelta(days=latest_day)).isoformat() if latest_day else None,
                 recessions=C.NBER_RECESSION_STARTS,
                 note="短天期（3 個月）貼著政策利率；長天期（10、30 年）反映長期成長與通膨預期加期限溢酬。"
-                     "正常是往上斜；倒掛＝短率高於長率，市場預期未來降息。倒掛期間用月均值判定（10 年 − 3 個月 < 0），"
-                     "「之後」欄是從倒掛起算月的 S&P 500 價格變動與 NBER 認定的下一次衰退起點。")
+                     "正常是往上斜；倒掛＝短率高於長率，市場預期未來降息。倒掛期間用月底值判定（10 年 − 3 個月 < 0），"
+                     "「之後」欄是從倒掛起算月的 S&P 500 價格變動與 NBER 認定的下一次衰退起點。"
+                     "資料是月底值。")
 
 
 def reserves_table(annual, tic_blk):

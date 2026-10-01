@@ -387,3 +387,4 @@ table.data tr.sel td { background: var(--accent-soft); }
 .faq-a { margin: 6px 0 0; line-height: 1.7; font-size: 13.5px; }
 .faq-item.open { border-left: 3px solid var(--warn); }
 .kpi .k-name.has-watch { white-space: normal; overflow: visible; line-height: 1.5; }
+.bar-track.mono .bar-fill.exempt { left: 0; right: auto; background: var(--line-strong); }

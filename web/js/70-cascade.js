@@ -8,6 +8,13 @@ const csLayerName = (id) => (A.cascade.layers.find((l) => l.id === id) || {}).na
 const CS_WIN = { 10: "兩週", 21: "一個月", 42: "兩個月", 126: "半年", 252: "一年" };
 const csWin = (w) => CS_WIN[w] || `${w} 日`;
 const csPersist = (k) => (A.cascade.persist_labels || {})[k] || k;
+/* 隨機日期的持續性分布：沒有事件也會有不少標的被判成「一年以上」（長期漂移＋長視窗波動較大） */
+function persistBaseNote() {
+  const B = A.cascade.persist_base;
+  if (!B || !B.pct) return null;
+  return h("span", { class: "muted" }, `對照：隨機挑 ${B.n_dates} 個日期當假事件，有反應的標的中 短暫 ${B.pct.transient}%、長期 ${B.pct.persistent}%、一年以上 ${B.pct.lasting}%。`
+    + "真實事件要比這個高才算特別持久。");
+}
 /* 持續性分布：短暫／長期／一年以上 的小橫條（有反應的標的數） */
 function persistBar(dist, n) {
   const keys = ["transient", "persistent", "lasting", "unknown"];
@@ -285,7 +292,7 @@ TABS.cascade = (root) => {
       c.body.append(h("div", { class: "cs-persist" },
         h("b", {}, "持續性："), P.verdict ? `多數有反應的標的屬於「${csPersist(P.verdict)}」衝擊` : "無法判定",
         h("span", { class: "muted" }, "　尺＝兩個月內的最大反應：半年後還保有一半以上才算長期，一年後還保有一半以上才算一年以上"),
-        persistBar(P.dist, P.n),
+        persistBar(P.dist, P.n), persistBaseNote(),
         fin(ev.growing_share) ? h("span", { class: "muted" }, `有反應的標的中 ${ev.growing_share}% 在半年後比兩個月的峰值更大（事件過了兩個月還在擴大）${ev.region === "cn" ? "；這是中國事件" : ""}`) : null));
       const host = h("div", { class: "chart" });
       c.body.append(h("h4", { class: "sub-h" }, "傳導時間軸：點的位置＝走完一半反應的那一天，大小＝反應幅度"), host);
@@ -310,7 +317,7 @@ TABS.cascade = (root) => {
         c.body.append(h("p", { class: "cs-warn" }, "以下事件與同類前一個事件相隔太近，彙總時不重複計算：",
           cat.skipped.map((s) => `${s.name}（${s.after}後 ${s.days} 天）`).join("、")));
       }
-      c.body.append(h("div", { class: "cs-persist" }, h("b", {}, "這類事件的持續性（所有事件、有反應的標的合計）："), persistBar(cat.persist, 0)));
+      c.body.append(h("div", { class: "cs-persist" }, h("b", {}, "這類事件的持續性（所有事件、有反應的標的合計）："), persistBar(cat.persist, 0), persistBaseNote()));
       const host = h("div", { class: "chart" });
       c.body.append(h("h4", { class: "sub-h" }, "傳導時間軸（各標的的中位數）"), host);
       mount(host, () => cascadeTimeline(host, cat.assets.filter((r) => fin(r.half_day) && r.half_n >= 2)
@@ -336,12 +343,15 @@ TABS.cascade = (root) => {
       c.body.append(...cascadeCompare(win));
       const L = CA.cn_lag;
       if (L && L.cn_n) {
-        const ok = fin(L.cn_median) && fin(L.other_median) && L.cn_median > L.other_median;
+        const sig = fin(L.p) && L.p <= 0.05;
+        const B = CA.persist_base;
         c.body.append(h("h4", { class: "sub-h" }, "課堂假說檢驗：中國事件是不是「半年後才浮現」"),
-          h("p", { class: ok ? "cs-info" : "cs-warn" },
+          h("p", { class: "cs-info" },
             `量法：事件後兩個月內有實質反應的標的中，半年後的變動比兩個月的峰值更大（＝事件過了兩個月還在擴大）的比例。`
-            + `中國事件（${L.cn_n} 次）中位數 ${L.cn_median}%，其他事件（${L.other_n} 次）${L.other_median}%。`
-            + (ok ? "方向和課堂說法一致，但只有幾次事件，不能當定論。" : "資料不支持「中國事件比較晚浮現」；可能是這幾次事件本身的性質，或半年尺度太短。")
+            + `中國事件（${L.cn_n} 次）中位數 ${L.cn_median}%、平均 ${L.cn_mean}%；其他事件（${L.other_n} 次）中位數 ${L.other_median}%、平均 ${L.other_mean}%`
+            + (B && fin(B.growing_median) ? `；隨機日期 ${B.growing_median}%` : "") + "。"
+            + (sig ? `中國事件明顯較高（重排檢定 p=${L.p}），但次數少，仍只能當參考。`
+                   : `差異在隨機範圍內（重排檢定 p≈${fin(L.p) ? L.p : "—"}），資料不能證明中國事件比較晚浮現，也不能否定——次數太少。`)
             + `　逐一：${L.cn_events.map((e) => `${e.name} ${fin(e.share) ? e.share + "%" : "—"}`).join("、")}`));
       }
       body.append(c.el);

@@ -104,7 +104,7 @@ SERIES = [
     dict(id="c_dap", group="commodity", name="磷酸二銨 DAP（磷肥）", kind="price", unit="$/mt",
          src=("wb_pink", "Monthly Prices", "DAP"), note="月均價"),
     dict(id="c_potash", group="commodity", name="氯化鉀（鉀肥）", kind="price", unit="$/mt",
-         src=("wb_pink", "Monthly Prices", "Potassium chloride"), note="月均價；俄羅斯與白俄羅斯是主要出口國"),
+         src=("wb_pink", "Monthly Prices", "Potassium chloride"), note="月均價；加拿大、俄羅斯、白俄羅斯是三大出口國"),
     dict(id="c_nickel", group="commodity", name="鎳", kind="price", unit="$/mt",
          src=("wb_pink", "Monthly Prices", "Nickel"), note="月均價；不鏽鋼與電池"),
     # 鋰與稀土沒有免費的長期現貨價，用 ETF 代替（2010 年起；是股票籃子，不是商品價格）
@@ -179,7 +179,7 @@ LEADERS = {
 
 # 各國外匯存底（世界銀行年資料，含黃金）＋台灣（央行月資料，不含黃金）
 # 2026-10-01 課堂：看 GDP 前十大國家的外匯存底與美債持有。順序＝世界銀行 2024 年名目 GDP 排名
-# （美、中、德、日、印、英、法、義、加、俄；俄羅斯 2,186 十億略高於巴西 2,186）。台灣不在世界銀行資料庫，
+# （美、中、德、日、印、英、法、義、加、俄；俄羅斯 2,186.5 十億略高於巴西 2,185.8）。台灣不在世界銀行資料庫，
 # 存底另取央行，列在表最後。
 RESERVE_COUNTRIES = [("USA", "美國"), ("CHN", "中國"), ("DEU", "德國"), ("JPN", "日本"), ("IND", "印度"),
                      ("GBR", "英國"), ("FRA", "法國"), ("ITA", "義大利"), ("CAN", "加拿大"), ("RUS", "俄羅斯")]
@@ -579,7 +579,7 @@ PLAYBOOK_UNIVERSE = [
 # 放在同一張排行榜會把真正可投資的標的擠掉，所以分開呈現。
 PLAYBOOK_OBSERVE_ONLY = ["v_vix", "d_curve", "b_us10y", "b_us3m", "b_jp10y", "fx_usdcny"]
 # 為什麼只當觀察指標（KPI 卡片的標記、訊號劇本的註記都從這裡取字）。
-# mechanical＝事件後的反應是機械性的、也不能直接買進持有；managed＝價格由政策引導，不反映供需。
+# mechanical＝事件後的反應是機械性的、也不能直接買進持有；managed＝中間價與波動區間由政策設定，方向與幅度受政策引導。
 OBSERVE_REASONS = {
     "v_vix": dict(kind="mechanical", short="VIX", text="VIX 要用期貨或選擇權才能表達，且股市大跌後必先衝高再回落"),
     "d_curve": dict(kind="mechanical", short="利差", text="利差要用債券部位表達，事件後的變動多半是機械性的"),
@@ -587,8 +587,9 @@ OBSERVE_REASONS = {
     "b_us3m": dict(kind="mechanical", short="殖利率", text="短率貼著政策利率走，事件後的變動多半是機械性的"),
     "b_jp10y": dict(kind="mechanical", short="殖利率", text="殖利率要用債券部位表達，事件後的變動多半是機械性的"),
     "fx_usdcny": dict(kind="managed", short="人民幣",
-                      text="人民幣中間價由人民銀行每日設定、境內只能在 ±2% 內波動，價格由政策引導而不是供需；"
-                           "可以拿它判斷中國的政策與內需壓力，但不建議當交易標的（2026-10-01 課堂）"),
+                      text="人民銀行每天設定中間價，境內即期匯率只能在中間價上下 2% 內波動；區間內仍反映供需，"
+                           "但方向與幅度受中間價與政策工具引導。可以拿它判斷中國的政策與內需壓力，"
+                           "但不建議當交易標的（2026-10-01 課堂）。本站序列是月均與即期匯率，不是中間價"),
 }
 
 # 除了傳導鏈的節點以外，另外納入這些常被討論的訊號（格式同鏈節點）
