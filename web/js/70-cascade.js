@@ -215,9 +215,12 @@ TABS.cascade = (root) => {
   root.append(g);
 
   const catName = (id) => (CA.categories.find((c) => c.id === id) || {}).name || id;
-  let mode = store.get("csMode", "event");
-  let sel = store.get("csSel", "ukraine22");
-  let fcat = store.get("csCat", "all");
+  // 從其他分頁指定要打開的事件（名詞解釋的連結）：記憶體優先，用過即清
+  const pending = window.csPending;
+  window.csPending = null;
+  let mode = pending ? pending.mode : store.get("csMode", "event");
+  let sel = pending ? pending.sel : store.get("csSel", "ukraine22");
+  let fcat = pending ? pending.cat : store.get("csCat", "all");
   let win = store.get("csWin", 21);
   const chips = h("div", { class: "chips" });
   const chips2 = h("div", { class: "chips", style: "margin-top:8px" });

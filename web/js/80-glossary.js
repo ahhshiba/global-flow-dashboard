@@ -4,6 +4,8 @@ function glossaryGo(link) {
   const [tab, event] = link.split(":");
   if (event) {
     window.gotoTab("cascade", () => {
+      // 記憶體直接交給事件衝擊分頁；localStorage 在沙箱 iframe 可能被封鎖，只當作「下次打開」的記憶
+      window.csPending = { mode: "event", cat: "all", sel: event };
       store.set("csMode", "event");
       store.set("csCat", "all");
       store.set("csSel", event);
@@ -51,7 +53,11 @@ TABS.glossary = (root) => {
   const jump = (id) => {
     const target = byId[id];
     if (!target) return;
-    if (!matches(target)) { q = ""; input.value = ""; cat = "all"; onlyClass = false; draw(); }
+    if (!matches(target)) {
+      q = ""; input.value = ""; cat = "all"; onlyClass = false;
+      store.set("glCat", cat); store.set("glClass", onlyClass);
+      draw();
+    }
     const el = document.getElementById("gl-" + id);
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });

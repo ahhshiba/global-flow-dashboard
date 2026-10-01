@@ -107,7 +107,7 @@ TABS.playbook = (root) => {
   mc.body.append(h("h4", { class: "sub-h" }, "虛無校準：把事件時點整體隨機位移後，用同一套門檻重跑"),
     h("p", { class: "note", style: "margin:0" },
       `在「確定沒有訊號」的資料上重跑 ${s.null_runs.length} 次，通過全部門檻的組數分別是 ${s.null_runs.join("、")}（平均 ${s.null_mean}）。`
-      + `實際資料留下 ${s.robust} 組（可投資 ${s.robust_investable} 組），所以估計約 ${s.fdr_estimate}% 是運氣——大約一半。`
+      + `實際資料留下 ${s.robust} 組（可投資 ${s.robust_investable} 組），所以估計約 ${s.fdr_estimate}% 是運氣。`
       + "這個比例是直接量出來的，不是假設出來的。這張清單是「候選」，不是「結論」。"));
   if (s.conflicts) {
     mc.body.append(h("p", { class: "note" },

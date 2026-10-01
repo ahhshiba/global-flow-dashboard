@@ -55,7 +55,7 @@ ENTRIES = [
     _e("fed", "聯準會", "Federal Reserve / FOMC", "macro",
        "美國的中央銀行；聯邦公開市場委員會（FOMC）一年開 8 次會決定利率。",
        "法定雙重目標是充分就業與物價穩定（通膨目標 2%，以 PCE 物價衡量）。會後聲明、點陣圖與主席談話"
-       "常比利率決定本身更能移動市場（本站事件衝擊收錄了 1994 首次升息、2013 縮減恐慌、2022 傑克森洞等）。",
+       "常比利率決定本身更能移動市場（本站事件衝擊收錄了 1994 年五年來首次升息、2013 縮減恐慌、2022 傑克森洞等）。",
        links=["cascade:taper13", "cascade:jackson22", "cascade:fed94"], related=["policy_rate", "qe"]),
     _e("gdp", "國內生產毛額 GDP", "Gross domestic product", "macro",
        "一個國家一段期間內生產的最終商品與服務總值。",
@@ -70,7 +70,7 @@ ENTRIES = [
     _e("qe", "量化寬鬆 QE", "Quantitative easing", "macro",
        "政策利率已近零時，央行改成大量買進公債等資產，壓低長天期利率、增加市場資金。",
        "反向操作叫縮表（QT）。2013 年柏南奇只是暗示要「縮減購債」，就引發美債殖利率急升與新興市場資金外流。",
-       links=["cascade:taper13", "cascade:draghi12"], related=["liquidity_trap", "fed"]),
+       links=["cascade:taper13"], related=["liquidity_trap", "fed"]),
     _e("potential_output", "潛在產出／產能", "Potential output / capacity", "macro",
        "總體經濟：不引發通膨加速時，經濟能持續生產的最大量。產業：一個產業目前能生產的上限。",
        "實際產出高於潛在產出（產出缺口為正）通常伴隨通膨壓力。課堂在能源談的「潛在產能」是後一個意思："
@@ -128,8 +128,9 @@ ENTRIES = [
        links=["flow"], related=["reserves"]),
     _e("tic", "美債持有（TIC 報告）", "Treasury International Capital", "fx",
        "美國財政部每月公布各國持有的美國公債金額。",
-       "日本與中國長期是前兩大持有國。一國減持美債可能是為了護匯（賣美債換本幣）或分散風險；"
-       "增持則常伴隨貿易順差。",
+       "日本長期居首；中國曾長年居次，近年被英國超越（本站 2026-07：日本約 1.10 兆、英國約 1.00 兆、中國約 0.62 兆美元）。"
+       "英國的數字包含其他國家託管在倫敦的部位，不全是英國自己的。一國減持美債可能是為了護匯（賣美債換本幣）"
+       "或分散風險；增持則常伴隨貿易順差。",
        links=["flow"], related=["reserves"], class_note=True),
     _e("speculative_attack", "投機性攻擊", "Speculative attack", "fx",
        "釘住匯率的貨幣若外匯存底不夠，投機客大量放空它，央行賣存底護盤，存底見底就只能放手貶值。",
@@ -141,7 +142,7 @@ ENTRIES = [
        "2015 年 811 匯改是中間價機制的一次大改。",
        links=["cascade:cny815", "chains"], related=["hot_money"], class_note=True),
     _e("brexit", "英國脫歐與英鎊", "Brexit and the pound", "fx",
-       "2016-06-23 英國公投決定脫離歐盟，英鎊隔天重挫；之後英鎊與歐元的走勢不再同步。",
+       "2016-06-23 英國公投決定脫離歐盟，英鎊隔天對美元重挫，之後長期停在較低的水準。",
        "課堂建議看歐元時把英鎊一起放進來比較。本站目前還沒有英鎊序列。",
        links=["cascade:brexit", "cascade:ukbudget22"], related=["quote_convention"], class_note=True),
 
@@ -282,7 +283,7 @@ ENTRIES = [
        "冶煉非常耗電，電價與能源政策影響供給；基礎建設與汽車輕量化帶動需求。",
        links=["commodity"], related=["infrastructure"], class_note=True),
     _e("nickel", "鎳", "Nickel", "commodity",
-       "約三分之二用於不鏽鋼，其餘多用於電池；印尼供應全球過半。",
+       "約三分之二用於不鏽鋼，其餘為合金、電鍍與電池（電池占比還小，但成長最快）；印尼供應全球過半。",
        "2022-03 倫敦金屬交易所鎳價兩天內暴漲並暫停交易，是空頭被軋的極端案例。",
        related=["lithium", "infrastructure"], class_note=True),
     _e("lithium", "鋰", "Lithium", "commodity",
@@ -323,12 +324,12 @@ ENTRIES = [
        "用兩條線找出利率與產出的均衡：IS 是商品市場（利率越低、投資越多、產出越高），LM 是貨幣市場"
        "（產出越高、貨幣需求越大、利率越高）。",
        "財政政策移動 IS 線，貨幣政策移動 LM 線。陷入流動性陷阱時 LM 線在低利率處變平，央行再印錢也壓不低利率，"
-       "這時財政政策比貨幣政策有效——日本 1990 年代就是例子。（逐字稿的「希克斯底線模型」應是這個模型。）",
+       "這時財政政策比貨幣政策有效——日本 1990 年代就是例子。",
        related=["liquidity_trap", "deflation"], class_note=True),
     _e("liquidity_trap", "流動性陷阱", "Liquidity trap", "theory",
        "利率已降到接近零，民眾與銀行寧可持有現金，央行增加貨幣供給也刺激不了借貸與消費。",
        "日本 1990 年代後、美國與歐洲 2008 年後都出現過；央行因此改用量化寬鬆、前瞻指引，或需要財政支出接手。",
-       links=["cascade:boj89"], related=["islm", "qe", "deflation"], class_note=True),
+       related=["islm", "qe", "deflation", "lost_decades"], class_note=True),
     _e("deflation", "通貨緊縮", "Deflation", "theory",
        "物價全面、持續下跌。",
        "看似東西變便宜，但大家延後消費、企業延後投資；債務的實質負擔變重，形成惡性循環。"
@@ -339,10 +340,11 @@ ENTRIES = [
     _e("vix", "VIX 恐慌指數", "CBOE Volatility Index", "method",
        "用 S&P 500 選擇權價格推算的未來 30 天預期波動率（年化 %）。",
        "平常約 12–20，超過 30 代表市場緊張；2020-03-16 收盤 82.69 是歷史最高收盤。VIX 是跟著股市下跌一起飆高的，"
-       "比較像同步到落後的溫度計，而不是預告；股市大跌後 VIX 必然先飆後回落，所以本站訊號劇本把它列為觀察指標、不列入可投資標的。",
+       "比較像同步到落後的溫度計，而不是預告；股市大跌後 VIX 通常先飆後回落（但 2008、2022 都曾在高檔停留數月），"
+       "這種回落是機械性的，所以本站訊號劇本把它列為觀察指標、不列入可投資標的。",
        links=["vol", "playbook"], related=["leading_lagging"], class_note=True),
     _e("leading_lagging", "領先／同步／落後指標", "Leading / coincident / lagging indicators", "method",
-       "領先指標在景氣轉折前先動（新訂單、殖利率曲線）；同步指標同時動（工業生產）；落後指標事後才確認（失業率、VIX 的高點）。",
+       "領先指標在景氣轉折前先動（新訂單、殖利率曲線）；同步指標同時動（工業生產）；落後指標事後才確認（失業率、企業倒閉數）。",
        "判斷「現在該做什麼」要靠領先指標；落後指標用來確認、不適合用來進出場。本站「30 年關聯」有各組配對的領先落後月數。",
        links=["research"], related=["vix", "inversion"], class_note=True),
     _e("log_return", "對數報酬", "Log return", "method",
@@ -359,7 +361,7 @@ ENTRIES = [
        links=["cascade"], related=["baseline"]),
     _e("baseline", "無條件基準（平常）", "Unconditional baseline", "method",
        "不管有沒有事件，這個標的任意一天起算同樣天數的中位數與上漲機率。",
-       "S&P 500 平常一個月就有約六成機率上漲。事件後的數字一定要跟「平常」比，否則長期上漲的資產在任何事件後都像有「錢流入」。",
+       "S&P 500 平常一個月就有約 64% 的機率上漲。事件後的數字一定要跟「平常」比，否則長期上漲的資產在任何事件後都像有「錢流入」。",
        links=["cascade", "playbook"], related=["excess", "pvalue"]),
     _e("excess", "超額", "Excess over baseline", "method",
        "事件後的中位數 − 平常的中位數。",
@@ -372,7 +374,8 @@ ENTRIES = [
     _e("fdr", "偽發現率／多重檢定", "False discovery rate", "method",
        "所有「通過」的結果裡，估計有多少比例其實是運氣。",
        "本站做法是虛無校準：把事件日期隨機移位、整套重跑，看假事件也有幾格通過，當作運氣預期。"
-       "事件衝擊的分類比較約三分之二、訊號劇本約一半是運氣——這是用來提醒不要過度解讀單一格子。",
+       "目前事件衝擊的分類比較約三分之二、訊號劇本約四成多是運氣（數字隨資料更新，以各分頁顯示為準）——"
+       "這是用來提醒不要過度解讀單一格子。",
        links=["playbook", "cascade"], related=["pvalue"]),
     _e("proxy", "代理序列", "Proxy series", "method",
        "原標的還沒有資料的年代，用性質相近的序列代替（例：1999 年以前用 Fidelity 能源基金代替能源股 ETF）。",
