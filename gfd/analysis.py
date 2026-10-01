@@ -395,6 +395,59 @@ def reserves_ca(g, annual):
     return res, ca
 
 
+def reserves_table(annual, tic_blk):
+    """GDP 前十大國家＋台灣：外匯存底、可支應進口月數、存底／GDP、持有美債與其占存底比例。
+    1997 年的教訓：存底不足（常用門檻＝三個月進口）又釘住匯率的國家最容易被攻擊；
+    浮動匯率的準備貨幣國（美、英、加）存底本來就少，門檻對它們意義不大，表上照列但註明。"""
+    if not annual:
+        return None
+    res, months, gdp = (annual.get(k) or {} for k in ("reserves", "reserves_months", "gdp"))
+    holders = {h["key"]: h for h in (tic_blk or {}).get("holders", [])}
+
+    def latest(d):
+        if not d:
+            return None, None
+        y = max(d)
+        return y, d[y]
+
+    rows = []
+    for rank, (code, name) in enumerate(C.RESERVE_COUNTRIES, start=1):
+        ry, rv = latest(res.get(code))
+        prev = (res.get(code) or {}).get(str(int(ry) - 1)) if ry else None
+        my, mv = latest(months.get(code))
+        gy, gv = latest(gdp.get(code))
+        same_year = (gdp.get(code) or {}).get(ry) if ry else None
+        h = holders.get(C.RESERVE_TIC_KEY.get(code))
+        rows.append(dict(code=code, name=name, rank=rank,
+                         reserves=num(rv / 1e9, 1) if rv else None, reserves_year=ry,
+                         c12=num((rv - prev) / 1e9, 1) if rv and prev else None,
+                         c12_pct=num(100 * (rv - prev) / prev, 1) if rv and prev else None,
+                         months=num(mv, 1) if mv is not None else None, months_year=my,
+                         gdp=num(gv / 1e9, 0) if gv else None, gdp_year=gy,
+                         res_gdp=num(100 * rv / same_year, 1) if rv and same_year else None,
+                         ust=h["latest"] if h else None, ust_at=h["latest_at"] if h else None,
+                         ust_pct=num(100 * h["latest"] / (rv / 1e9), 0) if h and h.get("latest") and rv else None,
+                         low_cover=bool(mv is not None and mv < C.RESERVE_IMPORT_MONTHS_MIN),
+                         reserve_currency=code in ("USA", "GBR", "CAN")))
+    tw = annual.get("tw_reserves") or {}
+    if tw:
+        last = max(tw)
+        prev = f"{int(last[:4]) - 1}{last[4:]}"
+        h = holders.get("taiwan")
+        rv = tw[last] / 1000
+        rows.append(dict(code="TWN", name="台灣", rank=None, reserves=num(rv, 1), reserves_year=last,
+                         c12=num((tw[last] - tw[prev]) / 1000, 1) if prev in tw else None,
+                         c12_pct=num(100 * (tw[last] - tw[prev]) / tw[prev], 1) if prev in tw else None,
+                         months=None, months_year=None, gdp=None, gdp_year=None, res_gdp=None,
+                         ust=h["latest"] if h else None, ust_at=h["latest_at"] if h else None,
+                         ust_pct=num(100 * h["latest"] / rv, 0) if h and h.get("latest") else None,
+                         low_cover=False, reserve_currency=False))
+    return dict(rows=rows, months_min=C.RESERVE_IMPORT_MONTHS_MIN,
+                note="存底與 GDP：世界銀行年資料（存底含黃金），十億美元；台灣存底：央行月資料（不含黃金）。"
+                     "進口月數＝存底可支付幾個月的商品與服務進口（世界銀行）。美債持有：美國財政部 TIC 月底數，"
+                     "含該國官方與民間所有持有者，英國等託管中心的數字含替他國保管的部位，所以「占存底」可能超過 100%。")
+
+
 def tic(annual):
     data = (annual or {}).get("tic") or {}
     allm = sorted({m for v in data.values() for m in v})
@@ -514,6 +567,8 @@ def run(log=print):
     annual = _load("annual.json", {})
     res, ca = reserves_ca(g, annual)
     tic_blk = tic(annual)
+    if res:
+        res["table"] = reserves_table(annual, tic_blk)
     chain_block, chain_findings = CH.build(g, series, g.months, log=log)
     play = PB.build(g, series, g.months, log=log)
     for t in [x for x in play["triggers"] if x["active"]][:6]:
@@ -531,6 +586,7 @@ def run(log=print):
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
         months=g.months, complete_end=g.months[g.end],
+        observe=C.OBSERVE_REASONS,
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),

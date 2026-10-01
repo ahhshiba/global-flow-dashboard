@@ -22,6 +22,7 @@
   --band: rgba(43, 63, 143, 0.07);
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
   --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+  --s9: #7a5c00; --s10: #0b8a9c; --s11: #9c4dcc; --s12: #6b7280;
   --div-neg: #2a78d6; --div-mid: #f0efec; --div-pos: #e34948;
   --shadow: 0 6px 24px rgba(20, 24, 38, 0.12);
   --f-body: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
@@ -38,6 +39,7 @@
     --band: rgba(147, 166, 242, 0.08);
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
     --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    --s9: #c9a227; --s10: #3cc0d3; --s11: #c58cf0; --s12: #9aa3b5;
     --div-neg: #3987e5; --div-mid: #383835; --div-pos: #e66767;
     --shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
@@ -51,6 +53,7 @@
   --band: rgba(147, 166, 242, 0.08);
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
   --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  --s9: #c9a227; --s10: #3cc0d3; --s11: #c58cf0; --s12: #9aa3b5;
   --div-neg: #3987e5; --div-mid: #383835; --div-pos: #e66767;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
@@ -366,3 +369,8 @@ table.data tr.sel td { background: var(--accent-soft); }
 .gl-flash { animation: gl-flash 1.2s ease-out; }
 @keyframes gl-flash { 0% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (prefers-reduced-motion: reduce) { .gl-flash { animation: none; } }
+.k-watch { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 3px; font-size: 10.5px; vertical-align: 1px;
+  background: var(--warn-soft); color: var(--warn-ink); cursor: help; }
+.bar-track.mono::before { display: none; }
+.bar-track.mono .bar-fill.pos, .bar-track.mono .bar-fill.neg { left: 0; right: auto; }
+.bar-ref { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--down); opacity: .85; }

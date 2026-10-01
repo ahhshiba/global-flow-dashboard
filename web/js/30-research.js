@@ -93,7 +93,8 @@ TABS.flow = (root, redo) => {
     const holders = T.holders.filter((x) => x.key !== "grand total");
     g.append(xCard({ key: "flow-tic", title: "主要外國持有美債（十億美元）", span: 7, xs, labels: T.months, rangeAware: true, xName: "月份", height: 280,
       sub: "月底持有量存量及其變化；存量變動可能包含估值等影響，不能直接視為跨境淨買賣流量。", note: `資料：美國財政部 TIC，2000 年起，月底持有量（含官方與民間）；資料期間至 ${T.months[T.months.length - 1] || "未提供"}。`,
-      series: holders.map((x, i) => ({ key: x.key, name: x.name, color: `var(--s${i + 1})`, values: x.values, fmt: (v) => (fin(v) ? fmtNum(v, 1) + " B" : "—") })) }));
+      series: holders.slice().sort((a, b) => (b.latest || 0) - (a.latest || 0)).slice(0, 8)
+        .map((x, i) => ({ key: x.key, name: x.name, color: `var(--s${i + 1})`, values: x.values, fmt: (v) => (fin(v) ? fmtNum(v, 1) + " B" : "—") })) }));
     const tc = card({ title: "持有量與 12 個月變化", span: 5, sub: `截至 ${T.holders[0].latest_at}（十億美元）` });
     tc.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
       h("thead", {}, h("tr", {}, h("th", {}, "國家/地區"), h("th", { class: "n" }, "持有"), h("th", { class: "n" }, "12 個月"), h("th", { class: "n" }, "占外國合計"))),
@@ -108,6 +109,7 @@ TABS.flow = (root, redo) => {
     g.append(xCard({ key: "flow-ca", title: "經常帳餘額（十億美元）", span: 12, xs: CA.years, labels: CA.years.map(String), rangeAware: true, xName: "年度", height: 260,
       sub: "期間內商品、服務、初次所得與二次所得的收支餘額；不是金融帳或證券投資淨流量。", note: "世界銀行年資料；各國最新非空年份見圖表，缺值不等於零。台灣不在世界銀行資料庫中，見總覽的資料缺口。",
       refs: [{ y: 0 }], series: CA.countries.map((c, i) => ({ key: c.code, name: c.name, color: `var(--s${i + 1})`, values: c.values, fmt: (v) => (fin(v) ? fmtNum(v, 0) + " B" : "—") })) }));
+    // 十國經常帳：線圖的圖例可以點掉，顏色到 --s12
   }
   if (A.company_cf) g.append(cfCard(A.company_cf));
 };

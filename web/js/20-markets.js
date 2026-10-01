@@ -151,10 +151,48 @@ TABS.overview = (root, redo) => {
   g.append(gap.el);
 };
 
+/* 外匯存底總表：GDP 前十大＋台灣（2026-10-01 課堂的作業：存底、進口月數、持有美債比例） */
+function reservesTableCard(T) {
+  const c = card({ title: "外匯存底總表：GDP 前十大國家＋台灣", span: 12,
+    sub: `依世界銀行 2024 年名目 GDP 排序。「進口月數」低於 ${T.months_min} 個月是 1997 年亞洲金融風暴後常用的警戒線——`
+      + "但它是給釘住匯率、靠外債的國家用的；美、英、加是浮動匯率的準備貨幣國，存底本來就少，對它們不適用。",
+    note: T.note });
+  const head = ["GDP 排名", "國家", "外匯存底", "一年變化", "可支應進口", "存底／GDP", "持有美債", "美債／存底"];
+  const rows = T.rows.map((r) => h("tr", {},
+    h("td", { class: "n muted" }, r.rank ? `#${r.rank}` : "—"),
+    h("td", {}, r.name, r.reserve_currency ? h("span", { class: "sub" }, "準備貨幣國，門檻不適用") : null),
+    h("td", { class: "n" }, fin(r.reserves) ? fmtNum(r.reserves, 0) : "—", h("span", { class: "sub" }, r.reserves_year || "")),
+    h("td", { class: "n" }, fin(r.c12) ? h("span", { class: dirClass(r.c12) }, fmtSigned(r.c12, 0)) : "—",
+      fin(r.c12_pct) ? h("span", { class: "sub" }, fmtSigned(r.c12_pct, 1, "%")) : null),
+    h("td", { class: "n" }, fin(r.months) ? `${r.months.toFixed(1)} 個月` : "—",
+      r.low_cover && !r.reserve_currency ? h("span", { class: "pill pill-warn", style: "margin-left:6px" }, `不到 ${T.months_min} 個月`) : null,
+      r.months_year ? h("span", { class: "sub" }, r.months_year) : null),
+    h("td", { class: "n" }, fin(r.res_gdp) ? `${r.res_gdp.toFixed(1)}%` : "—"),
+    h("td", { class: "n" }, fin(r.ust) ? fmtNum(r.ust, 0) : "—", r.ust_at ? h("span", { class: "sub" }, r.ust_at) : null),
+    h("td", { class: "n" }, fin(r.ust_pct) ? `${r.ust_pct}%` : "—",
+      fin(r.ust_pct) && r.ust_pct > 100 ? h("span", { class: "sub" }, "含民間與託管部位") : null)));
+  c.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
+    h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))), h("tbody", {}, rows))));
+  const bars = T.rows.filter((r) => fin(r.months)).map((r) => ({ label: r.name, v: r.months }));
+  c.body.append(h("h4", { class: "sub-h" }, `可支應進口月數（紅線＝${T.months_min} 個月）`), monthsBars(bars, T.months_min));
+  return c.el;
+}
+/* 單向橫條（進口月數），帶一條門檻線 */
+function monthsBars(rows, min) {
+  const max = Math.max(min * 1.2, ...rows.map((r) => r.v));
+  return h("div", { class: "bars" }, rows.map((r) => h("div", { class: "bar-row" },
+    h("span", {}, r.label),
+    h("div", { class: "bar-track mono", role: "img", "aria-label": `${r.label} ${r.v.toFixed(1)} 個月` },
+      h("div", { class: `bar-fill ${r.v < min ? "neg" : "pos"}`, style: `width:${(r.v / max) * 100}%` }),
+      h("i", { class: "bar-ref", style: `left:${(min / max) * 100}%` })),
+    h("span", { class: `n ${r.v < min ? "down" : ""}` }, `${r.v.toFixed(1)} 個月`))));
+}
+
 /* ── 匯市 ── */
 TABS.fx = (root, redo) => {
   root.replaceChildren(tabHead("匯市：美元、人民幣、日圓、新台幣、歐元",
-    "以「美元/該貨幣」報價時，線往上代表該貨幣貶值；歐元/美元相反。匯率不是資金流量。30 年匯率取自台灣央行月均值，美元指數為月底值。", true, redo));
+    "以「美元/該貨幣」報價時，線往上代表該貨幣貶值；歐元/美元相反。匯率不是資金流量。30 年匯率取自台灣央行月均值，美元指數為月底值。"
+    + "人民幣中間價由政策引導，本站只當觀察指標、不列入可投資標的。", true, redo));
   const g = h("div", { class: "grid" });
   root.append(g);
   const f = findingsCard("fx");
@@ -168,10 +206,14 @@ TABS.fx = (root, redo) => {
   const R = A.reserves;
   if (R) {
     const fmtB = (v) => (fin(v) ? fmtNum(v, 0) + " B" : "—");
-    const series = R.countries.map((c, i) => ({ key: c.code, name: c.name, color: `var(--s${i + 1})`, values: c.values, fmt: fmtB }));
-    series.push({ key: "TWN", name: "台灣", color: "var(--s6)", values: R.tw_annual, fmt: fmtB });
-    g.append(xCard({ key: "fx-reserves", title: "各國外匯存底（十億美元）", span: 7, xs: R.years, labels: R.years.map(String), rangeAware: true, series, xName: "年度",
-      sub: "年底值。", note: "中、日、美、歐元區、香港：世界銀行（含黃金）；台灣：中央銀行（不含黃金）。口徑不同，請比較趨勢而非絕對值。" }));
+    if (R.table) g.append(reservesTableCard(R.table));
+    // 線圖只畫存底最大的六國＋台灣，十國全畫會糊成一團；全部數字都在上面的表
+    const latestOf = (c) => { for (let i = c.values.length - 1; i >= 0; i--) if (fin(c.values[i])) return c.values[i]; return -1; };
+    const top = R.countries.slice().sort((a, b) => latestOf(b) - latestOf(a)).slice(0, 6);
+    const series = top.map((c, i) => ({ key: c.code, name: c.name, color: `var(--s${i + 1})`, values: c.values, fmt: fmtB }));
+    series.push({ key: "TWN", name: "台灣", color: "var(--s7)", values: R.tw_annual, fmt: fmtB });
+    g.append(xCard({ key: "fx-reserves", title: "外匯存底走勢：存底最大的六國＋台灣（十億美元）", span: 7, xs: R.years, labels: R.years.map(String), rangeAware: true, series, xName: "年度",
+      sub: "年底值。", note: "世界銀行（含黃金）；台灣：中央銀行（不含黃金）。口徑不同，請比較趨勢而非絕對值。" }));
     const tw = R.tw_latest;
     g.append(chartCard({
       key: "fx-tw-reserves", title: "台灣外匯存底（月資料）", span: 5, height: 240, area: true,

@@ -9,13 +9,17 @@ function pbConflictBadge(r) {
   const c = pbConflictOf(r);
   return c ? h("span", { class: "qnote", style: "background:var(--warn-soft);color:var(--warn-ink)", title: c }, "⚠ 與假說相反") : null;
 }
+function pbWatchText(sid) {
+  const w = (A.observe || {})[sid];
+  return w && w.kind === "managed" ? "人為管理的價格，不建議操作" : "觀察指標，不能直接買";
+}
 function pbRows(rows, showFlag) {
   const head = ["資產", "期間", "事件後中位數", "平常", "超額", "上漲比例", "最糟一次", "前半／後半", "p", "n"];
   return h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
     h("thead", {}, h("tr", {}, head.map((t, i) => h("th", { class: i ? "n" : null }, t)))),
     h("tbody", {}, rows.map((r) => h("tr", { class: r.robust ? "sel" : null },
       h("td", {}, r.name, r.robust && showFlag ? h("span", { class: "qnote" }, "通過檢驗") : null, pbConflictBadge(r),
-        !r.investable ? h("span", { class: "sub" }, "觀察指標，不能直接買") : null),
+        !r.investable ? h("span", { class: "sub", title: ((A.observe || {})[r.sid] || {}).text }, pbWatchText(r.sid)) : null),
       h("td", { class: "n" }, `${r.horizon} 個月`),
       h("td", { class: "n" }, h("span", { class: dirClass(r.median) }, pbNum(r.median, r.unit))),
       h("td", { class: "n muted" }, pbNum(r.base, r.unit)),
@@ -145,7 +149,8 @@ TABS.playbook = (root) => {
   rc.body.append(h("h4", { class: "sub-h" }, "事件後表現優於自己平常（超額為正）"), mkList(up),
     h("h4", { class: "sub-h" }, "事件後表現劣於自己平常（超額為負，通常是該避開或反手的方向）"), mkList(down));
   if (P.robust_observe && P.robust_observe.length) {
-    rc.body.append(h("details", { style: "margin-top:10px" }, h("summary", {}, `另有 ${P.robust_observe.length} 組落在觀察指標（VIX、殖利率、利差）——反應多半是機械性的，不能直接當部位`),
+    const kinds = [...new Set(Object.values(A.observe || {}).map((w) => w.short))].join("、");
+    rc.body.append(h("details", { style: "margin-top:10px" }, h("summary", {}, `另有 ${P.robust_observe.length} 組落在觀察指標（${kinds}）——VIX、殖利率、利差的反應多半是機械性的，人民幣是政策引導的價格；都不能直接當部位`),
       mkList(P.robust_observe.slice(0, 10))));
   }
   g.append(rc.el);

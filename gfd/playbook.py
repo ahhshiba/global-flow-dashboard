@@ -134,6 +134,7 @@ def _asset_row(sid, series, starts, F, col, end, split_idx, p):
     big = abs(lift) >= (10.0 if unit == "bp" else 1.0)
     return dict(sid=sid, name=series[sid]["name"], unit=unit, n=ev["n"], big=bool(big), robust=False,
                 investable=sid not in C.PLAYBOOK_OBSERVE_ONLY,
+                watch=C.OBSERVE_REASONS.get(sid, {}).get("kind"),
                 median=ev["median"], base=base["median"], lift=CH.r(lift), hit=ev["hit"],
                 worst=ev["worst"], p10=ev["p10"], p=CH.r(float(p), 3) if p is not None and np.isfinite(p) else None,
                 early=CH.r(med_early), late=CH.r(med_late), agree=bool(agree))

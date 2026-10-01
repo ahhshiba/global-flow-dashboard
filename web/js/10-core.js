@@ -595,6 +595,12 @@ function yearChange(sid, L) {
   return L.rate ? (L.value - v[j]) * 100 : (L.value / v[j] - 1) * 100;
 }
 
+/* 只當觀察指標的序列（config OBSERVE_REASONS）：KPI 卡片上標出來，滑過看原因 */
+function watchBadge(sid) {
+  const w = (A.observe || {})[sid];
+  if (!w) return null;
+  return h("span", { class: "k-watch", title: w.text }, w.kind === "managed" ? "觀察用・不建議操作" : "觀察用");
+}
 function kpi(sid, name) {
   const s = A.series[sid];
   if (!s || !s.stats) return h("div", { class: "kpi" }, h("div", { class: "k-name" }, name || sid), h("div", { class: "k-val muted" }, "—"));
@@ -606,7 +612,7 @@ function kpi(sid, name) {
     const unit = isY ? "%" : ["點", "指數", "比值"].includes(s.unit) ? "" : s.unit;
     const d = (v) => (isY ? chg(v, 0, "bp") : chg(v, 1, "%"));
     return h("div", { class: "kpi" },
-      h("div", { class: "k-name", title: s.note }, name || s.name),
+      h("div", { class: "k-name", title: s.note }, name || s.name, watchBadge(sid)),
       h("div", { class: "k-val" }, isY ? fmtNum(st.value, 2) : fmtNum(st.value), unit ? h("span", { class: "k-unit" }, unit) : null),
       h("div", { class: "k-d" }, h("span", {}, h("span", { class: "muted" }, "1月 "), d(st.c1)), h("span", {}, h("span", { class: "muted" }, "12月 "), d(st.c12))),
       sparkline(s.values.slice(-37), { color: "var(--accent)" }),
@@ -618,7 +624,7 @@ function kpi(sid, name) {
   const unitText = ["點", "指數", "比值", "2010=100"].includes(L.unit) ? "" : L.unit;
   const yc = yearChange(sid, L);
   return h("div", { class: "kpi" },
-    h("div", { class: "k-name", title: `${s.note}；最新收盤來源：${L.src}` }, name || s.name),
+    h("div", { class: "k-name", title: `${s.note}；最新收盤來源：${L.src}` }, name || s.name, watchBadge(sid)),
     h("div", { class: "k-val" }, valText, unitText ? h("span", { class: "k-unit" }, unitText) : null),
     h("div", { class: "k-d" },
       h("span", {}, h("span", { class: "muted" }, "日 "), rate ? chg(L.dayChg, 1, "bp") : chg(L.dayChg, 2, "%")),
