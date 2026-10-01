@@ -74,7 +74,6 @@ WRAPPER = """<!doctype html>
 <body>
 <form id="f" autocomplete="off">
   <h1>資金流向觀測台</h1>
-  <p>這個網站需要密碼。內容在你的瀏覽器裡解密，網站上只放密文。</p>
   <input id="pw" type="password" placeholder="密碼" autofocus required aria-label="密碼">
   <button id="go" type="submit">進入</button>
   <div class="err" id="err" role="alert"></div>
