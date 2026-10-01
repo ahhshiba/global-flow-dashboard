@@ -1,133 +1,90 @@
-"""公開版的密碼門（2026-10-01 課堂：網站要有一層簡單的防護）。
+"""公開版的登入頁（2026-10-01 課堂：網站要有一層簡單的登入；2026-10-02 使用者：只要形式上的登入頁，不用加密）。
 
-GitHub Pages 只能放靜態檔，所以「登入」做不到伺服器端驗證。這裡把整個頁面用密碼加密後才發佈：
-瀏覽器輸入密碼 → PBKDF2 導出金鑰 → AES-256-GCM 解密 → gzip 解壓 → 顯示頁面。新部署的 gh-pages 上只有密文，
-搜尋引擎也看不到內容。限制要講清楚：
-- 密文是公開的，可以離線一直猜密碼；短密碼（例如 123）幾秒就猜得到。PBKDF2 次數只是讓每次猜慢一點，
-  對 3 個字元的密碼沒有實質差別，所以用 10 萬次（2026-10-02 由 30 萬次調低：慢的電腦按下「進入」後要等太久）。
-  這道門擋的是路人與搜尋引擎，不是有心人。
-- 解開後密碼存在該分頁的 sessionStorage（重新整理不用再輸入），關掉分頁就清掉。
-- 2026-10-01 以前部署過的明文版本，GitHub 可能仍以 commit 雜湊保留一段時間，也可能被快取或轉存。
+做法：公開版照舊是完整的明文頁面，最上層蓋一張全螢幕的登入頁，輸入正確密碼才拿掉。
+這是形式上的一道門，擋的是路過的人，不是防護——看原始碼或停用 JavaScript 就看得到內容。
+頁面裡只放密碼的簡單雜湊（FNV-1a），不放明文密碼；同一個分頁登入過，重新整理不用再輸入（sessionStorage）。
 
-密碼從環境變數 GFD_PUBLIC_PASSWORD 或 data/public_password.txt 讀（data/ 不進版控）。沒有密碼時 build --public
-預設拒絕產出（不會悄悄發佈明文）；真的要發佈明文版，設 GFD_ALLOW_PLAINTEXT=1。
-需要 `cryptography`（Ubuntu 的 python3-cryptography 套件已內建）。
+密碼從環境變數 GFD_PUBLIC_PASSWORD 或 data/public_password.txt 讀（data/ 不進版控），都沒有就用 123。
 """
-import base64
-import gzip
-import hashlib
-import json
 import os
 import pathlib
-import secrets
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PASSWORD_FILE = ROOT / "data" / "public_password.txt"
-ITERATIONS = 100_000
+DEFAULT_PASSWORD = "123"
 
 
 def password():
     pw = os.environ.get("GFD_PUBLIC_PASSWORD")
-    if pw:
+    if pw and pw.strip():
         return pw.strip()
     if PASSWORD_FILE.exists():
-        return PASSWORD_FILE.read_text(encoding="utf-8").strip() or None
-    return None
+        pw = PASSWORD_FILE.read_text(encoding="utf-8").strip()
+        if pw:
+            return pw
+    return DEFAULT_PASSWORD
 
 
-def allow_plaintext():
-    return os.environ.get("GFD_ALLOW_PLAINTEXT") == "1"
+def fnv1a(text):
+    """32 位元 FNV-1a，逐個 UTF-16 碼元計算（和頁面上 JS 的 charCodeAt 一致）。不是加密，只是不把密碼原樣寫進頁面。"""
+    data = text.encode("utf-16-le")
+    h = 0x811C9DC5
+    for i in range(0, len(data), 2):
+        h ^= data[i] | (data[i + 1] << 8)
+        h = (h * 0x01000193) & 0xFFFFFFFF
+    return f"{h:08x}"
 
 
-def encrypt(html, pw):
-    """整頁 HTML → gzip → AES-GCM 密文（base64）＋鹽、IV。先壓縮：密文無法再壓縮，壓縮後頁面約小四倍。"""
-    try:
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    except ImportError as e:  # 沒裝就明講，不要讓排程只看到 traceback
-        raise SystemExit("公開版加密需要 cryptography 套件（sudo apt install python3-cryptography）") from e
-    salt, iv = secrets.token_bytes(16), secrets.token_bytes(12)
-    key = hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt, ITERATIONS, dklen=32)
-    ct = AESGCM(key).encrypt(iv, gzip.compress(html.encode("utf-8"), compresslevel=9, mtime=0), None)
-    return dict(salt=base64.b64encode(salt).decode(), iv=base64.b64encode(iv).decode(),
-                data=base64.b64encode(ct).decode(), iter=ITERATIONS, z="gzip")
-
-
-WRAPPER = """<!doctype html>
-<html lang="zh-Hant">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>資金流向觀測台</title>
+LOGIN = """<div id="gfd-login" role="dialog" aria-modal="true" aria-labelledby="gfd-login-title">
 <style>
-  :root { --bg: #f5f6fa; --fg: #1d2130; --muted: #7d8497; --accent: #2b3f8f; --line: #c5cad6; --err: #b3261e; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #0d0f16; --fg: #e9ebf2; --muted: #7e8497; --accent: #93a6f2; --line: #383d51; --err: #ff8a80; } }
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--fg);
-    font: 15px/1.6 -apple-system, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; padding: 16px; box-sizing: border-box; }
-  form { width: min(360px, 100%); display: flex; flex-direction: column; gap: 10px; }
-  h1 { font-size: 20px; margin: 0; } p { margin: 0; color: var(--muted); font-size: 13px; }
-  input { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg); }
-  button { font: inherit; padding: 9px 12px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
-  button[disabled] { opacity: .6; cursor: wait; }
-  .err { color: var(--err); font-size: 13px; min-height: 1.4em; }
+  html.gfd-locked { overflow: hidden; }
+  #gfd-login { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 16px;
+    background: var(--ground, #f5f6fa); color: var(--ink, #1d2130); }
+  html:not(.gfd-locked) #gfd-login { display: none; }
+  #gfd-login form { width: min(340px, 100%); display: flex; flex-direction: column; gap: 10px; }
+  #gfd-login h1 { font-size: 20px; margin: 0 0 4px; }
+  #gfd-login input { font: inherit; font-size: 15px; padding: 9px 12px; border: 1px solid var(--line-strong, #c5cad6);
+    border-radius: 6px; background: var(--surface, #fff); color: inherit; }
+  #gfd-login button { font: inherit; font-size: 15px; padding: 9px 12px; border: 0; border-radius: 6px; cursor: pointer;
+    background: var(--accent, #2b3f8f); color: var(--on-accent, #fff); }
+  #gfd-login .err { color: var(--down, #b3261e); font-size: 13px; min-height: 1.4em; }
 </style>
-</head>
-<body>
-<form id="f" autocomplete="off">
-  <h1>資金流向觀測台</h1>
-  <input id="pw" type="password" placeholder="密碼" autofocus required aria-label="密碼">
-  <button id="go" type="submit">進入</button>
-  <div class="err" id="err" role="alert"></div>
+<form id="gfd-login-form" autocomplete="off">
+  <h1 id="gfd-login-title">資金流向觀測台</h1>
+  <input id="gfd-login-pw" type="password" placeholder="密碼" aria-label="密碼" required>
+  <button type="submit">進入</button>
+  <div class="err" id="gfd-login-err" role="alert"></div>
 </form>
-<script id="payload" type="application/json">__PAYLOAD__</script>
 <script>
 (function () {
-  const P = JSON.parse(document.getElementById("payload").textContent);
-  // 逐字迴圈解 base64：Uint8Array.from(atob(s), fn) 在 2 MB 的密文上慢一百倍（Node 實測 186 ms vs 2 ms）
-  const b64 = (s) => { const bin = atob(s), out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; };
-  const form = document.getElementById("f"), pw = document.getElementById("pw"), err = document.getElementById("err"), go = document.getElementById("go");
-  // 讓按鈕上的進度字先畫出來，再做會卡住畫面的工作（背景分頁沒有 requestAnimationFrame，所以加計時器保底）
-  const paint = () => new Promise((r) => { let done = false; const f = () => { if (!done) { done = true; setTimeout(r, 0); } }; requestAnimationFrame(f); setTimeout(f, 60); });
-  const label = (t) => { go.textContent = t; };
-  async function open(password) {
-    if (!window.crypto || !crypto.subtle) throw new Error("no-subtle");   // 非 HTTPS 或太舊的瀏覽器沒有 WebCrypto
-    go.disabled = true; label("解密中…"); await paint();
-    const enc = new TextEncoder();
-    const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
-    const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(P.salt), iterations: P.iter, hash: "SHA-256" },
-      base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(P.iv) }, key, b64(P.data));
-    let html;
-    if (P.z === "gzip") {
-      if (typeof DecompressionStream !== "function") throw new Error("old-browser");
-      const stream = new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"));
-      html = await new Response(stream).text();
+  var HASH = "__HASH__", KEY = "gfd:login";
+  function fnv1a(s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ("0000000" + h.toString(16)).slice(-8); }
+  var root = document.documentElement, ok = false;
+  try { ok = sessionStorage.getItem(KEY) === HASH; } catch (e) { /* 無痕視窗等：每次都要輸入 */ }
+  if (!ok) root.classList.add("gfd-locked");
+  var form = document.getElementById("gfd-login-form"), pw = document.getElementById("gfd-login-pw"), err = document.getElementById("gfd-login-err");
+  if (!ok) setTimeout(function () { pw.focus(); }, 0);
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (fnv1a(pw.value) === HASH) {
+      try { sessionStorage.setItem(KEY, HASH); } catch (ex) { /* 略過 */ }
+      root.classList.remove("gfd-locked");
+      // 圖表在登入頁後面已經畫好；拿掉遮罩後觸發一次 resize，讓依寬度繪製的圖表重算
+      window.dispatchEvent(new Event("resize"));
     } else {
-      html = new TextDecoder().decode(plain);
-    }
-    try { sessionStorage.setItem("gfd:pw", password); } catch (e) { /* 無痕視窗 */ }
-    label("載入中…"); await paint();             // 接下來解析整頁，慢的電腦要一兩秒
-    document.open(); document.write(html); document.close();
-  }
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault(); err.textContent = "";
-    try { await open(pw.value); } catch (ex) {
-      label("進入");
-      err.textContent = ex && ex.message === "old-browser" ? "這個瀏覽器太舊，無法解壓縮頁面；請更新瀏覽器。"
-        : ex && ex.message === "no-subtle" ? "這個瀏覽器不能解密（需要 HTTPS 網址與較新的瀏覽器）。" : "密碼不對。";
-      go.disabled = false; pw.select();
+      err.textContent = "密碼不對。";
+      pw.select();
     }
   });
-  // 同一個分頁重新整理不用再輸入
-  let saved = null; try { saved = sessionStorage.getItem("gfd:pw"); } catch (e) { /* 略過 */ }
-  if (saved) open(saved).catch(() => { label("進入"); go.disabled = false; try { sessionStorage.removeItem("gfd:pw"); } catch (e) { /* 略過 */ } });
 })();
 </script>
-</body>
-</html>
+</div>
 """
 
 
 def wrap(html, pw):
-    payload = json.dumps(encrypt(html, pw), separators=(",", ":")).replace("</", "<\\/")
-    return WRAPPER.replace("__PAYLOAD__", payload, 1)
+    """在 <body> 一開頭插入登入頁（在儀表板內容之前，避免內容先閃出來）。"""
+    marker = "<body>\n"
+    if html.count(marker) != 1:
+        raise SystemExit("公開版頁面找不到唯一的 <body> 起點，無法插入登入頁")
+    return html.replace(marker, marker + LOGIN.replace("__HASH__", fnv1a(pw)), 1)

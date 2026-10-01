@@ -58,17 +58,8 @@ def run(log=print, public=False):
     if public:
         from . import gate
         OUT_PUBLIC.parent.mkdir(parents=True, exist_ok=True)
-        pw = gate.password()
-        if pw:
-            _write(OUT_PUBLIC, gate.wrap(full, pw))
-            log(f"[build] 公開版 {OUT_PUBLIC}（{OUT_PUBLIC.stat().st_size / 1024:.0f} KB，已用密碼加密；新聞不含摘要）")
-        elif gate.allow_plaintext():
-            _write(OUT_PUBLIC, full)
-            log(f"[build] 公開版 {OUT_PUBLIC}（{OUT_PUBLIC.stat().st_size / 1024:.0f} KB，未加密：GFD_ALLOW_PLAINTEXT=1；新聞不含摘要）")
-        else:
-            # 預設拒絕：沒有密碼就不產出公開版，排程的部署步驟會因此停下，不會悄悄發佈明文
-            raise SystemExit("公開版需要密碼：設定環境變數 GFD_PUBLIC_PASSWORD 或 data/public_password.txt；"
-                             "真的要發佈明文版請設 GFD_ALLOW_PLAINTEXT=1")
+        _write(OUT_PUBLIC, gate.wrap(full, gate.password()))
+        log(f"[build] 公開版 {OUT_PUBLIC}（{OUT_PUBLIC.stat().st_size / 1024:.0f} KB，前面有登入頁；新聞不含摘要）")
         return OUT_PUBLIC
     _write(OUT, full)
     _write(OUT_ARTIFACT, body)
