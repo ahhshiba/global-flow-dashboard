@@ -86,6 +86,7 @@ WRAPPER = """<!doctype html>
   const b64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
   const form = document.getElementById("f"), pw = document.getElementById("pw"), err = document.getElementById("err"), go = document.getElementById("go");
   async function open(password) {
+    if (!window.crypto || !crypto.subtle) throw new Error("no-subtle");   // 非 HTTPS 或太舊的瀏覽器沒有 WebCrypto
     const enc = new TextEncoder();
     const base = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
     const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(P.salt), iterations: P.iter, hash: "SHA-256" },
@@ -105,7 +106,8 @@ WRAPPER = """<!doctype html>
   form.addEventListener("submit", async (e) => {
     e.preventDefault(); err.textContent = ""; go.disabled = true;
     try { await open(pw.value); } catch (ex) {
-      err.textContent = ex && ex.message === "old-browser" ? "這個瀏覽器太舊，無法解壓縮頁面；請更新瀏覽器。" : "密碼不對。";
+      err.textContent = ex && ex.message === "old-browser" ? "這個瀏覽器太舊，無法解壓縮頁面；請更新瀏覽器。"
+        : ex && ex.message === "no-subtle" ? "這個瀏覽器不能解密（需要 HTTPS 網址與較新的瀏覽器）。" : "密碼不對。";
       go.disabled = false; pw.select();
     }
   });
