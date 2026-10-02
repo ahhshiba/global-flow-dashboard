@@ -4,14 +4,15 @@ function glossaryGo(link) {
   const [tab, event] = link.split(":");
   if (event) {
     window.gotoTab("cascade", () => {
-      // 記憶體直接交給事件衝擊分頁；localStorage 在沙箱 iframe 可能被封鎖，只當作「下次打開」的記憶
+      // 記憶體直接交給事件衝擊檢視；localStorage 在沙箱 iframe 可能被封鎖，只當作「下次打開」的記憶
       window.csPending = { mode: "event", cat: "all", sel: event };
       store.set("csMode", "event");
       store.set("csCat", "all");
       store.set("csSel", event);
     });
   } else {
-    window.gotoTab(tab);
+    // 連到沙盤推演本身（例：走步回測、校準斜率）要打開推演總結，不是上次停留的檢視
+    window.gotoTab(tab, tab === "scenario" ? () => { window.scView = "summary"; } : null);
   }
 }
 
@@ -19,7 +20,8 @@ function glossaryLinkLabel(link, events) {
   const [tab, event] = link.split(":");
   if (event) return `事件衝擊：${events[event] || event}`;
   const btn = document.getElementById("t-" + tab);
-  return btn ? btn.textContent.trim() : tab;
+  if (btn) return btn.textContent.trim();
+  return SC_VIEW_LABEL[tab] ? `沙盤推演・${SC_VIEW_LABEL[tab]}` : tab;
 }
 
 TABS.glossary = (outer) => {

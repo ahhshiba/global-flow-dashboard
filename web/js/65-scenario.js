@@ -1,4 +1,4 @@
-/* 分頁：沙盤推演（資料在 gfd/scenario.py 算好；公開版用到才下載） */
+/* 沙盤推演的「推演總結」檢視（資料在 gfd/scenario.py 算好；公開版用到才下載）。分頁本身與檢視切換在 75-sandbox.js */
 
 // 判定用中性的「可信度」色，不用漲跌色（本站紅漲綠跌，紅綠在這裡會被讀成好壞）
 const SC_VERDICT_TONE = { "樣本外有效": "ok", "時好時壞": "meh", "樣本外無效": "bad", "樣本不足": "bad" };
@@ -43,12 +43,12 @@ function scenarioLead(S, hz) {
   return `${head}${picks}但${bt}，時好時壞。${check}不能當買賣依據，只是研究線索。`;
 }
 
-TABS.scenario = lazyTab("scenario", (root) => {
+const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   const S = A.scenario;
   let hz = store.get("scH", 3);
   if (S && !S.horizons.includes(hz)) hz = S.horizons[0];
   root.replaceChildren(tabHead("沙盤推演：現在亮著的訊號，接下來可能怎麼走、哪些標的期望值較好",
-    "把三個分頁接起來：訊號劇本告訴我們現在哪些訊號亮著；傳導鏈從亮著的層往下推，看下一層有多可能跟著成立；"
+    "把事件衝擊、傳導鏈、訊號劇本三個檢視接起來：訊號劇本告訴我們現在哪些訊號亮著；傳導鏈從亮著的層往下推，看下一層有多可能跟著成立；"
     + "期望值把所有亮著的訊號一起放進模型（每個標的之後 3／6／12 個月的報酬減掉它平常的平均，對全部訊號做收縮迴歸），"
     + "同時亮著、彼此重疊的訊號會分攤效果、不重複計算。模型值再乘上「樣本外校準斜率」（過去樣本外實際超額大約是模型值的幾倍），"
     + "得到比較實際的數字。最後附上事件衝擊（日線）裡相關事件類型的短期反應。全部是歷史統計，不是投資建議，也沒有計入交易成本。",
@@ -60,7 +60,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
 
   // ── 1. 現在亮著的訊號 ──
   const c1 = card({ title: "現在亮著的訊號", span: 12,
-    sub: `資料截至 ${S.asof}（各序列最新一筆）。和「訊號劇本」分頁同一套判定。` });
+    sub: `資料截至 ${S.asof}（各序列最新一筆）。和「訊號劇本」檢視同一套判定。` });
   const bySource = new Map();
   for (const a of S.active) { if (!bySource.has(a.source)) bySource.set(a.source, []); bySource.get(a.source).push(a); }
   c1.body.append(h("div", { class: "sc-active" }, [...bySource].map(([src, list]) => h("div", { class: "sc-src" },
@@ -210,7 +210,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
 
   // ── 5. 事件衝擊 ──
   const c5 = card({ title: "相關事件類型的短期反應（事件衝擊・日線）", span: 12,
-    sub: "亮著的訊號對應到事件衝擊分頁裡的事件類型，看這類事件發生後一個月、兩個月，各標的比平常多或少多少。這是「事件一爆發」的短期反應，月資料的訊號比較像慢慢累積的狀態，只能當參考。" });
+    sub: "亮著的訊號對應到事件衝擊檢視裡的事件類型，看這類事件發生後一個月、兩個月，各標的比平常多或少多少。這是「事件一爆發」的短期反應，月資料的訊號比較像慢慢累積的狀態，只能當參考。" });
   if (!S.events.length) c5.body.append(h("p", { class: "empty" }, "亮著的訊號沒有對應到明確的事件類型"));
   for (const e of S.events) {
     c5.body.append(h("div", { class: "sc-ev" },
@@ -225,7 +225,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
           h("td", { class: "n" }, fin(r.resp_rate) ? `${fmtNum(r.resp_rate, 0)}%` : "—")))))) : h("p", { class: "empty" }, "這類事件後沒有 p ≤ 0.10 的標的"),
       e.recent.length ? h("p", { class: "note" }, `最近的同類事件：${e.recent.map((x) => `${x.date.slice(0, 7)} ${x.name}`).join("、")}`) : null));
   }
-  if (fin(S.event_luck)) c5.body.append(h("p", { class: "note" }, `事件衝擊整體估計約 ${fmtNum(S.event_luck, 0)}% 的顯著結果是運氣（見事件衝擊分頁），單一類型的數字請保守看待。`));
+  if (fin(S.event_luck)) c5.body.append(h("p", { class: "note" }, `事件衝擊整體估計約 ${fmtNum(S.event_luck, 0)}% 的顯著結果是運氣（見事件衝擊檢視），單一類型的數字請保守看待。`));
   g.append(c5.el);
 
   // ── 6. 這套推演可信嗎 ──

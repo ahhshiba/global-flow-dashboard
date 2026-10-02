@@ -478,6 +478,9 @@ table.data tr.sel td { background: var(--accent-soft); }
 .bars-months .n.low { color: var(--up); font-weight: 600; }
 .gl-views { margin: 4px 0 14px; }
 /* ── 沙盤推演（2026-10-02） ── */
+/* 分頁上方的檢視切換（推演總結／事件衝擊／傳導鏈／訊號劇本） */
+.sc-views { margin: 0 0 20px; }
+.sc-views .chip { font-size: 14px; padding: 5px 14px; }
 .sc-active { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px 22px; }
 .sc-src-h { font: 600 12px var(--f-body); color: var(--muted); letter-spacing: 0.04em; margin-bottom: 6px; }
 .sc-sig { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

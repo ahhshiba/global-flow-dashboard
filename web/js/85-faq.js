@@ -22,7 +22,8 @@ function faqView(root, jumpTerm) {
     if (kind === "cascade" && target) return `事件衝擊：${F.events[target] || target}`;
     if (kind === "glossary" && target) return `名詞：${F.terms[target] || target}`;
     const btn = document.getElementById("t-" + kind);
-    return btn ? btn.textContent.trim() : kind;
+    if (btn) return btn.textContent.trim();
+    return SC_VIEW_LABEL[kind] ? `沙盤推演・${SC_VIEW_LABEL[kind]}` : kind;
   };
   const item = (i) => h("article", { class: `card span-12 faq-item ${i.status}` },
     h("div", { class: "faq-q" },

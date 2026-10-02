@@ -29,6 +29,14 @@
   }
 
   function show(id) {
+    let hashKeep = null;
+    if (SC_VIEW_LABEL[id] && id !== "summary") {   // 2026-10-02 事件衝擊、傳導鏈、訊號劇本併進沙盤推演：舊連結打開對應檢視
+      window.scView = id;
+      hashKeep = id;
+      id = "scenario";
+      const g = document.getElementById("tab-scenario");
+      if (g) g.replaceChildren();
+    }
     if (id === "faq") {             // FAQ 併進名詞解釋分頁（2026-10-01）：舊連結照樣打得開
       window.glView = "faq";
       id = "glossary";
@@ -59,14 +67,16 @@
     const root = document.getElementById("tab-" + id);
     if (root.dataset.range !== state.range || !root.childElementCount) render(id);
     store.set("tab", id);
-    if (location.hash.slice(1) !== id) {
-      try { history.replaceState(null, "", "#" + id); } catch (e) { /* 沙箱 iframe 可能不允許改網址 */ }
+    // 沙盤推演的網址用目前檢視（#cascade 等），其他分頁用分頁 id
+    const want = hashKeep || (id === "scenario" && window.scCurrentView ? scViewHash(window.scCurrentView) : id);
+    if (location.hash.slice(1) !== want) {
+      try { history.replaceState(null, "", "#" + want); } catch (e) { /* 沙箱 iframe 可能不允許改網址 */ }
     }
   }
 
   tabBtns.forEach((b, i) => {
     b.addEventListener("click", () => show(b.dataset.tab));
-    // 要另外下載資料的分頁（事件衝擊、訊號劇本、鉅亨每日）：滑過或按下就先開始下載，點下去時多半已經到了
+    // 要另外下載資料的分頁（沙盤推演、鉅亨每日）：滑過或按下就先開始下載，點下去時多半已經到了
     const needs = TAB_NEEDS[b.dataset.tab];
     if (needs && !needs.every(dataReady)) {
       const go = () => prefetch(needs);
@@ -172,7 +182,8 @@
   // 「回到本頁目錄」浮動鈕：捲過目錄很遠才出現（長分頁在手機上動輒上萬像素）
   const tocTop = h("button", { class: "toc-top off", type: "button", "aria-label": "回到本頁目錄", tabindex: -1 }, "↑ 本頁目錄");
   document.body.append(tocTop);
-  const currentToc = () => { const r = document.getElementById("tab-" + current); return r && r.querySelector(":scope > .toc"); };
+  // 有檢視切換的分頁（沙盤推演），目錄在目前的檢視容器裡
+  const currentToc = () => { const r = document.getElementById("tab-" + current); return r && r.querySelector(":scope > .toc, :scope > .view-root > .toc"); };
   tocTop.addEventListener("click", () => { const t = currentToc(); if (t) jumpTo(t, false); });
   let tocTick = false;
   const syncTocTop = () => {

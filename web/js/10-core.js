@@ -849,6 +849,8 @@ function jumpTo(el, flash = true) {
   if (flash) { el.classList.remove("gl-flash"); void el.offsetWidth; el.classList.add("gl-flash"); }
 }
 function addToc(root) {
+  const view = root.querySelector(":scope > .view-root");   // 有檢視切換的分頁（沙盤推演）：目錄放在目前的檢視裡
+  if (view) return addToc(view);
   const old = root.querySelector(":scope > .toc");
   if (old) old.remove();
   if (root.id === "tab-glossary") return;          // 名詞解釋有自己的分類篩選
