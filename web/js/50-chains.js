@@ -135,6 +135,31 @@ function chainCard(chain, selLink, onPick) {
   return c.el;
 }
 
+/* 目前成立中的層（2026-10-02 由一段段敘述改成表；總覽的「各市場重點」也用這張）：每條鏈一列，點＝各層、實心＝成立中 */
+// compact：總覽的窄卡片用，成立條件與第一段的名稱只放在提示裡
+function chainStatus(CHD, { compact = false } = {}) {
+  const items = CHD.items.filter((c) => c.active.count).sort((a, b) => b.active.count / b.active.of - a.active.count / a.active.of);
+  if (!items.length) return h("p", { class: "empty" }, "目前沒有任何一條鏈有成立的層");
+  const nodeName = (c, id) => (c.nodes.find((n) => n.id === id) || {}).name || id;
+  return h("div", { class: "tbl-wrap" }, h("table", { class: "data cs-tbl" },
+    h("thead", {}, h("tr", {}, h("th", {}, "傳導鏈"), h("th", {}, "成立的層"), h("th", { class: "n" }, compact ? "第一段跟著成立" : `第一段 ${CHD.within} 個月內跟著成立`), h("th", {}, "判斷"))),
+    h("tbody", {}, items.map((c) => {
+      const l = c.links[0];
+      const on = c.nodes.filter((n) => n.triggered);
+      return h("tr", {},
+        h("td", {}, c.name),
+        h("td", {},
+          h("span", { class: "cs-dots", role: "img", "aria-label": `${on.length}/${c.nodes.length} 層成立` },
+            ...c.nodes.map((n) => h("i", { class: n.triggered ? "on" : null, title: `${n.label}${n.triggered ? "（成立中）" : "（未成立）"}` }))),
+          h("b", { class: "cs-n" }, `${on.length}/${c.nodes.length}`),
+          compact ? null : h("span", { class: "sub" }, on.map((n) => n.label).join("、"))),
+        h("td", { class: "n", title: l ? `${nodeName(c, l.from_)} → ${nodeName(c, l.to)}・${l.prob_n} 次` : null },
+          l && fin(l.prob) ? [h("b", {}, `${fmtNum(l.prob, 0)}%`), h("span", { class: "muted" }, `（平常 ${fmtNum(l.prob_base, 0)}%）`),
+            compact ? null : h("span", { class: "sub" }, `${nodeName(c, l.from_)} → ${nodeName(c, l.to)}・${l.prob_n} 次`)] : "—"),
+        h("td", {}, l ? h("span", { class: `pill pill-${chVerdictTone(l.verdict)}` }, l.verdict) : "—"));
+    }))));
+}
+
 TABS.chains = (root) => {
   const CH = A.chains;
   // 開頭結論：現在哪些鏈成立了幾層（資料每次重算都會變，不寫死）
@@ -155,8 +180,10 @@ TABS.chains = (root) => {
   const g = h("div", { class: "grid" });
   root.append(g);
 
-  const f = findingsCard("chains", "目前成立中的層");
-  if (f) g.append(f);
+  const cs = card({ title: "目前成立中的層", span: 12,
+    sub: `每條鏈一列；點＝鏈的各層，實心＝成立中（滑到點上看條件）。右邊是鏈的第一段：歷史上第一層成立後 ${CH.within} 個月內，第二層也跟著成立的比例。` });
+  cs.body.append(chainStatus(CH));
+  g.append(cs.el);
 
   // 整體結論：由資料統計出來，不是寫死的
   const links = CH.items.flatMap((c) => c.links.map((l) => ({ chain: c, l })));
@@ -165,16 +192,23 @@ TABS.chains = (root) => {
   const timing = CH.items.flatMap((c) => c.summary.timing.map((t) => ({ chain: c.name, ...t })));
   const early = timing.filter((t) => t.better === "尚未反應時進場");
   const sc = card({ title: "整段研究的結論", span: 12, sub: "以下數字每次重算分析時更新。" });
-  sc.body.append(h("ul", { class: "finds" },
-    h("li", { class: "t-neutral" }, h("b", {}, `傳導本身大多成立：${links.length} 段裡有 ${transmit.length} 段，下游條件跟著出現的機率比平常高 10 個百分點以上`),
-      h("span", {}, "最強的幾段：" + transmit.slice().sort((a, b) => b.l.prob_lift - a.l.prob_lift).slice(0, 4)
-        .map((x) => `${x.chain.nodes.find((n) => n.id === x.l.from_).name}→${x.chain.nodes.find((n) => n.id === x.l.to).name} ${x.l.prob}%（平常 ${x.l.prob_base}%）`).join("；") + "。")),
-    h("li", { class: sig.length ? "t-up" : "t-alert" }, h("b", {}, `但「跟著發生」不等於「能賺錢」：只有 ${sig.length} 段的報酬在統計上站得住（p ≤ 0.05 且事件數 ≥ 10）`),
-      h("span", {}, sig.length
-        ? sig.map((x) => `${x.chain.name}：${x.chain.nodes.find((n) => n.id === x.l.from_).name}→${x.chain.nodes.find((n) => n.id === x.l.to).name}`).join("；") + "。其餘各段的事件後報酬與平常沒有明顯差別。"
-        : "其餘各段都與平常沒有明顯差別。")),
-    h("li", { class: "t-alert" }, h("b", {}, `「見報就是出場點」不是普世規則：${timing.length} 段可比較的連結中，${early.length} 段是「下游還沒反應時進場」較好`),
-      h("span", {}, "方向大致是：恐慌與下跌鏈偏反轉（要趁下游還沒跌時進場），景氣與上漲鏈偏動能（等下游確認了再進場反而較好）。兩邊的事件數都不多，請看各段的 n。"))));
+  const lk = (x) => `${x.chain.nodes.find((n) => n.id === x.l.from_).name}→${x.chain.nodes.find((n) => n.id === x.l.to).name}`;
+  sc.body.append(statTiles([
+    { label: "傳導本身大多成立", value: `${transmit.length}/${links.length} 段`, tone: "ok",
+      sub: "下游條件跟著出現的機率比平常高 10 個百分點以上" },
+    { label: "但「跟著發生」不等於「能賺錢」", value: `${sig.length}/${links.length} 段`, tone: sig.length ? "meh" : "bad",
+      sub: "事件後報酬在統計上站得住（p ≤ 0.05 且事件數 ≥ 10）" },
+    { label: "「見報就是出場點」不是普世規則", value: `${early.length}/${timing.length} 段`, tone: "meh",
+      sub: "「下游還沒反應時進場」比較好；其餘是等下游確認再進場較好" },
+  ]), moreBox("看是哪幾段",
+    h("ul", { class: "finds" },
+      h("li", { class: "t-neutral" }, h("b", {}, "傳導最強的幾段"),
+        h("span", {}, ...emNums(transmit.slice().sort((a, b) => b.l.prob_lift - a.l.prob_lift).slice(0, 4)
+          .map((x) => `${lk(x)} ${x.l.prob}%（平常 ${x.l.prob_base}%）`).join("；") + "。"))),
+      h("li", { class: sig.length ? "t-up" : "t-alert" }, h("b", {}, "報酬站得住的幾段"),
+        h("span", {}, sig.length ? sig.map((x) => `${x.chain.name}：${lk(x)}`).join("；") + "。其餘各段的事件後報酬與平常沒有明顯差別。" : "沒有；各段都與平常沒有明顯差別。")),
+      h("li", { class: "t-alert" }, h("b", {}, "進場時機"),
+        h("span", {}, "方向大致是：恐慌與下跌鏈偏反轉（要趁下游還沒跌時進場），景氣與上漲鏈偏動能（等下游確認了再進場反而較好）。兩邊的事件數都不多，請看各段的 n。")))));
   g.append(sc.el);
 
   let sel = store.get("chainSel", CH.items[0].id);

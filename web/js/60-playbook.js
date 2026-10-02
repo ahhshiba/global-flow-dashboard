@@ -133,8 +133,25 @@ TABS.playbook = lazyTab("playbook", (root) => {
   }
   g.append(mc.el);
 
-  const fc = findingsCard("playbook", "目前成立中的訊號");
-  if (fc) g.append(fc);
+  // 目前成立中的訊號（2026-10-02 由一段段敘述改成表）：有資產通過三道檢驗的排前面，沒有的併成一列
+  const act = P.triggers.filter((t) => t.active).map((t) => ({ t, best: P.horizons.flatMap((x) => (t.assets[String(x)] || {}).robust || [])
+    .slice().sort((a, b) => b.lift - a.lift) }));
+  if (act.length) {
+    const fc = card({ title: "目前成立中的訊號", span: 12,
+      sub: "每個成立中的訊號，事件後有哪些資產通過三道檢驗（事件數、前後半期一致、位移檢定）；數字是事件後中位數比平常多多少。" });
+    const withB = act.filter((x) => x.best.length).sort((a, b) => b.best.length - a.best.length);
+    const none = act.filter((x) => !x.best.length);
+    fc.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
+      h("thead", {}, h("tr", {}, h("th", {}, "訊號"), h("th", { class: "n" }, "歷史次數"), h("th", {}, "通過三道檢驗的資產（期間・超額）"))),
+      h("tbody", {}, ...withB.map(({ t, best }) => h("tr", {},
+        h("td", {}, t.label, h("span", { class: "sub" }, t.source)),
+        h("td", { class: "n" }, String(t.episodes)),
+        h("td", {}, h("span", { class: "pb-best" }, ...best.slice(0, 3).map((r) => h("span", { class: "pb-chip" }, `${r.name} ${r.horizon} 個月 `, chg(r.lift, 1, r.unit === "bp" ? "bp" : "%"))),
+          best.length > 3 ? h("span", { class: "muted" }, `等 ${best.length} 組`) : null)))),
+        none.length ? h("tr", { class: "pb-none" }, h("td", { colspan: 3 },
+          h("b", {}, `沒有任何資產通過的 ${none.length} 個：`), none.map((x) => `${x.t.label}（${x.t.episodes} 次）`).join("、"))) : null))));
+    g.append(fc.el);
+  }
 
   // 全域通過檢驗清單
   const up = P.robust.filter((r) => r.lift > 0).slice(0, 15);

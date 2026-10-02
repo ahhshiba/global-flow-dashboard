@@ -915,5 +915,35 @@ function findingsList(tab) {
   const toneLabel = { up: "偏多", down: "偏空", alert: "注意", neutral: "觀察" };
   return h("ul", { class: "finds" }, items.map((f) => h("li", { class: `t-${f.tone}` },
     h("b", {}, f.title, " ", h("span", { class: `pill pill-${f.tone === "alert" ? "warn" : f.tone === "up" ? "up" : f.tone === "down" ? "down" : "neutral"}` }, toneLabel[f.tone] || "")),
-    h("span", {}, f.text))));
+    h("span", {}, ...emNums(f.text)))));
+}
+
+/* ── 易讀性元件（2026-10-02）：數字先、說明點開才有 ── */
+// 自動敘述裡的數字加粗（+3.3%、−0.42、72%、+96bp、r = +0.10）：掃讀時眼睛先抓到數字。
+// 前面是英數字的不算（日期 2025-02、代碼），後面接「個月／年」的不算（「10 年−3 個月」是名稱）
+const EM_NUM = /(?<![0-9A-Za-z.])(?:r = )?(?:[+\-−±]\d[\d,]*(?:\.\d+)?(?:%|bp| 個百分點)?|\d[\d,]*(?:\.\d+)?%)(?!\s?(?:個月|年|[0-9]))/g;
+function emNums(text) {
+  const t = String(text ?? "");
+  const out = [];
+  let last = 0;
+  for (const m of t.matchAll(EM_NUM)) {
+    if (m.index > last) out.push(t.slice(last, m.index));
+    out.push(h("b", { class: "num" }, m[0]));
+    last = m.index + m[0].length;
+  }
+  if (last < t.length) out.push(t.slice(last));
+  return out;
+}
+// 統計小卡：標籤、大數字、一句判讀。tone：ok／meh／bad／warn（不用漲跌色，紅綠在這裡會被讀成好壞）
+function statTiles(items) {
+  const list = items.filter(Boolean);
+  // 欄數跟著格數走（6 格排 3×2、4 格排一列），不要排成 5＋1
+  return h("div", { class: `stat-tiles n-${Math.min(list.length, 6)}` }, list.map((x) => h("div", { class: `stat-tile${x.tone ? " t-" + x.tone : ""}`, title: x.title || null },
+    h("div", { class: "st-l" }, x.label),
+    h("div", { class: "st-v" }, x.value),
+    x.sub ? h("div", { class: "st-s" }, x.sub) : null)));
+}
+// 點開才有的細節（同一個樣式：箭頭＋強調色文字）
+function moreBox(label, ...kids) {
+  return h("details", { class: "more" }, h("summary", {}, label), h("div", { class: "more-b" }, ...kids));
 }

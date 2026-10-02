@@ -136,14 +136,35 @@ TABS.overview = (root, redo) => {
     colR.append(tc.el);
   }
 
+  // 各市場重點（2026-10-02 起依主題分組）：市場分頁的短敘述照列；傳導鏈改用狀態表、訊號劇本每個訊號一行（說明點開才有），
+  // 這兩組在沙盤推演裡有完整版，總覽只放一眼看得完的摘要
   const others = (A.findings || []).filter((f) => f.tab !== "overview");
-  const oc = card({ title: "各市場重點", span: 7, sub: "來自各分頁的自動敘述。" });
+  const oc = card({ title: "各市場重點", span: 7, sub: "來自各分頁的自動敘述，依主題分組；數字加粗，按「看分頁」到原來的地方。" });
   const own = findingsList("overview");
   if (own) oc.body.append(own);
-  if (others.length) {
-    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", cascade: "事件衝擊", chains: "傳導鏈", playbook: "訊號劇本", scenario: "沙盤推演", research: "配對關聯" };
-    oc.body.append(h("ul", { class: "finds", style: "margin-top:12px" }, others.map((f) => h("li", { class: `t-${f.tone}` },
-      h("b", {}, `【${tabName[f.tab] || f.tab}】${f.title}`), h("span", {}, f.text)))));
+  const GROUPS = [["fx", "匯市"], ["bond", "債市"], ["equity", "股市"], ["commodity", "商品"], ["vol", "VIX"], ["flow", "現金流"],
+    ["research", "配對關聯"], ["chains", "傳導鏈"], ["playbook", "訊號劇本"], ["cascade", "事件衝擊"], ["scenario", "沙盤推演"]];
+  const known = new Set(GROUPS.map(([t]) => t));
+  const extra = [...new Set(others.map((f) => f.tab))].filter((t) => !known.has(t)).map((t) => [t, t]);
+  for (const [tab, label] of [...GROUPS, ...extra]) {
+    const items = others.filter((f) => f.tab === tab);
+    if (!items.length) continue;
+    const head = h("div", { class: "fg-h" }, h("b", {}, label), h("span", { class: "muted" }, `${items.length} 則`),
+      h("button", { class: "fg-go", type: "button", onclick: () => window.gotoTab(tab) }, tab === "research" ? "看關聯熱圖 →" : "看分頁 →"));
+    let body;
+    if (tab === "chains" && A.chains && A.chains.items) body = chainStatus(A.chains, { compact: true });
+    else if (tab === "playbook") {
+      body = h("ul", { class: "fg-compact" }, items.map((f) => {
+        const passed = /通過三道檢驗的資產：/.test(f.text);
+        return h("li", {}, h("details", {},
+          h("summary", {}, h("span", {}, f.title.replace(/^訊號成立中：/, "")),
+            h("span", { class: `pill ${passed ? "pill-ok" : "pill-bad"}` }, passed ? "有資產通過檢驗" : "沒有資產通過")),
+          h("p", {}, ...emNums(f.text))));
+      }));
+    } else {
+      body = h("ul", { class: "finds" }, items.map((f) => h("li", { class: `t-${f.tone}` }, h("b", {}, f.title), h("span", {}, ...emNums(f.text)))));
+    }
+    oc.body.append(h("section", { class: "fg" }, head, body));
   }
   g.append(oc.el);
 

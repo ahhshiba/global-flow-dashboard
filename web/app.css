@@ -716,3 +716,101 @@ table.data td .sub.keep { word-break: keep-all; }   /* 短註記：只在標點�
   .hg-more { padding-left: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .hg-name::before, .hg-tile { transition: none; } .hg-tile:active { transform: none; } }
+
+/* ── 易讀性（2026-10-02）：數字先、說明點開才有 ── */
+b.num { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* .finds b 是整行的標題（display:block），敘述裡加粗的數字要留在行內 */
+.finds b.num, .fg-compact b.num { display: inline; font-size: inherit; }
+.stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.stat-tiles.n-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stat-tiles.n-3, .stat-tiles.n-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stat-tiles.n-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat-tiles.n-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .stat-tiles.n-4, .stat-tiles.n-5, .stat-tiles.n-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat-tile { padding: 11px 13px; border-radius: var(--radius); background: var(--surface-2); border-top: 3px solid var(--line-strong); min-width: 0; }
+.stat-tile.t-ok { border-top-color: var(--accent); }
+.stat-tile.t-meh, .stat-tile.t-warn { border-top-color: var(--warn); }
+.stat-tile.t-bad { border-top-style: dashed; }
+.st-l { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.st-v { font: 600 22px/1.25 var(--f-disp); font-variant-numeric: tabular-nums; margin-top: 3px; overflow-wrap: anywhere; }
+.stat-tile.t-warn .st-v { color: var(--warn-ink); }
+.st-s { font-size: 12px; color: var(--ink-2); line-height: 1.5; margin-top: 3px; }
+details.more { margin-top: 10px; font-size: 13px; }
+details.more > summary { cursor: pointer; color: var(--accent); width: fit-content; }
+details.more > .more-b { margin-top: 8px; }
+details.more > .more-b > p { margin: 0 0 6px; line-height: 1.7; color: var(--ink-2); max-width: 52em; }
+/* 總覽的「各市場重點」分組 */
+.fg { margin-top: 16px; }
+.fg-h { display: flex; align-items: baseline; gap: 8px; padding-bottom: 5px; margin-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.fg-h b { font-size: 13.5px; }
+.fg-go { margin-left: auto; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12.5px; cursor: pointer; padding: 0; }
+.fg-go:hover { text-decoration: underline; }
+.fg-compact { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.fg-compact summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; padding: 4px 0; font-size: 13px; list-style: none; }
+.fg-compact summary::-webkit-details-marker { display: none; }
+.fg-compact summary > span:first-child::before { content: "▸ "; color: var(--muted); }
+.fg-compact details[open] summary > span:first-child::before { content: "▾ "; }
+.fg-compact p { margin: 2px 0 8px 14px; font-size: 13px; color: var(--ink-2); line-height: 1.65; }
+/* 傳導鏈狀態表 */
+.cs-dots { display: inline-flex; gap: 4px; vertical-align: middle; margin-right: 8px; }
+.cs-dots i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--line-strong); background: var(--surface); }
+.cs-dots i.on { background: var(--accent); border-color: var(--accent); }
+.cs-n { font-family: var(--f-mono); font-size: 13px; }
+.cs-tbl td:first-child { white-space: nowrap; font-weight: 500; }
+/* 訊號劇本：成立中的訊號 */
+.pb-best { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.pb-chip { white-space: nowrap; }
+.pb-none td { color: var(--ink-2); font-size: 13px; line-height: 1.65; }
+/* 推演總結：亮著的訊號一列一個 */
+.sig-head, .sig-sum { display: grid; grid-template-columns: 1.6em minmax(12em, 1.3fr) minmax(11em, 1fr) minmax(12em, 1.2fr); gap: 12px; align-items: center; }
+.sig-head { font-size: 11.5px; color: var(--muted); padding: 0 6px 5px; }
+.sig-row { border-top: 1px solid var(--line); }
+.sig-sum { padding: 8px 6px; cursor: pointer; list-style: none; border-radius: var(--radius-sm); }
+.sig-sum::-webkit-details-marker { display: none; }
+.sig-sum:hover, .sig-row[open] > .sig-sum { background: var(--surface-2); }
+.sig-no { font-size: 15px; color: var(--accent); text-align: center; }
+.sig-name b { display: block; font-weight: 600; font-size: 13.5px; line-height: 1.4; }
+.sig-name .sub { display: block; color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+.sig-bar { position: relative; display: block; height: 8px; border-radius: 4px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.sig-row[open] .sig-bar, .sig-sum:hover .sig-bar { background: var(--surface); }
+.sig-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); opacity: 0.85; }
+.sig-bar.over .fill { background: var(--warn); opacity: 1; }
+.sig-bar .med, .sig-bar .max { position: absolute; top: -3px; bottom: -3px; margin-left: -1px; border-radius: 1px; }
+.sig-bar .med { width: 1px; background: var(--ink-2); }
+.sig-bar .max { width: 2.5px; background: var(--ink); }
+.sig-age-t { display: block; font-size: 12.5px; margin-top: 4px; }
+.sig-picks { display: grid; gap: 2px; font-size: 12.5px; }
+.sig-pick { white-space: nowrap; margin-right: 10px; }
+.sig-more { padding: 6px 6px 12px 2.4em; font-size: 13px; }
+.sig-more p { margin: 0 0 5px; line-height: 1.7; color: var(--ink-2); max-width: 52em; }
+table.data.sim-mx { width: auto; }
+table.sim-mx td:first-child { text-align: left; }
+table.sim-mx th.c, table.sim-mx td.c { text-align: center; padding-left: 4px; padding-right: 4px; }
+table.sim-mx th.c { color: var(--accent); font-size: 14px; }
+.mx-on { color: var(--accent); font-size: 14px; }
+.mx-off { color: var(--line-strong); }
+/* 傳導鏈節點的機率長條、關鍵數字小籤 */
+.sc-gauge { position: relative; height: 5px; border-radius: 3px; background: var(--surface-2); margin: 5px 0 3px; }
+.sc-gauge .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--accent); }
+.sc-node.likely .sc-gauge .fill { background: var(--up); }
+.sc-gauge .base { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
+.sc-node-p { font-family: var(--f-mono); font-size: 14px; color: var(--ink); }
+.kchips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.kchip { display: inline-flex; flex-direction: column; gap: 1px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-2); min-width: 9em; max-width: 22em; }
+.kchip .k-l { font-size: 11.5px; color: var(--ink-2); line-height: 1.35; }
+.kchip b { font: 600 16px/1.3 var(--f-disp); font-variant-numeric: tabular-nums; }
+.kchip .k-s { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 640px) {
+  .stat-tiles, .stat-tiles[class*="n-"] { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-tiles.n-3 { grid-template-columns: 1fr; }
+  .stat-tile { padding: 9px 10px; }
+  .st-v { font-size: 18px; }
+  .sig-head { display: none; }
+  .sig-sum { grid-template-columns: 1.4em minmax(0, 1fr); grid-template-areas: "no name" ". age" ". picks"; row-gap: 6px; }
+  .sig-sum .sig-no { grid-area: no; align-self: start; }
+  .sig-sum .sig-name { grid-area: name; }
+  .sig-sum .sig-age { grid-area: age; }
+  .sig-sum .sig-picks { grid-area: picks; }
+  .sig-more { padding-left: 6px; }
+  .kchip { min-width: 0; flex: 1 1 40%; }
+}
