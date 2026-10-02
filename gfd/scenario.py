@@ -268,27 +268,42 @@ def _signal_age(mask, cur, upto, months):
                 share_longer=CH.r(100 * float(np.mean([d >= age for d in done])), 0) if done else None)
 
 
-def _chain_frontier(cmasks, finite, on, rest, term_f6, upto, H=12, W=6):
-    """從這條鏈目前最深的已成立層往下看：歷史上那一層亮著、rest 都還沒亮的月份（t ≤ upto−H），
-    之後 H 個月 rest 再亮幾層的分布；W 個月內最深那層熄掉又沒往下一層＝斷鏈；
-    末端標的 6 個月報酬依「W 個月內有沒有再亮一層」分組。"""
+def _ends_within(mask, t, W, gap=CH.GAP):
+    """這一層在 (t, t+W] 內「熄掉」：照段的規則，連續熄超過 gap 個月才算這一段結束。"""
+    m = mask[t + 1:t + 1 + W + gap]
+    run = 0
+    for i, v in enumerate(m):
+        run = 0 if v else run + 1
+        if run > gap and i - run + 1 < W:      # 熄掉的那一段從 W 個月內開始
+            return True
+    return False
+
+
+def _chain_frontier(cmasks, finite, on, below, term_f6, upto, H=12, W=6):
+    """從這條鏈目前最深的已成立層往下看：歷史上那一層亮著、它下面的層（below）都還沒亮的月份（t ≤ upto−H），
+    之後 H 個月 below 再亮幾層的分布；W 個月內最深那層熄掉（照段的規則，連續熄超過 3 個月）又沒往下傳＝斷鏈；
+    末端標的 6 個月報酬依「W 個月內有沒有往下傳」分組。中間被跳過、還沒亮的上層不算在內。"""
     deepest = max(i for i in range(len(on)) if on[i])
     last = upto - H
-    ts = [t for t in range(max(0, last + 1)) if cmasks[deepest][t] and all((not cmasks[j][t]) and finite[j][t] for j in rest)]
+    ts = [t for t in range(max(0, last + 1)) if cmasks[deepest][t] and all((not cmasks[j][t]) and finite[j][t] for j in below)]
     if not ts:
         return dict(n_months=0, n_episodes=0)
+    rest = below
+    nxt = below[0]                                   # 緊接的下一層
     depth = [int(sum(bool(cmasks[j][t + 1:t + 1 + H].any()) for j in rest)) for t in ts]
     dist = {str(d): CH.r(100 * float(np.mean([x == d for x in depth])), 0) for d in range(len(rest) + 1)}
-    prop_w = [any(cmasks[j][t + 1:t + 1 + W].any() for j in rest) for t in ts]
-    off_w = [bool((~cmasks[deepest][t + 1:t + 1 + W]).any()) for t in ts]
+    prop_w = [bool(cmasks[nxt][t + 1:t + 1 + W].any()) for t in ts]
+    off_w = [_ends_within(cmasks[deepest], t, W) for t in ts]
     broke = [o and not pr for o, pr in zip(off_w, prop_w)]
-    went = [term_f6[t] for t, pr in zip(ts, prop_w) if pr and np.isfinite(term_f6[t])]
-    stay = [term_f6[t] for t, pr in zip(ts, prop_w) if not pr and np.isfinite(term_f6[t])]
+    # 末端標的依「下一層 W 個月內有沒有亮」分組。下一層本身就是末端時不分（末端的報酬和它自己的觸發條件是同一件事，分了等於同義反覆）
+    circular = nxt == len(cmasks) - 1
+    went = [] if circular else [term_f6[t] for t, pr in zip(ts, prop_w) if pr and np.isfinite(term_f6[t])]
+    stay = [] if circular else [term_f6[t] for t, pr in zip(ts, prop_w) if not pr and np.isfinite(term_f6[t])]
     m = np.zeros(len(cmasks[0]), bool)
     m[ts] = True
     return dict(n_months=len(ts), n_episodes=len(CH.episodes(m)), deepest=deepest, rest=rest, horizon=H,
                 depth=dist, mean_depth=CH.r(float(np.mean(depth)), 1),
-                broke=CH.r(100 * float(np.mean(broke)), 0), prop=CH.r(100 * float(np.mean(prop_w)), 0),
+                broke=CH.r(100 * float(np.mean(broke)), 0), prop=CH.r(100 * float(np.mean(prop_w)), 0), circular=circular,
                 term_if=dict(n=len(went), median=CH.r(float(np.median(went))) if went else None),
                 term_else=dict(n=len(stay), median=CH.r(float(np.median(stay))) if stay else None))
 
@@ -371,7 +386,8 @@ def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, l
         rec["wave"] = [{k: v for k, v in w.items() if k not in ("k", "why", "source", "_lift", "_base")} for w in wv]
         # 這個案例的故事：之後一年發生的事件、各鏈實際走到第幾層、6 個月實際最好與最差的標的（都是事後資料，只做對照）
         m_end = months[min(T + 12, len(months) - 1)]
-        rec["events_after"] = [dict(date=d, name=n, cat=c) for d, n, c in ev_list if months[T] < d[:7] <= m_end][:8]
+        rec["events_after"] = ([dict(date=d, name=n, cat=c) for d, n, c in ev_list if months[T] < d[:7] <= m_end][:8]
+                               if ev_list else None)      # 沒有事件資料時是 None，前端不要寫成「沒有事件」
         reached = []
         for chain in C.CHAINS:
             cmasks, finite = chain_masks[chain["id"]]
@@ -387,8 +403,8 @@ def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, l
         if fin6.sum() >= 10:
             am6 = float(F6[T, fin6].mean())
             order = np.argsort(-np.where(fin6, F6[T], -np.inf))
-            best = [a for a in order[:3] if fin6[a]]
-            worst = [a for a in order[::-1][:3] if fin6[a]]
+            best = [a for a in order if fin6[a]][:3]
+            worst = [a for a in order[::-1] if fin6[a]][:3]
             rec["actual6"] = dict(best=[dict(name=series[assets[a]]["name"], v=CH.r(F6[T, a] - am6)) for a in best],
                                   worst=[dict(name=series[assets[a]]["name"], v=CH.r(F6[T, a] - am6)) for a in worst])
         cases.append(rec)
@@ -459,12 +475,13 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         cur = months.index(p["current_at"]) if p.get("current_at") in months else end
         age = _signal_age(X[:, k], cur, end, months)
         blk6 = (p.get("assets") or {}).get("6") or {}
-        pick = lambda rows: [dict(name=r["name"], lift=r["lift"], n=r["n"], p=r["p"])
-                             for r in rows if r.get("investable") and r.get("p") is not None and r["p"] <= 0.10][:3]
+        pick = lambda rows, sign: [dict(name=r["name"], lift=r["lift"], n=r["n"], p=r["p"])
+                                   for r in rows if r.get("investable") and r.get("p") is not None and r["p"] <= 0.10
+                                   and np.sign(r["lift"] or 0) == sign][:3]
         active.append(dict(id=t["id"], label=t["label"], source=t["source"], why=t["why"], sid=t["sid"],
                            current=p.get("current"), current_at=p.get("current_at"),
                            run=_run_length(X[:, k], cur), episodes=p.get("episodes"), age=age,
-                           best6=pick(blk6.get("top", [])), worst6=pick(blk6.get("bottom", []))))
+                           best6=pick(blk6.get("top", []), 1), worst6=pick(blk6.get("bottom", []), -1)))
     active_ids = {a["id"] for a in active}
     assets = [s for s in C.PLAYBOOK_UNIVERSE if s in g.arr and s in series and s not in C.PLAYBOOK_OBSERVE_ONLY]
     start = months.index(C.SCENARIO_EVAL_START) if C.SCENARIO_EVAL_START in months else 120
@@ -636,10 +653,13 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         if state and "starts" in state:
             state["dates"] = [months[t] for t in state.pop("starts")]
         frontier = None
-        if rest:
+        below = [j for j in range(len(on)) if j > max(i for i in range(len(on)) if on[i])]   # 最深已成立層之下的層
+        if below:
             term_sid = chain["nodes"][-1]["sid"]
             term_f6 = CH.forward(g, term_sid, 6, series[term_sid]["kind"])
-            frontier = _chain_frontier(cmasks, finite, on, rest, term_f6, end)
+            frontier = _chain_frontier(cmasks, finite, on, below, term_f6, end)
+            frontier["below"] = [chain["nodes"][j]["label"] for j in below]
+            frontier["next_label"] = chain["nodes"][below[0]]["label"]
             frontier["deepest_label"] = chain["nodes"][frontier["deepest"]]["label"] if frontier.get("deepest") is not None else None
             frontier["term_name"] = series[term_sid]["name"]
             frontier.pop("deepest", None)

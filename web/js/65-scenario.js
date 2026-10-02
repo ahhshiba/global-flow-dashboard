@@ -123,9 +123,10 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     if (fr && fr.n_months) {
       const depth = Object.entries(fr.depth).map(([d, pct]) => `再亮 ${d} 層 ${fmtNum(pct, 0)}%`).join("、");
       frTxt = h("p", { class: "sc-state" },
-        `從目前最深的「${fr.deepest_label}」往下看：歷史上這一層亮著、更下層都還沒亮的有 ${fr.n_episodes} 段（${fr.n_months} 個月），12 個月內${depth}；`
-        + `6 個月內這一層熄掉又沒往下傳（斷鏈）${fmtNum(fr.broke, 0)}%。`,
-        fr.term_if.n && fr.term_else.n ? h("span", {}, `末端「${fr.term_name}」6 個月：6 個月內有往下傳時中位 `, chg(fr.term_if.median, 1, "%"), `（${fr.term_if.n} 次），沒有時 `, chg(fr.term_else.median, 1, "%"), `（${fr.term_else.n} 次）。`) : null,
+        `從目前最深的「${fr.deepest_label}」往下看（它下面的層：${fr.below.join("、")}）：歷史上這一層亮著、下面的層都還沒亮的有 ${fr.n_episodes} 段（${fr.n_months} 個月），12 個月內${depth}；`
+        + `緊接的下一層「${fr.next_label}」6 個月內亮起 ${fmtNum(fr.prop, 0)}%；這一層熄掉（連續熄超過 3 個月）又沒傳到下一層（斷鏈）${fmtNum(fr.broke, 0)}%。`,
+        fr.circular ? h("span", { class: "muted" }, `　下一層就是末端「${fr.term_name}」，末端的報酬不另外分組（分了會變成同義反覆）。`)
+          : fr.term_if.n && fr.term_else.n ? h("span", {}, `末端「${fr.term_name}」6 個月：下一層 6 個月內有亮時中位 `, chg(fr.term_if.median, 1, "%"), `（${fr.term_if.n} 次），沒有時 `, chg(fr.term_else.median, 1, "%"), `（${fr.term_else.n} 次）。`) : null,
         fr.n_episodes < 5 ? h("span", { class: "muted" }, "　樣本很少，只是紀錄。") : null);
     }
     c2.body.append(h("div", { class: "sc-path" },
@@ -228,8 +229,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
         c.layers && c.layers.length ? h("ul", { class: "sc-case-l" }, c.layers.map((l) => h("li", {}, ok(l.actual), ` ${l.chain}：${l.label}　當時推估 ${fmtNum(l.prob, 0)}%（平常 ${fmtNum(l.base, 0)}%）`))) : null,
         c.wave && c.wave.length ? h("p", { class: "sc-case-p" }, h("b", {}, "當時挑的下一波："),
           ...c.wave.map((w, k) => h("span", {}, k ? "、" : "", ok(w.actual), ` ${w.label}（${fmtNum(w.prob, 0)}% vs 平常 ${fmtNum(w.base, 0)}%）`))) : null,
-        h("p", { class: "sc-case-p" }, h("b", {}, "後來實際發生："),
-          c.events_after && c.events_after.length ? `之後一年內的事件：${c.events_after.map((e) => `${e.date.slice(0, 7)} ${e.name}`).join("、")}。` : "之後一年內沒有收錄的重大事件。",
+        h("p", { class: "sc-case-p" }, h("b", {}, "後來實際發生（事後資料，只做對照）："),
+          Array.isArray(c.events_after) ? (c.events_after.length ? `之後一年內的事件：${c.events_after.map((e) => `${e.date.slice(0, 7)} ${e.name}`).join("、")}。` : "之後一年內沒有收錄的重大事件。") : null,
           c.chains_after && c.chains_after.length ? h("span", {}, h("br"), "各鏈走到：", c.chains_after.map((x, k) => h("span", {}, k ? "；" : "", `${x.chain} ${x.on}/${x.of} 層亮著`,
             x.rest ? `，之後一年再亮 ${x.lit.length}/${x.rest} 層${x.lit.length ? `（${x.lit.join("、")}）` : ""}` : "，已是最末層")), "。") : null,
           c.actual6 ? h("span", {}, h("br"), "6 個月實際比全體多最多：", ...c.actual6.best.map((x, k) => h("span", {}, k ? "、" : "", `${x.name} `, chg(x.v, 1, ""))),
