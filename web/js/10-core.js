@@ -411,13 +411,17 @@ function foldCard({ title, sub, span = 12, note, key, render }) {
   const set = (v, remember = true) => {
     if (v && !drawn) {
       // 先畫成功才算展開：畫圖出錯只影響這張卡，不記住「展開」，否則之後每次進來都會把整個分頁弄壞
+      // 每次都從空白卡片重畫；失敗時連同畫到一半加進標題列的按鈕一起拿掉，重試才不會疊兩份
+      const keep = new Set(c.tools.children);
+      c.body.replaceChildren();
       try {
         render(c.body, c.tools);
         drawn = true;
       } catch (err) {
         console.error(err);
+        [...c.tools.children].forEach((el) => { if (!keep.has(el)) el.remove(); });
         c.body.replaceChildren(h("p", { class: "empty" }, `這張圖繪製失敗：${err.message}　`,
-          h("button", { class: "tool", type: "button", onclick: () => { c.body.replaceChildren(); set(true); } }, "再試一次")));
+          h("button", { class: "tool", type: "button", onclick: () => set(true) }, "再試一次")));
         c.body.hidden = false;
         c.el.classList.remove("folded");
         btn.textContent = "收合";
