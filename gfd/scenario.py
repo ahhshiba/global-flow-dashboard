@@ -270,7 +270,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
                 vals = [F[t, a] for t in starts if t <= end - h and np.isfinite(F[t, a])]
                 if not vals:
                     continue
-                lift = float(np.median(vals)) - base_med
+                lift = CH.r(float(np.median(vals))) - CH.r(base_med)    # 先各自四捨五入再相減，和訊號劇本完全一致
                 evidence.append(dict(id=ids[k], label=trig[k]["label"], source=trig[k]["source"], why=trig[k]["why"],
                                      n=len(vals), lift=CH.r(lift), hit=CH.r(100 * np.mean(np.array(vals) > base_med), 0),
                                      p=CH.r(float(pv[a]), 3) if np.isfinite(pv[a]) else None, beta=CH.r(beta[k])))
