@@ -612,6 +612,32 @@ PLAYBOOK_EXTRA_TRIGGERS = [
          label="美 10 年殖利率 6 個月下降 ≥ 80bp", why="降息預期或避險買盤湧入"),
 ]
 
+# ── 沙盤推演（2026-10-02）：目前亮燈的訊號 → 傳導鏈下一層 → 各資產期望超額 ──
+# 期望值模型：每個資產的「事件後超額報酬」對所有訊號的 0/1 指標做 ridge 迴歸（訊號彼此重疊時不重複計算），
+# 目前亮燈的訊號係數加總＝期望超額。λ 是事先定好的，不依樣本外結果挑選（挑了就等於偷看答案）。
+SCENARIO_LAMBDA = 24.0          # 收縮強度：約等於「一個訊號要有 24 個成立月份，係數才保留一半」
+SCENARIO_TOPK = 5               # 樣本外回測：每期買期望值最高的 5 個標的，和全體平均比
+SCENARIO_EVAL_START = "2005-01" # 走步回測起點（之前的 10 年只拿來估計）
+SCENARIO_BOOT = 200             # 期望值區間：以 12 個月為一塊的區塊自助法
+SCENARIO_SIMILAR = 0.5          # 「狀態相似的月份」：亮燈訊號的 Jaccard 相似度門檻
+# 訊號 → 事件衝擊的事件類型（只列對應關係明確的；其餘訊號不硬套）
+SCENARIO_EVENT_TYPES = {
+    "carry_jgb": ["cb"], "inflation_ust10": ["cb"], "rates_up": ["cb"], "rates_down": ["cb"],
+    "fertilizer_ust3m": ["cb"], "curve_inv": ["cb"],
+    "carry_jpy": ["crash"], "carry_spx": ["crash"], "carry_sox": ["crash"], "carry_twii": ["crash"],
+    "inflation_ndx": ["crash"], "panic_vix": ["crash"], "panic_hy": ["crash"], "panic_spx": ["crash"],
+    "panic_twii": ["crash"], "vix_25": ["crash"], "spx_dd": ["crash", "crisis"],
+    "inflation_oil": ["energy"], "fertilizer_gas": ["energy"], "fertilizer_urea": ["energy"], "fertilizer_agri": ["energy"],
+    "dollar_dxy": ["fx"], "twd_weak": ["fx"], "china_cny": ["fx"],
+}
+# 事件衝擊（日線代碼）→ 本站月資料序列，用來把兩邊的同一個標的對起來
+SCENARIO_CASCADE_SID = {
+    "CL=F": "c_wti", "NG=F": "c_natgas", "GC=F": "c_gold", "SI=F": "c_silver", "HG=F": "c_copper",
+    "KE=F": "c_wheat", "ZC=F": "c_maize", "ZS=F": "c_soy", "^SOX": "eq_sox", "^TWII": "eq_twii",
+    "^GSPC": "eq_spx", "^NDX": "eq_ndx", "^HSI": "eq_hsi", "^N225": "eq_n225", "DX-Y.NYB": "fx_dxy",
+    "JPY=X": "fx_usdjpy", "TWD=X": "fx_usdtwd", "TLT": "b_ust_long", "HYG": "b_hy",
+}
+
 # ── 單一標的線圖（日／週／月／年）──
 # 日線保留年數、週線保留年數；月線與年線從 1995 起。收盤價已含分割調整、不含股息。
 DETAIL_KEEP_YEARS = {"d": 3, "w": 15}

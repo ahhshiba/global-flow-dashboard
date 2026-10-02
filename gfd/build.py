@@ -5,7 +5,7 @@
   dashboard.artifact.html  只有頁面內容（無 doctype/head/body），發佈成 Artifact 用
 公開版（--public）另外產出 docs/index.html 與 docs/data/*.json。
 
-載入速度（2026-10-02）：開頁只需要總覽與各市場分頁的資料，事件衝擊、訊號劇本、完整日線、歷史每日
+載入速度（2026-10-02）：開頁只需要總覽與各市場分頁的資料，事件衝擊、訊號劇本、沙盤推演、完整日線、歷史每日
 占了頁面資料的八成以上。這幾塊拆出來（LAZY_KEYS），用到才拿：
   公開版   放成 docs/data/<鍵>.json，網址帶內容雜湊（?v=），頁面用到才下載
   本機版   仍是單一檔案（file:// 不能 fetch），但放在另外的 <script type="application/json">，用到才解析
@@ -26,7 +26,7 @@ OUT = ROOT / "dashboard.html"
 OUT_ARTIFACT = ROOT / "dashboard.artifact.html"
 OUT_PUBLIC = ROOT / "docs" / "index.html"
 OUT_PUBLIC_DATA = ROOT / "docs" / "data"
-LAZY_KEYS = ("cascade", "playbook", "detail", "daily_latest", "daily")
+LAZY_KEYS = ("cascade", "playbook", "scenario", "detail", "daily_latest", "daily")
 # 總覽 KPI 用到的日線尾巴：走勢小圖取日線最後 120 點（留 130）；「12 月」漲跌往回找「最新收盤日 − 365 天」以前
 # 最後一個週收盤，所以週線依日期截：最後一週往前 450 天，再多留一點在那之前（週線有缺口也找得到同一點）
 DETAIL_TAIL_D = 130
@@ -75,7 +75,7 @@ def run(log=print, public=False):
     detail = json.loads(detail_path.read_text(encoding="utf-8")) if detail_path.exists() else {}
     detail_items = detail.get("items", {})
     # 鉅亨每日分頁先只拿最新一天（daily_latest），選了別的日期才拿全部（daily）
-    lazy = dict(cascade=analysis.get("cascade"), playbook=analysis.get("playbook"), detail=detail_items,
+    lazy = dict(cascade=analysis.get("cascade"), playbook=analysis.get("playbook"), scenario=analysis.get("scenario"), detail=detail_items,
                 daily_latest=daily[0] if daily else None, daily=daily)
     lazy_text = {k: _json(v) for k, v in lazy.items()}
     if public:
@@ -94,7 +94,7 @@ def run(log=print, public=False):
         # 本機版：同一個檔案裡另外的 JSON 區塊，開頁時瀏覽器只當文字收下，用到才解析
         lazy_tags = "".join('<script id="gfd-lazy-%s" type="application/json">%s</script>\n' % (k, lazy_text[k].replace("</", "<\\/"))
                             for k in LAZY_KEYS)
-    core = {k: v for k, v in analysis.items() if k not in ("cascade", "playbook")}
+    core = {k: v for k, v in analysis.items() if k not in ("cascade", "playbook", "scenario")}
     # 報頭、報價跑馬燈、KPI 只用最新一天的收盤（不含走勢小圖）與重點則數；新聞列表在鉅亨每日分頁載入完整資料後才畫
     latest = dict(date=daily[0]["date"], quotes=[{k: v for k, v in q.items() if k != "spark"} for q in daily[0]["quotes"]],
                   highlights=sum(1 for n in daily[0]["news"] if n.get("highlight"))) if daily else None

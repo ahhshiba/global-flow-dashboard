@@ -12,6 +12,7 @@ from . import cascade as CA
 from . import chains as CH
 from . import config as C
 from . import playbook as PB
+from . import scenario as SC
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
@@ -686,6 +687,7 @@ def run(log=print):
     cas = CA.build(log=log)
     if cas:
         cas["analogs"] = AN.build(cas, log=log)
+    scen = SC.build(g, series, g.months, play, chain_block, cas, log=log)
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
@@ -694,7 +696,7 @@ def run(log=print):
         series=series, corr=correlations(g, series), pairs=pr, events=events(g, series),
         composite=comp, vix=vix, flowmap=flow, leaders=leaders(g),
         reserves=res, current_account=ca, tic=tic_blk, company_cf=company_cf(_load("company_cf.json")),
-        chains=chain_block, playbook=play, cascade=cas,
+        chains=chain_block, playbook=play, cascade=cas, scenario=scen,
         findings=findings(series, comp, pr, flow, vix, tic_blk, res) + chain_findings,
         coverage=(_load("coverage.json") or {}).get("items", []),
         gaps=[dict(item=a, reason=b, proxy=c) for a, b, c in C.GAPS],

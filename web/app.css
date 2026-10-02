@@ -477,6 +477,48 @@ table.data tr.sel td { background: var(--accent-soft); }
 .bars-months .bar-fill.low { background: var(--up); }
 .bars-months .n.low { color: var(--up); font-weight: 600; }
 .gl-views { margin: 4px 0 14px; }
+/* ── 沙盤推演（2026-10-02） ── */
+.sc-active { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px 22px; }
+.sc-src-h { font: 600 12px var(--f-body); color: var(--muted); letter-spacing: 0.04em; margin-bottom: 6px; }
+.sc-sig { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sc-sig li { padding-left: 12px; border-left: 3px solid var(--accent); }
+.sc-sig b { font-weight: 600; }
+.sc-sig .muted { font-size: 12px; }
+.sc-why { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+.sc-path, .sc-ev { padding: 12px 0; border-top: 1px solid var(--line); }
+.sc-path:first-of-type, .sc-ev:first-of-type { border-top: 0; padding-top: 0; }
+.sc-path-h { margin-bottom: 8px; }
+.sc-steps { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; }
+.sc-arrow { align-self: center; color: var(--muted); }
+.sc-node { border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 10px; min-width: 120px; max-width: 220px; background: var(--surface); }
+.sc-node.on { background: var(--accent-soft); border-color: var(--accent); }
+.sc-node.likely { border-color: var(--up); box-shadow: inset 0 0 0 1px var(--up); }
+.sc-node.unlikely { border-style: dashed; }
+.sc-node-l { font-size: 13px; font-weight: 500; line-height: 1.4; }
+.sc-node-s { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.sc-node.on .sc-node-s { color: var(--accent); font-weight: 600; }
+.sc-ifs { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); }
+.sc-banner { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; font-size: 13.5px; background: var(--surface-2); border-left: 3px solid var(--accent); }
+.sc-banner.t-ok { border-left-color: var(--accent); background: var(--accent-soft); }
+.sc-banner.t-meh { border-left-color: var(--warn); background: var(--warn-soft); }
+.sc-banner.t-bad { border-left-color: var(--line-strong); border-left-style: dashed; }
+/* 可信度色（不用漲跌色）：有效＝主色、時好時壞＝黃、無效＝灰虛框 */
+.pill-ok { background: var(--accent-soft); color: var(--accent); }
+.pill-meh { background: var(--warn-soft); color: var(--warn-ink); }
+.pill-bad { background: var(--surface-2); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+@media (max-width: 720px) {
+  /* 手機：傳導鏈的層改成直排，箭頭朝下 */
+  .sc-steps { flex-direction: column; align-items: stretch; }
+  .sc-node { max-width: none; }
+  .sc-arrow { align-self: flex-start; margin-left: 18px; transform: rotate(90deg); line-height: 1; }
+}
+.sc-banner b { margin-right: 4px; }
+table.sc-rank tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+table.data tr.sc-gap td { text-align: center; color: var(--muted); padding: 2px; }
+.sc-sum { font-size: 14px; line-height: 1.7; margin: 0 0 6px; }
+.sc-past { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
+.sc-chip { white-space: nowrap; }
+
 
 /* ── 設計層（2026-10-02）：按壓回饋、提示框進場、市場氣候、手機細節 ── */
 /* 可按的東西按下去要有回應：縮到 0.97，120ms 強 ease-out */

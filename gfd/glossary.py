@@ -20,7 +20,7 @@ CATS = [
     ("method", "本站用語（統計）"),
 ]
 
-TABS = {"overview", "fx", "bond", "equity", "commodity", "flow", "vol", "cascade", "chains", "playbook",
+TABS = {"overview", "fx", "bond", "equity", "commodity", "flow", "vol", "cascade", "chains", "playbook", "scenario",
         "research", "daily", "glossary"}
 
 
@@ -380,6 +380,17 @@ ENTRIES = [
        "目前事件衝擊的分類比較約四分之三、訊號劇本約四成是運氣（數字隨資料更新，以各分頁顯示為準）——"
        "這是用來提醒不要過度解讀單一格子。",
        links=["playbook", "cascade"], related=["pvalue"]),
+    _e("walkforward", "走步樣本外回測", "Walk-forward out-of-sample test", "method",
+       "回到過去的每一個月，只用「當時已經知道結果」的資料重估模型，照模型做決定，再看之後實際發生什麼。",
+       "和「用全部資料找規律、再拿同一批資料驗證」不同，走步回測不會偷看未來，是檢查一套方法到底有沒有用的基本功。"
+       "但它只排除了估計上的偷看：如果訊號和門檻本身是事後回頭設計的（本站就是），設計上的後見之明還在，實際效果通常比回測差。"
+       "沙盤推演的排名就是用這個方法檢查的。",
+       links=["scenario"], related=["calibration", "fdr"]),
+    _e("calibration", "校準斜率", "Calibration slope", "method",
+       "樣本外實際發生的超額，大約是模型預測值的幾倍。",
+       "模型排名可能有用，但給的數字通常太大：例如斜率 0.3 代表模型說 +10%，過去實際平均只有約 +3%。"
+       "沙盤推演的「校準後期望超額」就是模型值乘上這個斜率；斜率不是正的期間，代表模型的數字沒有參考價值。",
+       links=["scenario"], related=["walkforward", "excess"]),
     _e("proxy", "代理序列", "Proxy series", "method",
        "原標的還沒有資料的年代，用性質相近的序列代替（例：1999 年以前用 Fidelity 能源基金代替能源股 ETF）。",
        "只取代理在接點之前的報酬、以接點價位對齊；代理與原標的不是同一個資產，明細中逐筆標註。",

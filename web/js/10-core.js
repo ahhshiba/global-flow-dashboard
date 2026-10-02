@@ -4,7 +4,7 @@
 const GFD = JSON.parse(document.getElementById("gfd-data").textContent);
 const A = GFD.analysis;
 
-/* 用到才載入的大塊資料（build.py LAZY_KEYS）：事件衝擊、訊號劇本、完整日線、鉅亨每日（最新一天／全部）。
+/* 用到才載入的大塊資料（build.py LAZY_KEYS）：事件衝擊、訊號劇本、沙盤推演、完整日線、鉅亨每日（最新一天／全部）。
    GFD.lazy[鍵] 是網址（公開版，docs/data/*.json）或 "#元素 id"（本機單檔版，同頁另一個 JSON 區塊）。
    沒有 GFD.lazy 的舊頁面＝資料都已內嵌，一律視為已就緒。 */
 const LAZY = GFD.lazy || {};
@@ -23,7 +23,7 @@ function needData(key) {
   return LAZY_PENDING[key];
 }
 function applyLazy(key, v) {
-  if (key === "cascade" || key === "playbook") A[key] = v;
+  if (key === "cascade" || key === "playbook" || key === "scenario") A[key] = v;
   else if (key === "daily") GFD.daily = v;
   else if (key === "daily_latest") GFD.daily_latest = v;
   else if (key === "detail") {
@@ -34,7 +34,7 @@ function applyLazy(key, v) {
 // 預先下載只對公開版的網址有意義；本機版的資料就在頁面裡，預先解析只會讓滑過按鈕時卡一下
 const prefetch = (keys) => { for (const k of keys) if (LAZY[k] && LAZY[k][0] !== "#") needData(k).catch(() => {}); };
 /* 分頁需要的大塊資料：還沒到就先顯示載入中，到了再畫；滑過分頁鈕就先開始下載 */
-const TAB_NEEDS = { cascade: ["cascade"], playbook: ["playbook"], daily: ["daily_latest"] };
+const TAB_NEEDS = { cascade: ["cascade"], playbook: ["playbook"], scenario: ["scenario"], daily: ["daily_latest"] };
 function loadingNote(text) { return h("p", { class: "empty loading", role: "status" }, h("span", { class: "spin", "aria-hidden": "true" }), text); }
 function loadFailed(err, retry) {
   return h("div", { class: "empty" }, `資料載入失敗（${err.message}）。`,
