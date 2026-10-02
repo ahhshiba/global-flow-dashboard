@@ -37,6 +37,12 @@
       const g = document.getElementById("tab-scenario");
       if (g) g.replaceChildren();
     }
+    if (id === "research") {        // 「30 年關聯」併進總覽（2026-10-02）：舊連結打開總覽並展開關聯熱圖
+      window.ovOpen = "heat";
+      id = "overview";
+      const o = document.getElementById("tab-overview");
+      if (o) o.replaceChildren();
+    }
     if (id === "faq") {             // FAQ 併進名詞解釋分頁（2026-10-01）：舊連結照樣打得開
       window.glView = "faq";
       id = "glossary";

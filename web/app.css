@@ -477,6 +477,10 @@ table.data tr.sel td { background: var(--accent-soft); }
 .bars-months .bar-fill.low { background: var(--up); }
 .bars-months .n.low { color: var(--up); font-weight: 600; }
 .gl-views { margin: 4px 0 14px; }
+/* 收合卡：收起時只剩標題列 */
+.card.folded { padding-bottom: 14px; }
+.card.folded .card-h { margin-bottom: 0; }
+
 /* ── 沙盤推演（2026-10-02） ── */
 /* 分頁上方的檢視切換（推演總結／事件衝擊／傳導鏈／訊號劇本） */
 .sc-views { margin: 0 0 20px; }

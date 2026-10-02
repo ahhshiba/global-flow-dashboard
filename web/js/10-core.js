@@ -402,6 +402,28 @@ function card({ title, sub, span = 12, note }) {
     body, note ? h("p", { class: "note" }, note) : null);
   return { el, body, tools };
 }
+/* 收合卡（2026-10-02）：預設只有標題與說明，按「展開」才畫內容。總覽要輕，熱圖、危機表這種大東西用到才算；記住開合狀態 */
+function foldCard({ title, sub, span = 12, note, key, render }) {
+  const c = card({ title, sub, span, note });
+  const noteEl = c.el.querySelector(":scope > .note");
+  let open = !!store.get("fold:" + key, false), drawn = false;
+  const btn = h("button", { class: "tool", type: "button" }, "展開");
+  const set = (v) => {
+    open = v;
+    store.set("fold:" + key, v);
+    btn.textContent = v ? "收合" : "展開";
+    btn.setAttribute("aria-pressed", String(v));
+    btn.setAttribute("aria-expanded", String(v));
+    c.body.hidden = !v;
+    if (noteEl) noteEl.hidden = !v;
+    c.el.classList.toggle("folded", !v);
+    if (v && !drawn) { drawn = true; render(c.body, c.tools); }
+  };
+  btn.addEventListener("click", () => set(!open));
+  c.tools.append(btn);
+  set(open);
+  return Object.assign(c, { open: () => set(true) });
+}
 // 滑鼠移到／手指按到會打開單一標的檢視的按鈕上，就先在背景下載完整日線
 function warmDetail(btn) {
   if (dataReady("detail")) return btn;

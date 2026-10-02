@@ -21,7 +21,8 @@ CATS = [
 ]
 
 TABS = {"overview", "fx", "bond", "equity", "commodity", "flow", "vol", "cascade", "chains", "playbook", "scenario",
-        "research", "daily", "glossary"}
+        "research",   # 2026-10-02 起是總覽關聯熱圖的別名（舊連結仍可用）
+        "daily", "glossary"}
 
 
 def _e(id, term, en, cat, short, read, links=(), related=(), class_note=False):
@@ -348,7 +349,7 @@ ENTRIES = [
        links=["vol", "playbook"], related=["leading_lagging"], class_note=True),
     _e("leading_lagging", "領先／同步／落後指標", "Leading / coincident / lagging indicators", "method",
        "領先指標在景氣轉折前先動（新訂單、殖利率曲線）；同步指標同時動（工業生產）；落後指標事後才確認（失業率、企業倒閉數）。",
-       "判斷「現在該做什麼」要靠領先指標；落後指標用來確認、不適合用來進出場。本站「30 年關聯」有各組配對的領先落後月數。",
+       "判斷「現在該做什麼」要靠領先指標；落後指標用來確認、不適合用來進出場。本站各市場分頁的配對卡片有該組的領先落後月數；總覽最下面的關聯熱圖看整體關係。",
        links=["research"], related=["vix", "inversion"], class_note=True),
     _e("log_return", "對數報酬", "Log return", "method",
        "ln(今天價格 ÷ 起點價格) × 100。小幅變動時幾乎等於百分比報酬。",

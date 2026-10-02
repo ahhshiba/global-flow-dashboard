@@ -23,6 +23,7 @@ function faqView(root, jumpTerm) {
     if (kind === "glossary" && target) return `名詞：${F.terms[target] || target}`;
     const btn = document.getElementById("t-" + kind);
     if (btn) return btn.textContent.trim();
+    if (kind === "research") return "總覽・關聯熱圖";
     return isScView(kind) ? `沙盤推演・${SC_VIEW_LABEL[kind]}` : kind;
   };
   const item = (i) => h("article", { class: `card span-12 faq-item ${i.status}` },

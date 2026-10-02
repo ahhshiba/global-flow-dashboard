@@ -1,4 +1,4 @@
-/* 分頁：現金流、VIX、30 年關聯 */
+/* 分頁：現金流、VIX；關聯熱圖與歷史危機表（收合卡，給總覽與事件衝擊用） */
 
 const SHORT = {
   fx_dxy: "美元指數", fx_usdtwd: "美元/台幣", fx_usdjpy: "美元/日圓", fx_usdcny: "美元/人民幣", fx_eurusd: "歐元/美元", fx_gbpusd: "英鎊/美元", fx_audusd: "澳幣/美元",
@@ -157,53 +157,49 @@ TABS.vol = (root, redo) => {
 };
 
 /* ── 30 年關聯 ── */
-TABS.research = (root, redo) => {
-  root.replaceChildren(tabHead("30 年關聯研究",
-    "月資料：價格類用月對數報酬、殖利率用月變動（bp）、VIX 用對數變動。全期為 1995 年以來，近期為最近 36 個完整月。相關不等於因果；領先落後為樣本內統計。", true, redo));
-  const g = h("div", { class: "grid" });
-  root.append(g);
-  const f = findingsCard("research", "關係變化與領先落後");
-  if (f) g.append(f);
-
+/* 關聯熱圖（總覽用）與歷史危機表（事件衝擊檢視用）。2026-10-02 前是獨立的「30 年關聯」分頁；
+   13 組配對卡各市場分頁已經有，重點敘述在總覽的「各市場重點」，所以只剩這兩張，做成收合卡用到才畫。 */
+function heatmapCard() {
   const C = A.corr;
-  if (C) {
-    let mode = store.get("heatMode", "full");
-    const hc = card({ title: "資產關聯熱圖", span: 12, sub: `紅＝同向、藍＝反向；只標出 |r| ≥ 0.5 的數字，其餘移到格子上看。近期區間：${C.recent_start} → ${C.recent_end}。` });
-    const chips = h("div", { class: "chips" });
-    const host = h("div", { class: "heat-wrap heat" });
-    const names = C.ids.map(shortName);
-    const draw = () => {
-      chips.replaceChildren(...[["full", "1995 年以來"], ["recent", "近 36 個月"]].map(([k, l]) => h("button", { class: "chip", type: "button", "aria-pressed": String(k === mode),
-        onclick: () => { mode = k; store.set("heatMode", k); draw(); } }, l)));
-      heatmap(host, { ids: C.ids, names, matrix: mode === "full" ? C.full : C.recent, label: "資產關聯熱圖",
-        tip: (i, j) => `<div class="tip-h">${esc(names[i])} × ${esc(names[j])}</div>`
-          + `<div>1995 年以來 r = <b class="mono">${fin(C.full[i][j]) ? fmtSigned(C.full[i][j], 2) : "—"}</b>（n=${C.full_n[i][j]}）</div>`
-          + `<div>近 36 個月 r = <b class="mono">${fin(C.recent[i][j]) ? fmtSigned(C.recent[i][j], 2) : "—"}</b></div>` });
-    };
-    hc.tools.append(chips);
-    hc.body.append(host);
-    mount(host, draw);
-    g.append(hc.el);
-  }
+  if (!C) return null;
+  return foldCard({ title: "資產關聯熱圖（1995 年以來 vs 近 36 個月）", span: 12, key: "heat",
+    sub: `月資料：價格類用月對數報酬、殖利率用月變動（bp）、VIX 用對數變動。紅＝同向、藍＝反向；只標出 |r| ≥ 0.5 的數字，其餘移到格子上看。近期區間：${C.recent_start} → ${C.recent_end}。相關不等於因果。`,
+    render(body, tools) {
+      let mode = store.get("heatMode", "full");
+      const chips = h("div", { class: "chips" });
+      const host = h("div", { class: "heat-wrap heat" });
+      const names = C.ids.map(shortName);
+      const draw = () => {
+        chips.replaceChildren(...[["full", "1995 年以來"], ["recent", "近 36 個月"]].map(([k, l]) => h("button", { class: "chip", type: "button", "aria-pressed": String(k === mode),
+          onclick: () => { mode = k; store.set("heatMode", k); draw(); } }, l)));
+        heatmap(host, { ids: C.ids, names, matrix: mode === "full" ? C.full : C.recent, label: "資產關聯熱圖",
+          tip: (i, j) => `<div class="tip-h">${esc(names[i])} × ${esc(names[j])}</div>`
+            + `<div>1995 年以來 r = <b class="mono">${fin(C.full[i][j]) ? fmtSigned(C.full[i][j], 2) : "—"}</b>（n=${C.full_n[i][j]}）</div>`
+            + `<div>近 36 個月 r = <b class="mono">${fin(C.recent[i][j]) ? fmtSigned(C.recent[i][j], 2) : "—"}</b></div>` });
+      };
+      tools.prepend(chips);
+      body.append(host);
+      mount(host, draw);
+    } });
+}
 
-  for (const p of A.pairs || []) g.append(pairCard(p, 6));
-
+function crisisCard() {
   const E = A.events;
-  if (E && E.items.length) {
-    const ec = card({ title: "歷史危機期間各資產表現", span: 12,
-      sub: "區間起點前一個月底到終點月底的變化；價格類為 %、殖利率為 bp、VIX 為點數。紅＝上升、綠＝下跌（台灣行情慣例）。",
-      note: "商品與匯率為月均值，短區間（如新冠 2020-02→03）的跌幅會比日線看到的小。" });
-    const scale = { "%": 45, bp: 250, pt: 30 };
-    const head = h("tr", {}, h("th", {}, "資產"), E.items.map((e) => h("th", { class: "n" }, e.name, h("span", { class: "sub" }, `${e.start}→${e.end}`))));
-    const rows = E.ids.map((sid) => h("tr", {}, h("td", {}, shortName(sid)), E.items.map((e) => {
-      const m = e.moves[sid];
-      if (!m) return h("td", { class: "n muted" }, "—");
-      const p = Math.round(Math.min(1, Math.abs(m.v) / scale[m.unit]) * 42);
-      const col = m.v >= 0 ? "var(--up)" : "var(--down)";
-      return h("td", { class: "n heatcell", style: `background:color-mix(in srgb, ${col} ${p}%, transparent)` },
-        `${fmtSigned(m.v, m.unit === "%" ? 1 : 0)}${m.unit === "%" ? "%" : m.unit === "bp" ? "bp" : ""}`);
-    })));
-    ec.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, head), h("tbody", {}, rows))));
-    g.append(ec.el);
-  }
-};
+  if (!E || !E.items.length) return null;
+  return foldCard({ title: "歷史危機期間各資產表現（月資料）", span: 12, key: "crisis",
+    sub: "區間起點前一個月底到終點月底的變化；價格類為 %、殖利率為 bp、VIX 為點數。紅＝上升、綠＝下跌（台灣行情慣例）。和上面的事件研究不同：這裡是整段危機、月資料，不是事件日起算的日線。",
+    note: "商品與匯率為月均值，短區間（如新冠 2020-02→03）的跌幅會比日線看到的小。",
+    render(body) {
+      const scale = { "%": 45, bp: 250, pt: 30 };
+      const head = h("tr", {}, h("th", {}, "資產"), E.items.map((e) => h("th", { class: "n" }, e.name, h("span", { class: "sub" }, `${e.start}→${e.end}`))));
+      const rows = E.ids.map((sid) => h("tr", {}, h("td", {}, shortName(sid)), E.items.map((e) => {
+        const m = e.moves[sid];
+        if (!m) return h("td", { class: "n muted" }, "—");
+        const p = Math.round(Math.min(1, Math.abs(m.v) / scale[m.unit]) * 42);
+        const col = m.v >= 0 ? "var(--up)" : "var(--down)";
+        return h("td", { class: "n heatcell", style: `background:color-mix(in srgb, ${col} ${p}%, transparent)` },
+          `${fmtSigned(m.v, m.unit === "%" ? 1 : 0)}${m.unit === "%" ? "%" : m.unit === "bp" ? "bp" : ""}`);
+      })));
+      body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" }, h("thead", {}, head), h("tbody", {}, rows))));
+    } });
+}

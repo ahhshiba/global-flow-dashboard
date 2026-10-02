@@ -141,7 +141,7 @@ TABS.overview = (root, redo) => {
   const own = findingsList("overview");
   if (own) oc.body.append(own);
   if (others.length) {
-    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", cascade: "事件衝擊", chains: "傳導鏈", playbook: "訊號劇本", scenario: "沙盤推演", research: "30 年關聯" };
+    const tabName = { fx: "匯市", bond: "債市", equity: "股市", commodity: "商品", flow: "現金流", vol: "VIX", cascade: "事件衝擊", chains: "傳導鏈", playbook: "訊號劇本", scenario: "沙盤推演", research: "配對關聯" };
     oc.body.append(h("ul", { class: "finds", style: "margin-top:12px" }, others.map((f) => h("li", { class: `t-${f.tone}` },
       h("b", {}, `【${tabName[f.tab] || f.tab}】${f.title}`), h("span", {}, f.text)))));
   }
@@ -152,6 +152,15 @@ TABS.overview = (root, redo) => {
   const bad = (A.coverage || []).filter((c) => c.status !== "ok");
   if (bad.length) gap.body.append(h("p", { class: "note" }, `本次更新有 ${bad.length} 項抓取失敗或沿用舊資料：${bad.map((b) => b.name).join("、")}`));
   g.append(gap.el);
+  const hc = heatmapCard();                 // 原「30 年關聯」分頁的熱圖，收合卡，展開才畫
+  if (hc) {
+    g.append(hc.el);
+    if (window.ovOpen === "heat") {         // 舊網址 #research 或名詞解釋的連結：展開並捲過去
+      window.ovOpen = null;
+      hc.open();
+      setTimeout(() => jumpTo(hc.el), 0);
+    }
+  }
 };
 
 // 有排名欄的表：第 0 欄排名、第 1 欄國家（靠左）、其餘數字（靠右）

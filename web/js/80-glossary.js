@@ -21,6 +21,7 @@ function glossaryLinkLabel(link, events) {
   if (event) return `事件衝擊：${events[event] || event}`;
   const btn = document.getElementById("t-" + tab);
   if (btn) return btn.textContent.trim();
+  if (tab === "research") return "總覽・關聯熱圖";
   return isScView(tab) ? `沙盤推演・${SC_VIEW_LABEL[tab]}` : tab;
 }
 

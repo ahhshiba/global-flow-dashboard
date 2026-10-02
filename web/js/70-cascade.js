@@ -410,4 +410,6 @@ TABS.cascade = lazyTab("cascade", (root) => {
   g.append(holder.el);
   root.append(body);
   draw();
+  const cc = crisisCard();                  // 原「30 年關聯」分頁的歷史危機表（月資料），收合卡
+  if (cc) root.append(h("div", { class: "grid", style: "margin-top:16px" }, cc.el));
 });
