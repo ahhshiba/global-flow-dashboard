@@ -31,8 +31,10 @@ function scenarioLead(S, hz) {
   if (v === "樣本外無效") return `${head}${hz} 個月的排名在樣本外沒有比亂選好（${fmtSigned(B.ridge.mean, 2)}），這個期間不列推薦。`;
   const picks = `依模型，未來 ${hz} 個月期望超額較高的是${top.map((r) => `${r.name}（${scPct(val(r))}）`).join("、")}，`
     + `較弱的是${bot.map((r) => `${r.name}（${scPct(val(r))}）`).join("、")}${fin(top[0] && top[0].cal) ? "（已依樣本外校準）" : "（模型值）"}。`;
-  if (v === "樣本外有效") return `${head}${picks}${bt}，各起始月都顯著。訊號門檻是事後設計的，實際效果可能更差。`;
-  return `${head}${picks}但${bt}，時好時壞——不能當買賣依據，只是研究線索。`;
+  const cs = S.case_summary && S.case_summary.model && S.case_summary.model[String(hz)];
+  const check = cs && cs.n ? `對照過去 ${S.case_summary.n} 個類似時點，當時的模型 ${hz} 個月前 ${S.model.topk} 名跑贏全體 ${cs.hit}/${cs.n} 次（${scP(cs.p)}）。` : "";
+  if (v === "樣本外有效") return `${head}${picks}${bt}，各起始月都顯著。${check}訊號門檻是事後設計的，實際效果可能更差。`;
+  return `${head}${picks}但${bt}，時好時壞。${check}不能當買賣依據，只是研究線索。`;
 }
 
 TABS.scenario = lazyTab("scenario", (root) => {
@@ -89,18 +91,42 @@ TABS.scenario = lazyTab("scenario", (root) => {
       } else state = "上游未成立";
       steps.push(h("div", { class: `sc-node ${tone}`, title: n.triggered ? `${n.current_at} 數值 ${fmtNum(n.current, 2)}` : (n.after ? `接在「${n.after}」之後；歷史 ${n.n_episodes} 次` : "") },
         h("div", { class: "sc-node-l" }, n.label), h("div", { class: "sc-node-s" }, state),
+        !n.triggered && fin(n.prob12) ? h("div", { class: "sc-node-s" }, `12 個月內 ${fmtNum(n.prob12, 0)}%（平常 ${fmtNum(n.base12, 0)}%）`) : null,
         fin(n.wait) && !n.triggered ? h("div", { class: "sc-node-s muted" }, `成立的話中位數第 ${fmtNum(n.wait, 0)} 個月`) : null));
     });
     const ifs = p.nodes.filter((n) => !n.triggered && fin(n.prob) && n.if_then && n.if_then.length);
+    const st = p.state;
+    const stTxt = !st ? null : st.n_episodes === 0 ? "照這條鏈現在的狀態（亮著的層都亮、其餘都沒亮），歷史上沒有出現過，推不到更下層。"
+      : `照這條鏈現在的狀態（亮著的層都亮、其餘都沒亮），歷史上有 ${st.n_episodes} 段、${st.n_months} 個月：剩下的層在 12 個月內全部走完的比例 ${fmtNum(st.all, 0)}%`
+        + `${st.n_episodes < 3 ? "——樣本太少，只是紀錄" : ""}。`;
     c2.body.append(h("div", { class: "sc-path" },
       h("div", { class: "sc-path-h" }, h("b", {}, p.name), h("span", { class: "muted" }, `　${p.active}/${p.of} 層成立`)),
       h("div", { class: "sc-steps" }, steps),
+      stTxt ? h("p", { class: "sc-state" }, stTxt) : null,
       ifs.length ? h("ul", { class: "sc-ifs" }, ifs.map((n) => h("li", {}, `如果「${n.label}」也成立：訊號劇本裡通過三道檢驗的是 `,
         n.if_then.map((r, k) => h("span", {}, k ? "、" : "", `${r.name} ${r.horizon} 個月超額 `, chg(r.lift, 1, "%"))), "。"))) : null));
   }
   c2.body.append(h("p", { class: "note" }, "「比平常更可能」（紅框）＝高出平常 10 個百分點以上；「比平常更不可能」（虛線）＝低於平常 5 個百分點以上。"
     + "傳導鏈的層是事後挑的假說，歷史上多數段落「跟著發生」，但事件後報酬站得住的很少，請搭配下面的期望值與樣本外檢查一起看。"));
   g.append(c2.el);
+
+  // ── 2b. 下一波可能亮起的訊號（跨鏈） ──
+  const CS = S.case_summary || {};
+  const cW = card({ title: "下一波可能亮起的訊號（跨鏈）", span: 12,
+    sub: `不限同一條鏈：歷史上和現在狀態相似的月份（亮著的訊號重疊 ≥ ${fmtNum((CS.threshold || 0.25) * 100, 0)}%），之後 ${S.within} 個月哪些「現在沒亮」的訊號比平常更常亮起。` });
+  if (!S.wave || !S.wave.length) cW.body.append(h("p", { class: "empty" }, "沒有比平常明顯更常亮起的訊號"));
+  else cW.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
+    h("thead", {}, h("tr", {}, ["訊號", `${S.within} 個月內亮起`, "平常", "相似月份（段）", "如果亮起：訊號劇本通過檢驗的組合"].map((t, i) => h("th", { class: i && i < 4 ? "n" : null }, t)))),
+    h("tbody", {}, S.wave.map((w) => h("tr", {},
+      h("td", {}, w.label, h("span", { class: "sub" }, `${w.source}：${w.why}`)),
+      h("td", { class: "n" }, `${fmtNum(w.prob, 0)}%`), h("td", { class: "n" }, `${fmtNum(w.base, 0)}%`),
+      h("td", { class: "n" }, `${w.n_months}（${w.n_episodes}）`),
+      h("td", {}, w.if_then && w.if_then.length ? w.if_then.map((r, k) => h("span", {}, k ? "、" : "", `${r.name} ${r.horizon} 個月 `, chg(r.lift, 1, "%"))) : h("span", { class: "muted" }, "—"))))))));
+  if (CS.wave && CS.wave.n) {
+    cW.body.append(h("p", { class: "note" }, `對答案：在過去 ${CS.n} 個類似時點用同樣方法（只用當時的資料）挑出的「下一波」訊號，${CS.wave.n} 個裡實際亮起 ${CS.wave.hits} 個`
+      + `（${fmtNum(100 * CS.wave.hits / CS.wave.n, 0)}%），平常比例約 ${fmtNum(CS.wave.base, 0)}%；比平常好一些，但還在運氣範圍內（${scP(CS.wave.p)}）。`));
+  }
+  g.append(cW.el);
 
   // ── 3. 期望值排行 ──
   const c3 = card({ title: "期望值排行", span: 12 });
@@ -113,6 +139,67 @@ TABS.scenario = lazyTab("scenario", (root) => {
   // ── 4. 為什麼 ──
   const c4 = card({ title: "為什麼", span: 12 });
   g.append(c4.el);
+
+  // ── 4b. 對答案：過去類似的時點 ──
+  const cA = card({ title: "對答案：過去類似的時點，推演說了什麼、後來實際怎樣", span: 12,
+    sub: `挑出亮著的訊號和現在重疊最多的歷史時點（重疊 ≥ ${fmtNum((CS.threshold || 0.25) * 100, 0)}%、彼此至少隔一年、之後一年的結果已經知道），`
+      + "在每個時點只用「當時已經知道」的資料重跑整套推演，再對照之後實際發生的事。案例只有十來個，運氣成分很大。" });
+  if (!S.cases || !S.cases.length) cA.body.append(h("p", { class: "empty" }, "沒有夠相似的歷史時點"));
+  else {
+    const mm = CS.model || {}, td = CS.today || {}, ly = CS.layers || {}, wv = CS.wave || {};
+    const fair = (x) => (mm[x] && mm[x].n ? `${x} 個月前 ${S.model.topk} 名跑贏全體 ${mm[x].hit}/${mm[x].n} 次、平均每次 ${fmtSigned(mm[x].spread_mean, 2)} 個百分點（${scP(mm[x].p)}）` : null);
+    cA.body.append(h("ul", { class: "finds" },
+      h("li", { class: (mm["3"] && mm["3"].p <= 0.05) || (mm["6"] && mm["6"].p <= 0.05) ? "t-up" : "t-alert" },
+        h("b", {}, "公平的考試：當時的模型"),
+        h("span", {}, [fair("3"), fair("6")].filter(Boolean).join("；") + "。p 值是和「每次隨機挑 5 個」比；p 大代表分不出和亂挑的差別。")),
+      h("li", { class: ly.skill > 0 ? "t-up" : "t-alert" },
+        h("b", {}, "傳導鏈的下一層"),
+        h("span", {}, `${ly.n} 次預測中實際發生 ${ly.happened} 次。預測機率的準確度（Brier，越小越好）${fmtNum(ly.brier, 3)}，`
+          + `直接用「平常比例」是 ${fmtNum(ly.brier_base, 3)}——${ly.skill > 0 ? `比平常比例準 ${fmtNum(ly.skill * 100, 0)}%` : `比直接用平常比例還不準（${fmtNum(ly.skill * 100, 0)}%）`}。`
+          + "也就是說，「上游亮了，下一層比平常更可能」這件事在類似時點沒有幫上忙。")),
+      h("li", { class: wv.p <= 0.05 ? "t-up" : "t-neutral" },
+        h("b", {}, "下一波訊號"),
+        h("span", {}, `挑出的 ${wv.n} 個「可能亮起」的訊號實際亮起 ${wv.hits} 個（${fmtNum(wv.n ? 100 * wv.hits / wv.n : null, 0)}%），平常比例約 ${fmtNum(wv.base, 0)}%（${scP(wv.p)}）。`)),
+      h("li", { class: "t-neutral" },
+        h("b", {}, "今天的答案放回這些時點（不是公平的考試）"),
+        h("span", {}, ["3", "6"].filter((x) => td[x] && td[x].n).map((x) => `今天 ${x} 個月的前 ${S.model.topk} 名在這些時點之後 ${x} 個月跑贏全體 ${td[x].hit}/${td[x].n} 次、平均 ${fmtSigned(td[x].mean, 2)} 個百分點`).join("；")
+          + "。今天的模型就是從這些歷史學來的，對得上是應該的，只能看出「在哪幾次會錯、錯多少」。"))));
+    const ok = (v) => (v ? h("span", { class: "sc-ok" }, "✓") : h("span", { class: "sc-ng" }, "✗"));
+    const modelCell = (m) => (!m || !m.ok ? h("td", { class: "n muted" }, m && m.reason ? "資料不足" : "—")
+      : h("td", { class: "n" }, chg(m.spread, 1, ""), " ", ok(m.hit), h("span", { class: "sub" }, m.top.slice(0, 3).map((x) => x.name).join("、"))));
+    cA.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
+      h("thead", {}, h("tr", {}, ["時點", "相似度", "當時模型 3 個月：前 5 名比全體", "6 個月", "今天的前 5 名放在當時（3 個月）", "鏈的下一層猜對", "下一波亮起"]
+        .map((t, i) => h("th", { class: i ? "n" : null }, t)))),
+      h("tbody", {}, S.cases.map((c) => {
+        const lr = c.layers || [];
+        const right = lr.filter((l) => (l.prob >= 50) === l.actual).length;
+        const wvc = c.wave || [];
+        return h("tr", {},
+          h("td", {}, c.m, h("span", { class: "sub" }, `${c.shared.length} 個訊號和現在相同`)),
+          h("td", { class: "n" }, fmtNum(c.jaccard, 2)),
+          modelCell(c.model["3"]), modelCell(c.model["6"]),
+          h("td", { class: "n" }, c.today["3"] ? chg(c.today["3"].top, 1, "") : "—"),
+          h("td", { class: "n" }, lr.length ? `${right}/${lr.length}` : "—"),
+          h("td", { class: "n" }, wvc.length ? `${wvc.filter((w) => w.actual).length}/${wvc.length}` : "—"));
+      })))));
+    cA.body.append(h("p", { class: "note" }, "數字是之後 h 個月的報酬比當時全體標的平均多幾個百分點（對數報酬；月均價標的從下個月起算）。"
+      + "「鏈的下一層猜對」＝預測機率 ≥ 50% 而且真的發生、或 < 50% 而且沒發生。點下面各時點看細節。"));
+    for (const c of S.cases) {
+      const m3 = c.model["3"];
+      cA.body.append(h("details", { class: "sc-case" },
+        h("summary", {}, `${c.m}　相似度 ${fmtNum(c.jaccard, 2)}　當時亮著 ${c.active.length} 個訊號`),
+        h("p", { class: "sc-case-p" }, h("b", {}, "當時亮著："), c.active.join("、"), "。", h("br"), h("b", {}, "和現在相同："), c.shared.join("、") || "—", "。"),
+        m3 && m3.ok ? h("p", { class: "sc-case-p" }, h("b", {}, "當時模型 3 個月看好："),
+          ...m3.top.map((x, k) => h("span", {}, k ? "、" : "", `${x.name} `, chg(x.real, 1, ""))),
+          h("br"), h("b", {}, "當時模型 3 個月看壞："),
+          ...m3.bottom.map((x, k) => h("span", {}, k ? "、" : "", `${x.name} `, chg(x.real, 1, ""))),
+          h("span", { class: "muted" }, "（數字是實際比全體多幾個百分點）")) : null,
+        c.layers && c.layers.length ? h("ul", { class: "sc-case-l" }, c.layers.map((l) => h("li", {}, ok(l.actual), ` ${l.chain}：${l.label}　當時推估 ${fmtNum(l.prob, 0)}%（平常 ${fmtNum(l.base, 0)}%）`))) : null,
+        c.wave && c.wave.length ? h("p", { class: "sc-case-p" }, h("b", {}, "當時挑的下一波："),
+          ...c.wave.map((w, k) => h("span", {}, k ? "、" : "", ok(w.actual), ` ${w.label}（${fmtNum(w.prob, 0)}% vs 平常 ${fmtNum(w.base, 0)}%）`))) : null));
+    }
+  }
+  g.append(cA.el);
 
   // ── 5. 事件衝擊 ──
   const c5 = card({ title: "相關事件類型的短期反應（事件衝擊・日線）", span: 12,

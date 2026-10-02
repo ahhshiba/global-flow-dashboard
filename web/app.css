@@ -518,7 +518,14 @@ table.data tr.sc-gap td { text-align: center; color: var(--muted); padding: 2px;
 .sc-sum { font-size: 14px; line-height: 1.7; margin: 0 0 6px; }
 .sc-past { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
 .sc-chip { white-space: nowrap; }
-.sc-void { opacity: 0.55; }   /* 樣本外無效的期間：排行只是描述，淡化顯示 */
+.sc-void { opacity: 0.55; }
+.sc-state { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }
+.sc-ok { color: var(--accent); font-weight: 700; }
+.sc-ng { color: var(--muted); font-weight: 700; }
+.sc-case { border-top: 1px solid var(--line); padding: 8px 0; }
+.sc-case summary { cursor: pointer; font-weight: 600; font-size: 13.5px; }
+.sc-case-p { font-size: 13px; line-height: 1.7; margin: 6px 0 0; }
+.sc-case-l { font-size: 13px; line-height: 1.7; margin: 6px 0 0; padding-left: 4px; list-style: none; }   /* 樣本外無效的期間：排行只是描述，淡化顯示 */
 
 
 /* ── 設計層（2026-10-02）：按壓回饋、提示框進場、市場氣候、手機細節 ── */
