@@ -165,7 +165,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     const R = HG.regime;
     const cH = card({ title: "避險：如果真的跌了", span: 12,
       sub: `每個下跌情境：${HG.W} 個月內發生的機率、全部跌段裡最穩的避險資產（上漲次數／段數）`
-        + (R && R.lit ? `，以及和現在一樣在${R.short}開始的跌段裡，同一項與比較穩的一項。` : "。") });
+        + (R && R.lit ? `，以及同一項在和現在一樣「${R.short}」開始的跌段裡的表現（只有個位數段，只能參考）。` : "。") });
     const btn = h("button", { class: "tool", type: "button", onclick: () => window.gotoTab("scenario", () => { window.scView = "hedge"; }) }, "看避險檢視 →");
     cH.tools.append(btn);
     const cell = (x, s) => (x && s && s.n ? h("span", {}, `${hgName(x)} `, h("b", { class: "mono" }, `${s.up}/${s.n}`), h("span", { class: "muted" }, `　中位 ${hgPct(s.med)}`)) : h("span", { class: "muted" }, "—"));
@@ -176,13 +176,11 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
         const o = T.odds || {};
         const b = hgBest(T);
         const idx = R ? hgSubset(T, "regime") : [];
-        const alt = T.hedges.filter((x) => HG_RANK[x.verdict] <= 1).map((x) => ({ x, s: hgStats(x, idx) })).filter((r) => r.s.n >= 4)
-          .sort((p, q) => q.s.up / q.s.n - p.s.up / p.s.n || q.s.med - p.s.med)[0];
         return h("tr", {},
           h("td", {}, T.label, h("span", { class: "sub" }, `過去 ${T.n} 段・中位 ${hgPct(T.med)}`)),
           h("td", { class: "n" }, o.ongoing ? h("b", {}, "進行中") : fin(o.prob) ? h("span", {}, h("b", {}, `${fmtNum(o.prob, 0)}%`), h("span", { class: "muted" }, `（平常 ${fmtNum(o.base, 0)}%）`)) : h("span", { class: "muted" }, `—（平常 ${fmtNum(o.base, 0)}%）`)),
           h("td", {}, cell(b, b && hgStats(b, hgSubset(T, "all")))),
-          R && R.lit ? h("td", {}, idx.length ? [cell(b, b && hgStats(b, idx)), alt && alt.x !== b ? h("div", {}, cell(alt.x, alt.s)) : null] : h("span", { class: "muted" }, "沒有這樣的跌段")) : null);
+          R && R.lit ? h("td", {}, idx.length ? cell(b, b && hgStats(b, idx)) : h("span", { class: "muted" }, "沒有這樣的跌段")) : null);
       })))),
       h("p", { class: "note" }, "段數都只有個位數到二十幾段；每一段的報酬、配置試算（換多少比例能少跌多少、平常少賺多少）在避險檢視。"));
     g.append(cH.el);

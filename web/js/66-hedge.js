@@ -43,20 +43,20 @@ function hedgeLead(H, T) {
   const b = hgBest(T);
   if (!b) return risk;
   const sAll = hgStats(b, hgSubset(T, "all"));
-  let txt = `過去 ${sAll.n} 次這樣的下跌，${hgSp(hgName(b))}有 ${sAll.up} 次同時上漲（中位 ${hgPct(sAll.med)}）`;
+  const nm = hgSp(hgName(b));
+  let txt = sAll.n < T.n
+    ? `過去 ${T.n} 次這樣的下跌，${nm}有資料的 ${sAll.n} 次裡有 ${sAll.up} 次同時上漲（中位 ${hgPct(sAll.med)}）`
+    : `過去 ${T.n} 次這樣的下跌，${nm}有 ${sAll.up} 次同時上漲（中位 ${hgPct(sAll.med)}）`;
   const R = H.regime;
   const idx = R ? hgSubset(T, "regime") : [];
   if (R && R.lit && idx.length >= 3) {
+    // 環境分組只有個位數段：只講「同一項」在這幾段怎麼樣，不在這麼少的段裡另外挑贏家（挑出來的多半是運氣）
     const s = hgStats(b, idx);
-    const worse = s.n && s.up / s.n < b.up / 100 - 0.1;
-    txt += worse ? `；但現在是${R.short}，這種環境下開始的 ${s.n} 次，它只有 ${s.up} 次上漲（中位 ${hgPct(s.med)}）`
-      : `；現在是${R.short}，這種環境下開始的 ${s.n} 次，它也有 ${s.up} 次上漲（中位 ${hgPct(s.med)}）`;
-    // 只從「全部跌段」本來就算避險的資產裡挑：個位數段數裡，波動大的商品很容易靠運氣排到第一
-    const alt = T.hedges.filter((x) => HG_RANK[x.verdict] <= 1).map((x) => ({ x, s: hgStats(x, idx) })).filter((r) => r.s.n >= 4 && r.x !== b)
-      .sort((p, q) => q.s.up / q.s.n - p.s.up / p.s.n || q.s.med - p.s.med)[0];
-    if (worse && alt && alt.s.up / alt.s.n > s.up / Math.max(1, s.n)) txt += `；同樣情況下比較穩的是${hgName(alt.x)}，${alt.s.up}/${alt.s.n} 次上漲、中位 ${hgPct(alt.s.med)}`;
+    const worse = s.n && s.up / s.n < sAll.up / sAll.n - 0.1;
+    txt += `；${worse ? "但" : ""}現在是${R.short}，這種環境下開始的只有 ${s.n} 次，它${worse ? "只有" : "有"} ${s.up} 次上漲（中位 ${hgPct(s.med)}）`
+      + `——段數太少只能參考，其他資產在這幾段的表現按下方「${R.short}」看`;
   }
-  return `${risk}${txt}。樣本都只有一、二十段，下面每個點就是一段。`;
+  return `${risk}${txt}。下面每個點就是一段。`;
 }
 
 const HEDGE_VIEW = lazyTab("scenario", (root) => {
@@ -67,6 +67,10 @@ const HEDGE_VIEW = lazyTab("scenario", (root) => {
       + "2008 年這種長跌段不會重複算十幾次。每個資產看同一個 3 個月（月底收盤到月底收盤）的報酬：上漲次數就是「保護率」，另看中位數與最差一次。"
       + `判定只看全部跌段：穩定避險＝中位數 > 0、上漲 ≥ ${R.stable_up}%，而且跌段中的中位數明顯高於隨機挑同樣多個 3 個月（p ≤ ${R.stable_p}，跌的時候特別會漲，不只是平常就在漲）；`
       + `有點幫助＝中位數 > 0、上漲 ≥ ${R.help_up}%；跟著跌＝中位數 ≤ ${R.fall_med}%、上漲 ≤ ${R.fall_up}%；跌段少於 ${R.min_n} 段不判定。`
+      + `${(() => { const ps = H.targets.flatMap((T) => T.hedges).map((x) => x.p).filter(fin); const k = ps.filter((p) => p <= R.stable_p).length;
+          const k2 = ps.filter((p) => p <= 0.01).length;
+          return `四個情境合起來做了 ${ps.length} 次這種檢定，p ≤ ${R.stable_p} 的有 ${k} 個——就算全部都是運氣，也會有約 ${Math.round(ps.length * R.stable_p)} 個；`
+            + `p ≤ 0.01 的有 ${k2} 個（運氣約 ${Math.round(ps.length * 0.01)} 個）。所以只有 p 很小的那幾個比較可信，單一個「穩定避險」要和段數、其他情境一起看。`; })()}`
       + "環境分組（例：利率上行時開始的跌段）通常只有個位數段，只畫出來對照、不下判定。"
       + "報酬是各資產的原幣報酬，沒有換算成新台幣、沒有交易成本；黃金、原油、匯率用月線收盤（不是月均價），才不會和指數錯開時間。全部是歷史統計，不是投資建議。" : "",
     false, null, H && H.targets.length ? " " : null));
@@ -98,7 +102,7 @@ const HEDGE_VIEW = lazyTab("scenario", (root) => {
   const rows = h("div", { class: "hg-rows" });
   const more = h("button", { class: "tool hg-more-btn", type: "button" });
   c2.body.append(h("div", { class: "hg-ctl hg-env" }, h("span", { class: "muted" }, "跌段開始時："), envBar, envSel), axis, rows, more);
-  c2.el.append(h("p", { class: "note" }, "判定（右邊標籤）一律看全部跌段；換成某種環境時，點和中位數只算那幾段、標籤不變。"
+  c2.el.append(h("p", { class: "note" }, "判定（右邊標籤）與排列順序一律看全部跌段；換成某種環境時，只有亮著的點、上漲次數與中位數改算那幾段。"
     + "持有美元資產的台灣投資人，還要再加上「美元（對新台幣）」那一列的變化。"));
   g.append(c2.el);
 
@@ -222,8 +226,8 @@ const HEDGE_VIEW = lazyTab("scenario", (root) => {
     axis.replaceChildren(h("span", { class: "a-name" }, "資產"),
       h("span", { class: "a-strip" }, h("span", {}, `−${D}%`), h("span", {}, "0"), h("span", {}, `+${D}%`)),
       h("span", { class: "a-cnt" }, "上漲"), h("span", { class: "a-med" }, "中位"), h("span", { class: "a-pill" }, "判定"));
-    const list = T.hedges.map((x) => ({ x, s: hgStats(x, idx) }))
-      .sort((p, q) => (q.s.n >= 3) - (p.s.n >= 3) || (q.s.med ?? -1e9) - (p.s.med ?? -1e9) || q.s.up / Math.max(1, q.s.n) - p.s.up / Math.max(1, p.s.n));
+    // 順序固定用全部跌段的中位數（後端排好的）：換環境時列不跳動，直接看同一列的點怎麼變
+    const list = T.hedges.map((x) => ({ x, s: hgStats(x, idx) }));
     const shown = st.all ? list : list.slice(0, HG_ROWS);
     rows.replaceChildren(...shown.map(({ x }) => hedgeRow(T, x, idx, D)));
     more.hidden = list.length <= HG_ROWS;

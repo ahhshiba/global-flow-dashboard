@@ -674,7 +674,7 @@ table.data td .sub.keep { word-break: keep-all; }   /* 短註記：只在標點�
 .hg-name { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
 .hg-name::before { content: "▸"; display: inline-block; width: 1em; color: var(--muted); transition: transform var(--dur-fast) var(--ease-out); }
 .hg-row[open] .hg-name::before { transform: rotate(90deg); }
-.hg-strip { position: relative; height: 22px; }
+.hg-strip { position: relative; height: 22px; margin: 0 5px; }   /* 左右留半個點：最邊緣的點不要超出格子 */
 .hg-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line-strong); }
 .hg-dot { position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; opacity: 0.8;
   box-shadow: 0 0 0 1px var(--surface); }

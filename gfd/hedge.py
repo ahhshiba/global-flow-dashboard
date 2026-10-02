@@ -192,8 +192,9 @@ def build(g, series, scen, detail, log=print):
             # （中位數不能線性相加，所以不在頁面上用兩個中位數去混）
             cm = calm[np.isfinite(c["r3"][calm])] if len(calm) else calm
             mix = [CH.r(float(np.median((1 - w) * tr3[cm] + w * c["r3"][cm]))) for w in MIX_W] if len(cm) else None
+            # rets 留 3 位：頁面上的中位數再四捨五入到 1 位，才不會因為先截成 2 位而差一點（−0.151 → −0.15 → −0.1）
             hedges.append(dict(key=c["key"], sid=c["sid"], name=c["name"], custom=c["custom"], inverse=c["inverse"],
-                               rets=[CH.r(v) for v in rets], n=int(len(x)), med=CH.r(med), up=CH.r(up, 0),
+                               rets=[CH.r(v, 3) for v in rets], n=int(len(x)), med=CH.r(med), up=CH.r(up, 0),
                                worst=CH.r(float(np.min(x))), best=CH.r(float(np.max(x))), p=CH.r(p, 4),
                                calm=CH.r(float(np.median(c["r3"][cm]))) if len(cm) else None,
                                calm_mix=mix, calm_n=int(len(cm)), verdict=_verdict(len(x), med, up, p)))
