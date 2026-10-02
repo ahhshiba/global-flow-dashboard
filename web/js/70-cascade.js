@@ -242,7 +242,7 @@ function cascadeLead(CA) {
   if (!layers.length) return null;
   const lo = Math.min(...layers.map((l) => l.d)), hi = Math.max(...layers.map((l) => l.d));
   let text = hi - lo <= 3
-    ? `${CA.events.length} 個事件合起來看，各層「走完一半反應」的中位數都在第 ${lo}～${hi} 天，差距不大：上游先動、下游後到只在個別事件裡明顯。`
+    ? `${CA.events.length} 個事件合起來看，各層「走完一半反應」的中位數都在第 ${lo}～${hi} 天，差距不大，誰先誰後要看個別事件。`
     : `${CA.events.length} 個事件合起來看，「走完一半反應」的中位數：${layers.map((l) => `${l.short}第 ${l.d} 天`).join("、")}。`;
   const tot = pc.transient + pc.persistent + pc.lasting;
   const B = CA.persist_base && CA.persist_base.pct;

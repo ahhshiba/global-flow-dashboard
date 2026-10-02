@@ -193,6 +193,9 @@
     if (!usable || tipFor === el) { if (tipFor) { hideTip(); tipFor = null; } return; }
     const r = el.getBoundingClientRect();
     showTip(`<div class="tip-note">${esc(el.title)}</div>`, r.left, r.bottom - 6);
+    // 上方放得下就放在文字上方，不要蓋住下面的數字（例如 KPI 名稱下面就是收盤價）
+    const tb = tipEl.getBoundingClientRect();
+    if (r.top - tb.height - 6 >= 8) tipEl.style.top = `${r.top - tb.height - 6}px`;
     tipFor = el;
   });
   window.addEventListener("scroll", () => { if (tipFor) { hideTip(); tipFor = null; } }, { passive: true });

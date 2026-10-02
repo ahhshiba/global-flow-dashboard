@@ -90,7 +90,7 @@ function pbTriggerCard(t, P) {
 /* 開頭結論：現在哪些訊號亮燈、有沒有通過檢驗的資產組合，以及這些數字的可信度 */
 function playbookLead(P) {
   const act = P.triggers.filter((t) => t.active);
-  const withRobust = act.map((t) => ({ t, n: P.robust.filter((r) => r.trigger === t.id).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
+  const withRobust = act.map((t) => ({ t, n: P.robust.filter((r) => r.trigger === t.id).length })).filter((x) => x.n).sort((a, b) => b.n - a.n || a.t.label.localeCompare(b.t.label, "zh-Hant"));   // 同數時依名稱，順序固定
   let text = act.length
     ? `現在有 ${act.length} 個訊號亮燈` + (withRobust.length
       ? `，其中 ${withRobust.length} 個有通過檢驗的資產組合：${withRobust.slice(0, 3).map((x) => `「${x.t.label}」${x.n} 組`).join("、")}${withRobust.length > 3 ? " 等" : ""}。`

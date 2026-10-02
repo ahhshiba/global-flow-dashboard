@@ -146,7 +146,8 @@ TABS.chains = (root) => {
     const sigN = allLinks.filter((l) => l.verdict.includes("報酬") && l.verdict.includes("顯著")).length;
     lead = (lit.length ? `現在成立最多層的是${lit.map((c) => `${c.name.replace(/（[^）]*）/g, "")}（${c.active.count}/${c.active.of} 層）`).join("、")}` : "現在沒有任何一條鏈成立兩層以上")
       + (none.length ? `；${none.map((c) => c.name.replace(/（[^）]*）/g, "")).join("、")}一層都還沒成立` : "")
-      + `。歷史上下游大多會跟著發生，但事件後報酬在統計上站得住的，${allLinks.length} 段裡只有 ${sigN} 段。`;
+      + `。歷史上 ${allLinks.length} 段裡有 ${allLinks.filter((l) => (l.prob_lift || 0) >= 10).length} 段，下游跟著發生的機率比平常高 10 個百分點以上；`
+      + `但事件後報酬在統計上站得住的只有 ${sigN} 段。`;
   }
   root.replaceChildren(tabHead("傳導鏈：一個事件推到第三、四層",
     "先寫下經濟學上的假說（例如「日債殖利率上行 → 日圓升值 → 美股下跌 → 費半 → 台股」），再用 1995 年以來的月資料逐段檢定：下游條件多久跟著成立、機率比平常高多少、下游標的之後的報酬分布與最大逆行。這些是歷史統計，不是預測，也沒有做樣本外交易驗證。", false, null, lead));
