@@ -135,14 +135,14 @@ TABS.playbook = lazyTab("playbook", (root) => {
 
   // 目前成立中的訊號（2026-10-02 由一段段敘述改成表）：有資產通過三道檢驗的排前面，沒有的併成一列
   const act = P.triggers.filter((t) => t.active).map((t) => ({ t, best: P.horizons.flatMap((x) => (t.assets[String(x)] || {}).robust || [])
-    .slice().sort((a, b) => b.lift - a.lift) }));
+    .slice().sort((a, b) => Math.abs(b.lift) - Math.abs(a.lift)) }));      // 依幅度排：大幅為負的也要看得到
   if (act.length) {
     const fc = card({ title: "目前成立中的訊號", span: 12,
       sub: "每個成立中的訊號，事件後有哪些資產通過三道檢驗（事件數、前後半期一致、位移檢定）；數字是事件後中位數比平常多多少。" });
     const withB = act.filter((x) => x.best.length).sort((a, b) => b.best.length - a.best.length);
     const none = act.filter((x) => !x.best.length);
     fc.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
-      h("thead", {}, h("tr", {}, h("th", {}, "訊號"), h("th", { class: "n" }, "歷史次數"), h("th", {}, "通過三道檢驗的資產（期間・超額）"))),
+      h("thead", {}, h("tr", {}, h("th", {}, "訊號"), h("th", { class: "n" }, "歷史次數"), h("th", {}, "通過三道檢驗的資產（期間・超額，依幅度取前 3）"))),
       h("tbody", {}, ...withB.map(({ t, best }) => h("tr", {},
         h("td", {}, t.label, h("span", { class: "sub" }, t.source)),
         h("td", { class: "n" }, String(t.episodes)),

@@ -142,7 +142,7 @@ function chainStatus(CHD, { compact = false } = {}) {
   if (!items.length) return h("p", { class: "empty" }, "目前沒有任何一條鏈有成立的層");
   const nodeName = (c, id) => (c.nodes.find((n) => n.id === id) || {}).name || id;
   return h("div", { class: "tbl-wrap" }, h("table", { class: "data cs-tbl" },
-    h("thead", {}, h("tr", {}, h("th", {}, "傳導鏈"), h("th", {}, "成立的層"), h("th", { class: "n" }, compact ? "第一段跟著成立" : `第一段 ${CHD.within} 個月內跟著成立`), h("th", {}, "判斷"))),
+    h("thead", {}, h("tr", {}, h("th", {}, "傳導鏈"), h("th", {}, "成立的層"), h("th", { class: "n" }, `第一段 ${CHD.within} 個月內跟著成立`), compact ? null : h("th", {}, "判斷"))),
     h("tbody", {}, items.map((c) => {
       const l = c.links[0];
       const on = c.nodes.filter((n) => n.triggered);
@@ -155,8 +155,9 @@ function chainStatus(CHD, { compact = false } = {}) {
           compact ? null : h("span", { class: "sub" }, on.map((n) => n.label).join("、"))),
         h("td", { class: "n", title: l ? `${nodeName(c, l.from_)} → ${nodeName(c, l.to)}・${l.prob_n} 次` : null },
           l && fin(l.prob) ? [h("b", {}, `${fmtNum(l.prob, 0)}%`), h("span", { class: "muted" }, `（平常 ${fmtNum(l.prob_base, 0)}%）`),
-            compact ? null : h("span", { class: "sub" }, `${nodeName(c, l.from_)} → ${nodeName(c, l.to)}・${l.prob_n} 次`)] : "—"),
-        h("td", {}, l ? h("span", { class: `pill pill-${chVerdictTone(l.verdict)}` }, l.verdict) : "—"));
+            h("span", { class: "sub" }, compact ? `${l.prob_n} 次` : `${nodeName(c, l.from_)} → ${nodeName(c, l.to)}・${l.prob_n} 次`),
+            compact ? h("span", { class: `pill pill-${chVerdictTone(l.verdict)} cs-pill` }, l.verdict) : null] : "—"),
+        compact ? null : h("td", {}, l ? h("span", { class: `pill pill-${chVerdictTone(l.verdict)}` }, l.verdict) : "—"));
     }))));
 }
 

@@ -67,10 +67,12 @@ function scenarioTiles(S, hz) {
       sub: `樣本外前 ${S.model.topk} 名平均每期多 ${fmtSigned(B.ridge.mean, 2)} 個百分點（不同起始月 ${scRange(B.ridge.offsets)}）` },
     cs && cs.n ? { label: `對答案：類似時點的 ${hz} 個月`, value: `${cs.hit}/${cs.n}`, tone: scSig(cs.p) ? "ok" : "meh",
       sub: `當時的模型跑贏全體的次數（${scP(cs.p)}，${scPWord(cs.p)}）` } : null,
-    likely ? { label: "接下來最可能跟著成立", value: `${fmtNum(likely.n.prob, 0)}%`, tone: likely.n.prob - likely.n.base >= 10 ? "warn" : null,
-      sub: `${likely.n.label}：${S.within} 個月內（平常 ${fmtNum(likely.n.base, 0)}%，${likely.p.name}）` } : null,
-    hs && hs.n ? { label: `${HG.label}時最常一起漲`, value: `${hgName(hb)} ${hs.up}/${hs.n}`,
-      sub: hr && hr.n ? `但${S.hedge.regime.short}開始的跌段只有 ${hr.up}/${hr.n}；看避險檢視` : "看避險檢視" } : null,
+    likely ? { label: "比平常更常接著成立的一層（歷史比例）", value: `${fmtNum(likely.n.prob, 0)}%`, tone: likely.n.prob - likely.n.base >= 10 ? "warn" : null,
+      sub: `${likely.n.label}：歷史上上游成立後 ${S.within} 個月內跟著成立的比例（平常 ${fmtNum(likely.n.base, 0)}%；${likely.n.n_episodes} 段，${likely.p.name}）` } : null,
+    hs && hs.n ? { label: `${HG.label}時的避險候選（上漲次數／段數）`, value: `${hgName(hb)} ${hs.up}/${hs.n}`, tone: hb.verdict === "穩定避險" ? "ok" : "meh",
+      sub: `判定：${hb.verdict}（${scP(hb.p)}）`
+        + (hr && hr.n ? `；${S.hedge.regime.short}開始的跌段只有 ${hr.up}/${hr.n}` : "")
+        + (HG.hedges.some((x) => fin(x.p) && x.p <= 0.05) ? "" : "。這個情境沒有任何一項在統計上站得住（p ≤ 0.05）") } : null,
   ]);
 }
 
@@ -166,7 +168,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
           h("div", { class: "sc-gauge", "aria-hidden": "true" }, h("i", { class: "fill", style: `width:${n.prob}%` }),
             fin(n.base) ? h("i", { class: "base", style: `left:${n.base}%` }) : null),
           h("div", { class: "sc-node-s" }, h("b", { class: "sc-node-p" }, `${fmtNum(n.prob, 0)}%`), `　${S.within} 個月內・平常 ${fmtNum(n.base, 0)}%`),
-          fin(n.prob12) ? h("div", { class: "sc-node-s muted" }, `12 個月 ${fmtNum(n.prob12, 0)}%（平常 ${fmtNum(n.base12, 0)}%）`) : null]));
+          fin(n.prob12) ? h("div", { class: "sc-node-s muted" }, `12 個月 ${fmtNum(n.prob12, 0)}%（平常 ${fmtNum(n.base12, 0)}%）${fin(n.wait) ? `・中位第 ${fmtNum(n.wait, 0)} 個月` : ""}`) : null]));
     });
     const ifs = p.nodes.filter((n) => !n.triggered && fin(n.prob) && n.if_then && n.if_then.length);
     const st = p.state;
@@ -188,7 +190,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     const kchip = (label, value, sub) => h("span", { class: "kchip" }, h("span", { class: "k-l" }, label), h("b", {}, value), sub ? h("span", { class: "k-s" }, sub) : null);
     const kc = [];
     if (fr && fr.n_months) {
-      kc.push(kchip("12 個月內再往下亮 ≥ 1 層", `${fmtNum(100 - (fr.depth["0"] || 0), 0)}%`, `從「${fr.deepest_label}」往下・${fr.n_episodes} 段`),
+      kc.push(kchip("12 個月內再往下亮 ≥ 1 層", `${fmtNum(100 - (fr.depth["0"] || 0), 0)}%`, `從「${fr.deepest_label}」往下・${fr.n_episodes} 段${fr.n_episodes < 5 ? "・樣本很少" : ""}`),
         kchip("斷鏈", `${fmtNum(fr.broke, 0)}%`, "這層熄掉、沒傳到下一層"));
       if (!fr.circular && fr.term_if.n && fr.term_else.n) {
         kc.push(kchip(`末端「${fr.term_name}」6 個月`, h("span", {}, chg(fr.term_if.median, 1, "%"), h("span", { class: "muted" }, " vs "), chg(fr.term_else.median, 1, "%")),
@@ -272,7 +274,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   // ── 4b. 對答案：過去類似的時點 ──
   const cA = card({ title: "對答案：過去類似的時點，推演說了什麼、後來實際怎樣", span: 12,
     sub: `挑出亮著的訊號和現在重疊最多的歷史時點（重疊 ≥ ${fmtNum((CS.threshold || 0.25) * 100, 0)}%、彼此至少隔一年、之後一年的結果已經知道），`
-      + "在每個時點只用「當時已經知道」的資料重跑整套推演，再對照之後實際發生的事。案例只有十來個，運氣成分很大。" });
+      + "在每個時點只用「當時已經知道」的資料重跑整套推演，再對照之後實際發生的事。案例只有十來個，運氣成分很大；"
+      + "而且這只排除了估計上的偷看——訊號、門檻與傳導鏈本身是事後設計的，真實情況通常更差。" });
   if (!S.cases || !S.cases.length) cA.body.append(h("p", { class: "empty" }, "沒有夠相似的歷史時點"));
   else {
     const mm = CS.model || {}, td = CS.today || {}, ly = CS.layers || {}, wv = CS.wave || {};

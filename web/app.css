@@ -757,6 +757,7 @@ details.more > .more-b > p { margin: 0 0 6px; line-height: 1.7; color: var(--ink
 .cs-dots i.on { background: var(--accent); border-color: var(--accent); }
 .cs-n { font-family: var(--f-mono); font-size: 13px; }
 .cs-tbl td:first-child { white-space: nowrap; font-weight: 500; }
+.cs-pill { display: inline-flex; margin-top: 3px; }
 /* 訊號劇本：成立中的訊號 */
 .pb-best { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .pb-chip { white-space: nowrap; }
