@@ -10,7 +10,7 @@ const scRange = (rows, key = "mean") => {
   return key === "hit" ? `${Math.min(...v).toFixed(0)}～${Math.max(...v).toFixed(0)}%` : `${fmtSigned(Math.min(...v), 2)}～${fmtSigned(Math.max(...v), 2)}`;
 };
 // 樣本內穩定度：重抽後和現在「同方向」的比例（期望值為負的標的要看「為負」的比例）
-const scStable = (r) => (fin(r.prob_pos) ? (r.ev >= 0 ? r.prob_pos : 100 - r.prob_pos) : null);
+const scStable = (r) => (fin(r.prob_pos) && fin(r.ev) && r.ev !== 0 ? (r.ev > 0 ? r.prob_pos : 100 - r.prob_pos) : null);   // 沒有方向（0）就不給
 // 訊號劇本通過三道檢驗的組合：和模型同方向＝支持，反方向＝相反（不能只標「通過檢驗」，會被讀成支持）
 const scRefs = (r) => {
   const refs = r.robust || [];
@@ -194,7 +194,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
     const pastWin = past.filter((p) => Math.sign(p.own) === dir).length;
     const parts = [];
     parts.push(h("p", { class: "sc-sum" },
-      `模型期望超額 ${scPct(r.ev)}（80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}；樣本內重抽 200 次有 ${fmtNum(scStable(r), 0)}% 和現在同方向，這只代表模型在樣本內穩不穩，不是賺錢的機率）`,
+      `模型期望超額 ${scPct(r.ev)}（80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}；${fin(scStable(r)) ? `樣本內重抽 200 次有 ${fmtNum(scStable(r), 0)}% 和現在同方向，這只代表模型在樣本內穩不穩，不是賺錢的機率` : "目前沒有方向"}）`,
       fin(r.cal) ? `，依樣本外校準約 ${scPct(r.cal)}` : "，這個期間樣本外無效，不給校準值",
       `；它平常 ${hz} 個月平均 ${scPct(r.base)}。`,
       valid ? "" : h("b", { class: "down" }, `　注意：${hz} 個月的排名在樣本外沒有比亂選好，下面的原因只是描述，不能當依據。`)));
@@ -287,7 +287,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
           oppose.length ? h("span", { class: "pill pill-meh", style: "margin-left:6px", title: oppose.map((x) => x.label).join("、") }, "檢驗相反") : null]; })()),
         h("td", { class: "n" }, fin(r.cal) ? chg(r.cal, 1, "%") : h("span", { class: "muted" }, "—")),
         h("td", { class: "n" }, chg(r.ev, 1, "%"), h("span", { class: "sub" }, `${scPct(r.lo)}～${scPct(r.hi)}`)),
-        h("td", { class: "n" }, `${fmtNum(scStable(r), 0)}%`),
+        h("td", { class: "n" }, fin(scStable(r)) ? `${fmtNum(scStable(r), 0)}%` : "—"),
         h("td", { class: "n" }, past.length ? `${win}/${past.length}` : "—"),
         h("td", { class: "n" }, `${up} 多／${dn} 空`),
         h("td", { class: "n" }, scPct(r.base)));
