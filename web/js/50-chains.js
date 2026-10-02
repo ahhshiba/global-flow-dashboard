@@ -141,7 +141,7 @@ function chainStatus(CHD, { compact = false } = {}) {
   const items = CHD.items.filter((c) => c.active.count).sort((a, b) => b.active.count / b.active.of - a.active.count / a.active.of);
   if (!items.length) return h("p", { class: "empty" }, "目前沒有任何一條鏈有成立的層");
   const nodeName = (c, id) => (c.nodes.find((n) => n.id === id) || {}).name || id;
-  return h("div", { class: "tbl-wrap" }, h("table", { class: "data cs-tbl" },
+  return h("div", { class: "tbl-wrap" }, h("table", { class: `data cs-tbl${compact ? " compact" : ""}` },
     h("thead", {}, h("tr", {}, h("th", {}, "傳導鏈"), h("th", {}, "成立的層"), h("th", { class: "n" }, `第一段 ${CHD.within} 個月內跟著成立`), compact ? null : h("th", {}, "判斷"))),
     h("tbody", {}, items.map((c) => {
       const l = c.links[0];

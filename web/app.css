@@ -814,4 +814,14 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
   .sig-sum .sig-picks { grid-area: picks; }
   .sig-more { padding-left: 6px; }
   .kchip { min-width: 0; flex: 1 1 40%; }
+  /* 總覽的窄鏈表：手機上鏈名可換行、圓點縮小、「（平常 x%）」換到下一行，整張表放得進卡片 */
+  .cs-tbl.compact th, .cs-tbl.compact td { padding-left: 5px; padding-right: 5px; }
+  /* 手機表格的第一欄有 8.5em 最小寬、數字欄不換行（見上面），這張窄表要蓋掉，否則判斷標籤會被切到卡片外 */
+  table.data.cs-tbl.compact td:first-child:not(.rank):not(.heatcell):not(.n):not([colspan]) { min-width: 0; white-space: normal; }
+  table.data.cs-tbl.compact td.n { white-space: normal; }
+  .cs-tbl.compact .cs-pill { white-space: normal; text-align: left; border-radius: 8px; }
+  .cs-tbl.compact .cs-dots { gap: 3px; margin-right: 4px; }
+  .cs-tbl.compact .cs-dots i { width: 8px; height: 8px; }
+  .cs-tbl.compact td.n .muted { display: block; }
+  table.data.cs-tbl.compact th, table.data.cs-tbl.compact th.n { white-space: normal; }
 }
