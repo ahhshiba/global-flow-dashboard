@@ -555,7 +555,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
                           active=it["active"]["count"], of=it["active"]["of"], state=state))
 
     # 下一波可能亮起的訊號（跨鏈）：和現在狀態相似的月份，之後 6 個月哪些目前沒亮的訊號比平常更常亮起
-    wave = _next_wave(X, x_now, end, W, trig)
+    wave = [{k: v for k, v in w.items() if k not in ("k", "_lift", "_base")} for w in _next_wave(X, x_now, end, W, trig)]
     for w in wave:
         w["if_then"] = [dict(name=r["name"], lift=r["lift"], horizon=r["horizon"]) for r in robust if r["trigger"] == w["id"]][:3]
 

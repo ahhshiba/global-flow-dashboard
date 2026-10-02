@@ -7,7 +7,8 @@ const scP = (p) => (fin(p) ? (p < 0.001 ? "p<0.001" : `p=${p.toFixed(3)}`) : "")
 // p 值白話：≤ 0.05 顯著、≤ 0.10 邊際、其餘分不出和亂挑（或運氣）的差別
 const scPWord = (p, vsWhat = "亂挑") => (!fin(p) ? "" : p <= 0.05 ? "統計上顯著" : p <= 0.10 ? "邊際，未達 0.05" : `分不出和${vsWhat}的差別`);
 // 「下一波」命中率對照平常比例的說法：依 p 與命中率決定，不寫死
-const scWaveWord = (w) => (!w || !w.n ? "" : w.p <= 0.05 ? "明顯高於平常"
+const scSig = (p) => fin(p) && p <= 0.05;      // null 不能當成顯著（JS 會把 null <= 0.05 判成 true）
+const scWaveWord = (w) => (!w || !w.n ? "" : scSig(w.p) ? "明顯高於平常"
   : 100 * w.hits / w.n > w.base ? "略高於平常，但還在運氣範圍內" : "沒有比平常好");
 const scRange = (rows, key = "mean") => {
   const v = rows.map((r) => r[key]).filter(fin);
@@ -154,7 +155,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
     const mm = CS.model || {}, td = CS.today || {}, ly = CS.layers || {}, wv = CS.wave || {};
     const fair = (x) => (mm[x] && mm[x].n ? `${x} 個月前 ${S.model.topk} 名跑贏全體 ${mm[x].hit}/${mm[x].n} 次、平均每次 ${fmtSigned(mm[x].spread_mean, 2)} 個百分點（${scP(mm[x].p)}，${scPWord(mm[x].p)}）` : null);
     cA.body.append(h("ul", { class: "finds" },
-      h("li", { class: (mm["3"] && mm["3"].p <= 0.05) || (mm["6"] && mm["6"].p <= 0.05) ? "t-up" : "t-alert" },
+      h("li", { class: (mm["3"] && scSig(mm["3"].p)) || (mm["6"] && scSig(mm["6"].p)) ? "t-up" : "t-alert" },
         h("b", {}, "公平的考試：當時的模型"),
         h("span", {}, [fair("3"), fair("6")].filter(Boolean).join("；") + "。p 值是和「每次隨機挑 5 個」比。"
           + "這裡只排除了估計上的偷看；訊號、門檻與傳導鏈本身是事後設計的，真實情況通常更差。")),
@@ -163,9 +164,9 @@ TABS.scenario = lazyTab("scenario", (root) => {
         h("span", {}, `${ly.n} 次預測中實際發生 ${ly.happened} 次。預測機率的準確度（Brier，越小越好）${fmtNum(ly.brier, 3)}，`
           + `直接用「平常比例」是 ${fmtNum(ly.brier_base, 3)}——${ly.skill > 0 ? `比平常比例準 ${fmtNum(ly.skill * 100, 0)}%。` : `比直接用平常比例還不準（${fmtNum(ly.skill * 100, 0)}%）。`}`
           + (ly.skill > 0 ? "在類似時點，「上游亮了，下一層比平常更可能」有一點參考價值，但案例不多。" : "也就是說，「上游亮了，下一層比平常更可能」這件事在類似時點沒有幫上忙。"))) : null,
-      h("li", { class: wv.p <= 0.05 ? "t-up" : "t-neutral" },
+      wv.n ? h("li", { class: scSig(wv.p) ? "t-up" : "t-neutral" },
         h("b", {}, "下一波訊號"),
-        h("span", {}, `挑出的 ${wv.n} 個「可能亮起」的訊號實際亮起 ${wv.hits} 個（${fmtNum(wv.n ? 100 * wv.hits / wv.n : null, 0)}%），平常比例約 ${fmtNum(wv.base, 0)}%：${scWaveWord(wv)}（${scP(wv.p)}）。`)),
+        h("span", {}, `挑出的 ${wv.n} 個「可能亮起」的訊號實際亮起 ${wv.hits} 個（${fmtNum(100 * wv.hits / wv.n, 0)}%），平常比例約 ${fmtNum(wv.base, 0)}%：${scWaveWord(wv)}（${scP(wv.p)}）。`)) : null,
       h("li", { class: "t-neutral" },
         h("b", {}, "今天的答案放回這些時點（不是公平的考試）"),
         h("span", {}, ["3", "6"].filter((x) => td[x] && td[x].n).map((x) => `今天 ${x} 個月的前 ${S.model.topk} 名在這些時點之後 ${x} 個月跑贏全體 ${td[x].hit}/${td[x].n} 次、平均 ${fmtSigned(td[x].mean, 2)} 個百分點`).join("；")
