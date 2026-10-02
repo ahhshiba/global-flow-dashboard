@@ -687,7 +687,13 @@ def run(log=print):
     cas = CA.build(log=log)
     if cas:
         cas["analogs"] = AN.build(cas, log=log)
-    scen = SC.build(g, series, g.months, play, chain_block, cas, log=log)
+    # 沙盤推演是在其他分析之上的推估：它出錯不能拖垮每日更新（排程會跑這裡），記錄錯誤、分頁顯示「尚未產生」
+    try:
+        scen = SC.build(g, series, g.months, play, chain_block, cas, log=log)
+    except Exception as exc:          # noqa: BLE001
+        import traceback
+        log(f"[scenario] 失敗，這次略過沙盤推演：{exc!r}\n{traceback.format_exc()}")
+        scen = None
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
