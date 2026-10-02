@@ -9,6 +9,10 @@
 4. 樣本外檢查：走步回測，每個月只用當時已經知道結果的資料估計，買期望值最高的幾個，和全體平均比；
    同時量「校準斜率」＝樣本外實際超額大約是模型值的幾倍，頁面上的「校準後」就是模型值乘上它。
 
+5. 更深一層：鏈的每個未成立層給 6／12 個月內成立的比例；照鏈現在的狀態看剩下的層 12 個月內全部走完的比例；
+   跨鏈的「下一波」＝和現在相似（亮燈重疊 ≥ SIM_THR）的月份，之後 6 個月哪些沒亮的訊號比平常更常亮起。
+6. 對答案：和現在最像的歷史時點，每個只用「當時已知」的資料重跑 3～5，對照之後實際發生的事（_cases）。
+
 原因說明不用 ridge 係數（同時亮著的訊號會互相分攤，單看係數會出現「日圓升值讓原油漲」這種看不出道理的拆法），
 改列每個亮燈訊號「單獨」的歷史：用訊號劇本同一套口徑（獨立事件起點、事件後中位數減平常中位數、位移檢定 p），
 兩個分頁的數字可以互相對照。
@@ -176,7 +180,7 @@ def _chain_state(cmasks, finite, on, rest, upto, H):
     m = np.zeros(len(cmasks[0]), bool)
     m[ts] = True
     return dict(n_months=len(ts), n_episodes=len(CH.episodes(m)), all=allp, each=each, horizon=H,
-                dates=[int(t) for t in CH.episodes(m)][-6:])
+                starts=[int(t) for t in CH.episodes(m)][-6:])
 
 
 def _jaccard(X, x):
@@ -210,8 +214,8 @@ def _next_wave(X, x_state, upto, W, trig, thr=SIM_THR, min_eps=4, top=8):
         b = float(np.mean([X[t + 1:t + 1 + W, k].any() for t in range(last + 1) if not X[t, k]]))
         if p - b >= 0.10:
             out.append(dict(id=trig[k]["id"], k=k, label=trig[k]["label"], source=trig[k]["source"], why=trig[k]["why"],
-                            prob=CH.r(100 * p, 0), base=CH.r(100 * b, 0), n_months=len(ts), n_episodes=eps))
-    out.sort(key=lambda w: (w["prob"] - w["base"]), reverse=True)
+                            prob=CH.r(100 * p, 0), base=CH.r(100 * b, 0), n_months=len(ts), n_episodes=eps, _lift=p - b, _base=b))
+    out.sort(key=lambda w: w["_lift"], reverse=True)          # 用沒四捨五入的差距排序
     return out[:top]
 
 
@@ -306,8 +310,8 @@ def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, l
         for w in wv:
             w["actual"] = bool(X[T + 1:T + 1 + W, w["k"]].any())
             wave_hits.append(w["actual"])
-            wave_base.append(w["base"] / 100)
-        rec["wave"] = [{k: v for k, v in w.items() if k not in ("k", "why", "source")} for w in wv]
+            wave_base.append(w["_base"])
+        rec["wave"] = [{k: v for k, v in w.items() if k not in ("k", "why", "source", "_lift", "_base")} for w in wv]
         cases.append(rec)
 
     rng = np.random.default_rng(SEED + 11)
@@ -326,9 +330,16 @@ def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, l
             null.append(np.mean(v))
         return CH.r(float((np.sum(np.array(null) >= obs) + 1) / 2001), 3)
 
-    def binom_tail(n, k, p):
-        from math import comb
-        return CH.r(float(sum(comb(n, i) * p ** i * (1 - p) ** (n - i) for i in range(k, n + 1))), 3) if n else None
+    def pb_tail(ps, k):
+        """Poisson-binomial：每個預測有自己的平常比例，至少命中 k 個的機率（精確計算）。"""
+        if not ps:
+            return None
+        dist = np.zeros(len(ps) + 1)
+        dist[0] = 1.0
+        for q in ps:
+            dist[1:] = dist[1:] * (1 - q) + dist[:-1] * q
+            dist[0] *= (1 - q)
+        return CH.r(float(dist[k:].sum()), 3)
 
     def brier(rows, idx):
         return CH.r(float(np.mean([(r[idx] - (1.0 if r[2] else 0.0)) ** 2 for r in rows])), 3) if rows else None
@@ -346,7 +357,7 @@ def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, l
                     base_mean=CH.r(100 * float(np.mean([r[1] for r in layer_scores])), 0) if layer_scores else None),
         wave=dict(n=len(wave_hits), hits=int(sum(wave_hits)),
                   base=CH.r(100 * float(np.mean(wave_base)), 0) if wave_base else None,
-                  p=binom_tail(len(wave_hits), int(sum(wave_hits)), float(np.mean(wave_base))) if wave_base else None))
+                  p=pb_tail(wave_base, int(sum(wave_hits))) if wave_base else None))
     lb = summ["layers"]
     lb["skill"] = CH.r(1 - lb["brier"] / lb["brier_base"], 2) if lb.get("brier") is not None and lb.get("brier_base") else None
     return cases, summ
@@ -510,7 +521,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
     paths = []
     for chain in C.CHAINS:
         it = items.get(chain["id"])
-        cmasks, finite = [], []
+        cmasks, finite = [], []   # 每條鏈都算遮罩（對答案要用到所有鏈）
         for nd in chain["nodes"]:
             vals = CH.transform(g, nd["sid"], nd["op"], series[nd["sid"]]["kind"])
             cmasks.append(CH.trigger_mask(vals, nd["cmp"], nd["thr"], end))
@@ -538,6 +549,8 @@ def build(g, series, months, play, chain_block, cascade, log=print):
             nodes.append(row)
         rest = [j for j in range(len(on)) if not on[j] and any(on[:j])]
         state = _chain_state(cmasks, finite, on, rest, end, 12) if rest else None
+        if state and "starts" in state:
+            state["dates"] = [months[t] for t in state.pop("starts")]
         paths.append(dict(id=chain["id"], name=chain["name"], thesis=chain["thesis"], nodes=nodes,
                           active=it["active"]["count"], of=it["active"]["of"], state=state))
 
