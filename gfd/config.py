@@ -644,6 +644,23 @@ SCENARIO_CASCADE_SID = {
     "JPY=X": "fx_usdjpy", "TWD=X": "fx_usdtwd", "TLT": "b_ust_long", "HYG": "b_hy",
 }
 
+# ── 避險（2026-10-02）：目標指數下跌的那幾段，各資產同一期間怎麼走 ──
+# 目標＝傳導鏈裡的「下跌」節點（觸發 id），跌段的定義、頁面上的發生機率都和傳導鏈同一套，數字才對得起來。
+HEDGE_TARGETS = ["carry_twii", "carry_spx", "inflation_ndx", "carry_sox"]
+# 環境分組：跌段開始時這個訊號有沒有亮。選它是因為機制明確（利率上行、通膨升溫時股債常一起跌，長債就不避險），
+# 不是看結果挑的；其他目前亮著的訊號在頁面上一樣可以逐一切換對照。
+HEDGE_REGIME = "inflation_ust10"
+HEDGE_REGIME_SHORT = "利率上行時"
+# 反向持有才是避險的匯率：美元/日圓下跌＝日圓升值，「持有日圓」的報酬是它的反向
+HEDGE_INVERSE = {"fx_usdjpy": "日圓（對美元）"}
+# 頁面上的名稱：匯率寫成「持有哪個幣」，避免把「美元/新台幣上漲」讀成新台幣變強
+HEDGE_NAMES = {"fx_usdtwd": "美元（對新台幣）", "fx_eurusd": "歐元（對美元）", "fx_dxy": "美元指數 DXY"}
+HEDGE_SKIP = ["fx_usdjpy"]      # 只留反向（持有日圓）那一邊
+HEDGE_MIN_N = 8                 # 跌段少於這個數就不下判定
+HEDGE_PERM = 2000               # 「比隨便挑時間更常漲」的置換次數
+# 判定（全部跌段）：保護率＝跌段中上漲的比例；p＝跌段中位數不比隨機同樣多段的 3 個月窗高的機率
+HEDGE_VERDICT = dict(stable_up=70, stable_p=0.10, help_up=55, fall_med=-2.0, fall_up=35)
+
 # ── 單一標的線圖（日／週／月／年）──
 # 日線保留年數、週線保留年數；月線與年線從 1995 起。收盤價已含分割調整、不含股息。
 DETAIL_KEEP_YEARS = {"d": 3, "w": 15}

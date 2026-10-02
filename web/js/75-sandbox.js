@@ -1,11 +1,11 @@
 /* 分頁：沙盤推演（2026-10-02 起事件衝擊、傳導鏈、訊號劇本併進這個分頁，上方切換四個檢視）
-   推演總結＝原本的沙盤推演（65-scenario.js）；另外三個檢視的畫法不變（TABS.cascade／chains／playbook 仍是各檢視的繪製函式，
+   推演總結＝原本的沙盤推演（65-scenario.js）；避險（66-hedge.js，2026-10-02 加）；另外三個檢視的畫法不變（TABS.cascade／chains／playbook 仍是各檢視的繪製函式，
    只是不再是獨立分頁）。舊網址 #cascade、#chains、#playbook 由 90-boot.js 轉到這裡的對應檢視，網址也跟著檢視走。 */
-const SC_VIEWS = [["summary", "推演總結"], ["cascade", "事件衝擊"], ["chains", "傳導鏈"], ["playbook", "訊號劇本"]];
+const SC_VIEWS = [["summary", "推演總結"], ["hedge", "避險"], ["cascade", "事件衝擊"], ["chains", "傳導鏈"], ["playbook", "訊號劇本"]];
 const SC_VIEW_LABEL = Object.fromEntries(SC_VIEWS);
 // 只認自己定義的檢視（#toString 之類的網址會查到 Object.prototype，不能當成檢視）
 const isScView = (v) => typeof v === "string" && Object.prototype.hasOwnProperty.call(SC_VIEW_LABEL, v);
-const SC_VIEW_NEEDS = { summary: "scenario", cascade: "cascade", playbook: "playbook" };   // 公開版要另外下載的資料
+const SC_VIEW_NEEDS = { summary: "scenario", hedge: "scenario", cascade: "cascade", playbook: "playbook" };   // 公開版要另外下載的資料
 const scViewHash = (v) => (v === "summary" ? "scenario" : v);
 
 TABS.scenario = (root, redo) => {
@@ -26,7 +26,7 @@ TABS.scenario = (root, redo) => {
       onpointerenter: () => { if (SC_VIEW_NEEDS[k]) prefetch([SC_VIEW_NEEDS[k]]); },   // 滑過就先下載
       onclick: () => { if (k !== view) draw(k, true); },
     }, label)));
-    const render = v === "summary" ? SCENARIO_SUMMARY : TABS[v];
+    const render = v === "summary" ? SCENARIO_SUMMARY : v === "hedge" ? HEDGE_VIEW : TABS[v];
     try {
       render(host, redo);
       addToc(host);

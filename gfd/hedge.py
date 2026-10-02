@@ -1,0 +1,217 @@
+"""避險：目標指數下跌的那幾段，各資產同一期間怎麼走。
+
+回答「如果真的跌了，手上什麼會漲、能補回多少、平常要付出多少」——和期望值排行（哪個之後漲比較多）是不同的問題。
+
+1. 跌段：用傳導鏈同一個觸發條件（例：台股 3 個月跌 ≥ 5%，對數報酬），亮燈的月份間隔 ≤ 3 個月算同一段；
+   每段取「最深的那個 3 個月窗」代表這一段。一段只算一次，避免 2008 年這種長跌段重複計入十幾個月。
+2. 同一個窗裡各資產的報酬：月底收盤對月底收盤（一般報酬，可以直接拿來算配置）。
+   月均價序列（黃金、原油、匯率…）的月資料是當月平均，和指數的月底收盤時間對不上，
+   所以改用 detail 的月線收盤（Yahoo，每月最後一筆）；沒有收盤價來源的月均價指數（ci_*）不列。
+   債券基金、波克夏維持原本的月資料（含配息的調整後收盤）。
+3. 每個資產：中位數、上漲的段數比例（保護率）、最差一次、其他時候（不在跌段的 3 個月窗）的中位數；
+   置換檢定：隨機挑同樣多個 3 個月窗，中位數有多常不低於跌段的中位數——小＝跌段中真的特別會漲，不只是平常就漲。
+4. 環境：每一段開始時哪些「現在亮著的訊號」也亮著，頁面上可以只看那些段（例：利率上行時開始的跌段）。
+   這樣的段通常只有個位數，頁面上一段一點畫出來，不給判定。
+
+報酬是各資產的原幣報酬，沒有換算成新台幣；「美元（對新台幣）」本身列為一項。全部是歷史統計，不是投資建議。
+"""
+import datetime as dt
+
+import numpy as np
+
+from . import chains as CH
+from . import config as C
+from . import playbook as PB
+from . import scenario as SC
+
+H = 3                    # 3 個月窗，和傳導鏈的下跌節點同一個長度
+W = 6                    # 發生機率看 6 個月內，和沙盤推演同一個口徑
+MIX_W = [i / 20 for i in range(11)]   # 配置試算：避險部位 0%、5%…50%
+SEED = 20261003
+EPOCH = dt.date(1970, 1, 1)
+
+
+def _closes(g, sid, detail):
+    """月底收盤。lag 0 的序列直接用月資料；月均價序列改用 detail 的月線收盤；都沒有就回 None。"""
+    if CH.lag_of(sid) == 0:
+        return g.arr.get(sid)
+    v = (detail or {}).get(sid)
+    if not v or not v.get("m"):
+        return None
+    a = np.full(len(g.months), np.nan)
+    for d, x in zip(*v["m"]):
+        i = g.pos.get((EPOCH + dt.timedelta(days=int(d))).strftime("%Y-%m"))
+        if i is not None and i <= g.end and x is not None and x > 0:
+            a[i] = x
+    return _despike(a)
+
+
+def _despike(a, k=2.0):
+    """拿掉單月的錯值：和前後兩個月都差 k 倍以上、而且方向相反（跳出去又跳回來）。
+    例：Yahoo 的 TWD=X 在 2014-12 有一筆 3.67（前後都是 30 左右），不拿掉會讓「平常」變成每 3 個月 +2.7%。"""
+    a = a.copy()
+    idx = np.where(np.isfinite(a))[0]
+    bad = [idx[j] for j in range(1, len(idx) - 1)
+           if (a[idx[j]] / a[idx[j - 1]] > k and a[idx[j]] / a[idx[j + 1]] > k)
+           or (a[idx[j - 1]] / a[idx[j]] > k and a[idx[j + 1]] / a[idx[j]] > k)]
+    a[bad] = np.nan
+    return a
+
+
+def _ret(a, t0, t1, inverse=False):
+    if a is None or t0 < 0 or not (np.isfinite(a[t0]) and np.isfinite(a[t1])) or a[t0] <= 0 or a[t1] <= 0:
+        return np.nan
+    return 100 * ((a[t0] / a[t1]) - 1 if inverse else (a[t1] / a[t0]) - 1)
+
+
+def _rets3(a, end, inverse=False):
+    """每個月 t 的「t−3 → t」報酬（%），t > end 為 NaN。"""
+    out = np.full(len(a), np.nan)
+    with np.errstate(all="ignore"):
+        x = (a[:-H] / a[H:]) if inverse else (a[H:] / a[:-H])
+        out[H:] = 100 * (x - 1)
+    out[end + 1:] = np.nan
+    return out
+
+
+def _episodes(mask, vals, end):
+    """亮燈月份分段（間隔 ≤ GAP 算同一段），每段取最深的月份。回 [(最深月, 段的最後一月)]。"""
+    out, cur = [], []
+    for t in np.where(mask[:end + 1])[0]:
+        if cur and t - cur[-1] > CH.GAP:
+            out.append(cur)
+            cur = []
+        cur.append(int(t))
+    if cur:
+        out.append(cur)
+    return [(min(e, key=lambda t: vals[t]), e[-1]) for e in out]
+
+
+def _verdict(n, med, up, p):
+    V = C.HEDGE_VERDICT
+    if n < C.HEDGE_MIN_N:
+        return "樣本不足"
+    if med > 0 and up >= V["stable_up"] and p is not None and p <= V["stable_p"]:
+        return "穩定避險"
+    if med > 0 and up >= V["help_up"]:
+        return "有點幫助"
+    if med <= V["fall_med"] and up <= V["fall_up"]:
+        return "跟著跌"
+    return "沒幫助"
+
+
+def _odds(scen, tid, g, mask, fin):
+    """發生機率：用傳導鏈算好的數字（同一個節點出現在幾條鏈就列幾條，標題取最高的——避險要照較壞的情況準備）。
+    沒有任何一條鏈的上游成立時，只給平常比例（和鏈的「平常」同一個定義）。"""
+    rows = []
+    for p in (scen or {}).get("paths", []):
+        for n in p["nodes"]:
+            if n.get("trigger") != tid:
+                continue
+            if n.get("triggered"):
+                return dict(ongoing=True, current=n.get("current"), current_at=n.get("current_at"), chain=p["name"])
+            if n.get("prob") is not None:
+                rows.append(dict(chain=p["name"], after=n.get("after"), prob=n["prob"], base=n.get("base"),
+                                 prob12=n.get("prob12"), base12=n.get("base12"), n_episodes=n.get("n_episodes")))
+    if rows:
+        rows.sort(key=lambda r: -r["prob"])
+        return dict(ongoing=False, prob=rows[0]["prob"], base=rows[0]["base"], chains=rows)
+    base = SC._node_prob(np.ones(len(mask), bool), mask, fin, g.end, W)
+    return dict(ongoing=False, prob=None, base=base["base"] if base else None, chains=[])
+
+
+def build(g, series, scen, detail, log=print):
+    detail = (detail or {}).get("items", detail or {})
+    trig = PB._triggers(series)
+    ids = [t["id"] for t in trig]
+    X = SC._masks(g, series, trig, g.end)
+    lit_now = [a["id"] for a in (scen or {}).get("active", []) if a["id"] in ids]
+    x_now = np.array([1.0 if i in lit_now else 0.0 for i in ids])
+    Xa = X.astype(float)
+    inter = Xa @ x_now
+    union = Xa.sum(axis=1) + x_now.sum() - inter
+    with np.errstate(invalid="ignore", divide="ignore"):
+        jac = np.where(union > 0, inter / union, 0.0)
+    rng = np.random.default_rng(SEED)
+    k_reg = ids.index(C.HEDGE_REGIME) if C.HEDGE_REGIME in ids else None
+
+    # 避險候選：可投資標的（扣掉只觀察的、沒有收盤價的）＋反向持有的匯率
+    cands = []
+    for s in C.PLAYBOOK_UNIVERSE:
+        if s in C.PLAYBOOK_OBSERVE_ONLY or s in C.HEDGE_SKIP or s not in series:
+            continue
+        a = _closes(g, s, detail)
+        if a is not None and np.isfinite(a).sum() > 24:
+            cands.append(dict(key=s, sid=s, inverse=False, name=C.HEDGE_NAMES.get(s, series[s]["name"]),
+                              custom=s in C.HEDGE_NAMES, a=a))
+    for s, name in C.HEDGE_INVERSE.items():
+        a = _closes(g, s, detail) if s in series else None
+        if a is not None and np.isfinite(a).sum() > 24:
+            cands.append(dict(key=s + "~inv", sid=s, inverse=True, name=name, custom=True, a=a))
+    for c in cands:
+        c["r3"] = _rets3(c["a"], g.end, c["inverse"])
+
+    targets = []
+    for tid in C.HEDGE_TARGETS:
+        if tid not in ids:
+            log(f"[hedge] 找不到觸發條件 {tid}，略過")
+            continue
+        k = ids.index(tid)
+        t = trig[k]
+        vals = CH.transform(g, t["sid"], t["op"], series[t["sid"]]["kind"])
+        mask = X[:, k]
+        fin = np.isfinite(vals)
+        price = g.arr[t["sid"]]
+        eps = _episodes(mask, vals, g.end)
+        tr3 = _rets3(price, g.end)
+        episodes = []
+        for tm, last in eps:
+            t0 = tm - H
+            if t0 < 0:
+                continue
+            episodes.append(dict(t0=t0, t1=tm, m0=g.months[t0], m1=g.months[tm], ret=CH.r(_ret(price, t0, tm)),
+                                 recent=bool(last >= g.end - CH.GAP),           # 最近一段，可能還沒結束
+                                 regime=bool(X[t0, k_reg]) if k_reg is not None else None,
+                                 sim=CH.r(jac[t0]), lit=[ids[j] for j in range(len(ids)) if x_now[j] and X[t0, j]]))
+        calm = np.array([u for u in range(H, g.end + 1) if fin[u] and not mask[u] and np.isfinite(tr3[u])])
+        hedges = []
+        for c in cands:
+            if c["sid"] == t["sid"]:
+                continue
+            rets = [_ret(c["a"], e["t0"], e["t1"], c["inverse"]) for e in episodes]
+            x = np.array([v for v in rets if np.isfinite(v)])
+            if len(x) < 4:
+                continue
+            med, up = float(np.median(x)), 100 * float(np.mean(x > 0))
+            p = None
+            pool = np.where(np.isfinite(c["r3"]) & np.isfinite(tr3))[0]
+            if len(x) >= C.HEDGE_MIN_N and len(pool) > 3 * len(x):
+                null = np.median(c["r3"][rng.choice(pool, (C.HEDGE_PERM, len(x)))], axis=1)
+                p = float((1 + np.sum(null >= med)) / (C.HEDGE_PERM + 1))
+            # 其他時候（不在跌段的 3 個月窗）：中位數；配置試算要的「目標＋避險」混合中位數，0～50% 每 5% 先算好
+            # （中位數不能線性相加，所以不在頁面上用兩個中位數去混）
+            cm = calm[np.isfinite(c["r3"][calm])] if len(calm) else calm
+            mix = [CH.r(float(np.median((1 - w) * tr3[cm] + w * c["r3"][cm]))) for w in MIX_W] if len(cm) else None
+            hedges.append(dict(key=c["key"], sid=c["sid"], name=c["name"], custom=c["custom"], inverse=c["inverse"],
+                               rets=[CH.r(v) for v in rets], n=int(len(x)), med=CH.r(med), up=CH.r(up, 0),
+                               worst=CH.r(float(np.min(x))), best=CH.r(float(np.max(x))), p=CH.r(p, 4),
+                               calm=CH.r(float(np.median(c["r3"][cm]))) if len(cm) else None,
+                               calm_mix=mix, calm_n=int(len(cm)), verdict=_verdict(len(x), med, up, p)))
+        hedges.sort(key=lambda r: -(r["med"] if r["med"] is not None else -1e9))
+        for e in episodes:
+            del e["t0"], e["t1"]
+        tr = np.array([e["ret"] for e in episodes if e["ret"] is not None])
+        targets.append(dict(id=tid, sid=t["sid"], name=series[t["sid"]]["name"], label=t["label"], thr=t["thr"],
+                            n=len(episodes), first=episodes[0]["m0"] if episodes else None,
+                            med=CH.r(float(np.median(tr))) if len(tr) else None,
+                            worst=CH.r(float(np.min(tr))) if len(tr) else None,
+                            calm=CH.r(float(np.median(tr3[calm]))) if len(calm) else None, calm_n=int(len(calm)),
+                            odds=_odds(scen, tid, g, mask, fin), episodes=episodes, hedges=hedges))
+        top = [f"{x['name']} {x['med']:+.1f}%（{x['up']:.0f}%）" for x in hedges[:3]]
+        log(f"[hedge] {t['label']}：{len(episodes)} 段，跌段中位數最高 {'、'.join(top)}")
+    return dict(H=H, W=W, asof=g.months[g.end], mix_w=[int(round(100 * w)) for w in MIX_W],
+                regime=dict(id=C.HEDGE_REGIME, label=trig[k_reg]["label"], short=C.HEDGE_REGIME_SHORT,
+                            lit=C.HEDGE_REGIME in lit_now) if k_reg is not None else None,
+                rules=dict(C.HEDGE_VERDICT, min_n=C.HEDGE_MIN_N),
+                lit=[dict(id=i, label=trig[ids.index(i)]["label"]) for i in lit_now],
+                targets=targets)

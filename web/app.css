@@ -638,3 +638,81 @@ table.data td .sub.keep { word-break: keep-all; }   /* 短註記：只在標點�
   .toc::-webkit-scrollbar { display: none; }
   .toc .chip, .toc .lab { flex: none; }
 }
+
+/* ── 避險檢視（2026-10-02）：數字與圖先、說明點開才有 ── */
+.hg-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.hg-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 12px 14px;
+  border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
+.hg-tile:hover { border-color: var(--accent); }
+.hg-tile:active { transform: scale(0.99); }
+.hg-tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.hg-tile-l { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.hg-tile-big { font: 600 30px/1.1 var(--f-disp); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.hg-tile.likely .hg-tile-big, .hg-tile.now .hg-tile-big { color: var(--warn-ink); }
+.hg-gauge { position: relative; width: 100%; height: 6px; border-radius: 3px; background: var(--surface-2); margin: 3px 0; }
+.hg-tile[aria-pressed="true"] .hg-gauge { background: var(--surface); }
+.hg-gauge .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--accent); }
+.hg-tile.likely .hg-gauge .fill, .hg-tile.now .hg-gauge .fill { background: var(--warn); }
+.hg-gauge .base { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--ink); }
+.hg-tile-s { font-size: 12px; color: var(--ink-2); line-height: 1.45; }
+.hg-why { margin-top: 12px; font-size: 13px; }
+.hg-why > summary { cursor: pointer; color: var(--accent); width: fit-content; }
+.hg-list { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; color: var(--ink-2); line-height: 1.65; max-width: 52em; }
+.hg-sel { font: inherit; font-size: 13px; padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--ink); max-width: 100%; }
+.hg-env { margin-bottom: 12px; gap: 8px 12px; }
+.hg-env .hg-sel { max-width: min(22em, 100%); }
+.hg-axis, .hg-sum { display: grid; grid-template-columns: minmax(6.5em, 9.5em) minmax(0, 1fr) 3.6em 4.4em 5.6em; gap: 10px; align-items: center; }
+.hg-axis { font-size: 11.5px; color: var(--muted); padding: 0 6px 5px; }
+.hg-axis .a-strip { display: flex; justify-content: space-between; font-family: var(--f-mono); }
+.hg-axis .a-cnt, .hg-axis .a-med, .hg-axis .a-pill { text-align: right; }
+.hg-row { border-top: 1px solid var(--line); }
+.hg-sum { padding: 7px 6px; cursor: pointer; list-style: none; border-radius: var(--radius-sm); }
+.hg-sum::-webkit-details-marker { display: none; }
+.hg-sum:hover, .hg-row[open] > .hg-sum { background: var(--surface-2); }
+.hg-name { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
+.hg-name::before { content: "▸"; display: inline-block; width: 1em; color: var(--muted); transition: transform var(--dur-fast) var(--ease-out); }
+.hg-row[open] .hg-name::before { transform: rotate(90deg); }
+.hg-strip { position: relative; height: 22px; }
+.hg-zero { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--line-strong); }
+.hg-dot { position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; opacity: 0.8;
+  box-shadow: 0 0 0 1px var(--surface); }
+.hg-dot.up { background: var(--up); }
+.hg-dot.down { background: var(--down); }
+.hg-dot.off { opacity: 0.13; }
+.hg-dot.clip { border-radius: 2px; }
+.hg-med { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
+.hg-cnt { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink-2); }
+.hg-cnt b { color: var(--ink); font-size: 15px; font-weight: 600; }
+.hg-medv { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+.hg-sum .pill { justify-self: end; }
+.hg-more { padding: 8px 6px 16px 22px; font-size: 13px; }
+.hg-more > p { margin: 0 0 4px; line-height: 1.7; color: var(--ink-2); }
+.hg-more-btn { margin-top: 10px; }
+.hg-ctl { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; font-size: 13.5px; }
+.hg-ctl label { display: inline-flex; align-items: center; gap: 8px; }
+.hg-range { width: min(240px, 46vw); accent-color: var(--accent); }
+.hg-wlab { font-family: var(--f-mono); font-variant-numeric: tabular-nums; min-width: 3em; }
+.hg-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 14px; }
+.hg-stat { padding: 12px 14px; border-radius: var(--radius); background: var(--surface-2); }
+.hg-stat-l { font-size: 12.5px; color: var(--ink-2); }
+.hg-stat-v { font: 600 24px/1.25 var(--f-disp); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.hg-stat-v .was { font-weight: 500; font-size: 16px; }
+.hg-stat-d { font-size: 13px; font-weight: 600; margin-top: 2px; }
+.hg-stat-n { font-size: 11.5px; margin-top: 2px; }
+@media (max-width: 640px) {
+  .hg-tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hg-tile { padding: 10px 11px; }
+  .hg-tile-big { font-size: 24px; }
+  .hg-sum { grid-template-columns: minmax(0, 1fr) auto auto auto; grid-template-areas: "name cnt med pill" "strip strip strip strip"; row-gap: 4px; }
+  .hg-sum .hg-name { grid-area: name; }
+  .hg-sum .hg-strip { grid-area: strip; }
+  .hg-sum .hg-cnt { grid-area: cnt; }
+  .hg-sum .hg-medv { grid-area: med; }
+  .hg-sum .pill { grid-area: pill; }
+  .hg-axis { grid-template-columns: 1fr; }
+  .hg-axis .a-name, .hg-axis .a-cnt, .hg-axis .a-med, .hg-axis .a-pill { display: none; }
+  .hg-more { padding-left: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .hg-name::before, .hg-tile { transition: none; } .hg-tile:active { transform: none; } }

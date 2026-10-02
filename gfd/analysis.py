@@ -11,6 +11,7 @@ from . import analogs as AN
 from . import cascade as CA
 from . import chains as CH
 from . import config as C
+from . import hedge as HG
 from . import playbook as PB
 from . import scenario as SC
 
@@ -694,6 +695,14 @@ def run(log=print):
         import traceback
         log(f"[scenario] 失敗，這次略過沙盤推演：{exc!r}\n{traceback.format_exc()}")
         scen = None
+    # 避險放在沙盤推演裡（同一包延後載入的資料）；一樣不能拖垮每日更新
+    if scen is not None:
+        try:
+            scen["hedge"] = HG.build(g, series, scen, _load("detail.json"), log=log)
+        except Exception as exc:      # noqa: BLE001
+            import traceback
+            log(f"[hedge] 失敗，這次略過避險：{exc!r}\n{traceback.format_exc()}")
+            scen["hedge"] = None
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),
