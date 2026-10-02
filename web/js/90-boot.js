@@ -20,6 +20,7 @@
     const redo = () => { const y = window.scrollY; render(id); window.scrollTo(0, y); };
     try {
       TABS[id](root, redo);
+      addToc(root);                 // 要等資料的分頁會在資料到了、畫完之後再補（lazyTab）
     } catch (err) {
       root.replaceChildren(h("p", { class: "empty" }, `這個分頁繪製失敗：${err.message}`));
       console.error(err);
@@ -167,6 +168,34 @@
     h("span", {}, "更新：在專案資料夾執行 python3 gfd.py all（歷史資料超過 7 天才會重抓）。"));
 
   show(location.hash.slice(1) || store.get("tab", "overview"));
+
+  // 「回到本頁目錄」浮動鈕：捲過目錄很遠才出現（長分頁在手機上動輒上萬像素）
+  const tocTop = h("button", { class: "toc-top off", type: "button", "aria-label": "回到本頁目錄", tabindex: -1 }, "↑ 本頁目錄");
+  document.body.append(tocTop);
+  const currentToc = () => { const r = document.getElementById("tab-" + current); return r && r.querySelector(":scope > .toc"); };
+  tocTop.addEventListener("click", () => { const t = currentToc(); if (t) jumpTo(t, false); });
+  let tocTick = false;
+  const syncTocTop = () => {
+    tocTick = false;
+    const t = currentToc();
+    const on = !!t && t.getBoundingClientRect().bottom < -innerHeight * 0.8;
+    tocTop.classList.toggle("off", !on);
+    tocTop.tabIndex = on ? 0 : -1;
+  };
+  window.addEventListener("scroll", () => { if (!tocTick) { tocTick = true; requestAnimationFrame(syncTocTop); } }, { passive: true });
+
+  // 觸控裝置沒有「滑鼠停留」：有 title 說明的文字（不是按鈕）點一下就用提示框顯示，再點一次或捲動就收起
+  let tipFor = null;
+  document.addEventListener("click", (e) => {
+    if (!(window.matchMedia && matchMedia("(hover: none)").matches)) return;
+    const el = e.target.closest("[title]");
+    const usable = el && el.title && !el.closest("button, a, input, select, label, [role=button], .tape-track, svg");
+    if (!usable || tipFor === el) { if (tipFor) { hideTip(); tipFor = null; } return; }
+    const r = el.getBoundingClientRect();
+    showTip(`<div class="tip-note">${esc(el.title)}</div>`, r.left, r.bottom - 6);
+    tipFor = el;
+  });
+  window.addEventListener("scroll", () => { if (tipFor) { hideTip(); tipFor = null; } }, { passive: true });
 
   // 公開版：頁面畫好、瀏覽器閒下來之後，在背景先下載幾個分頁的資料（約 400 KB），之後切過去就不用等。
   // 完整日線與全部每日（較大、較少用）不預先下載；省流量模式或 2G／3G 連線也不預先下載。

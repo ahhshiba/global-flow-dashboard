@@ -31,7 +31,8 @@ function profileChart(host, profile, unit) {
     const y = Y(Math.max(0, p.mean));
     svg.append(sv("rect", { x: X(i) - bw / 2, y, width: bw, height: Math.max(1, Math.abs(Y(p.mean) - Y(0))), rx: 2,
       style: `fill:${p.mean >= 0 ? "var(--up)" : "var(--down)"}` }));
-    if (i % 2 === 0) svg.append(sv("text", { x: X(i), y: H - 8, "text-anchor": "middle" }, String(p.m)));
+    // 右下角留給軸標題「事件後第 N 個月」（約 84px），太靠近的刻度數字不畫，免得兩者疊在一起（手機上會撞到）
+    if (i % 2 === 0 && X(i) < ml + pw - 96) svg.append(sv("text", { x: X(i), y: H - 8, "text-anchor": "middle" }, String(p.m)));
     const hit = sv("rect", { x: X(i) - pw / (profile.length * 2), y: mt, width: pw / profile.length, height: ph, class: "hit" });
     hit.addEventListener("pointermove", (e) => showTip(
       `<div class="tip-h">事件後第 ${p.m} 個月</div><div>平均 <b class="mono">${chUnit(p.mean, unit)}</b>　n = ${p.n}</div>`, e.clientX, e.clientY));
@@ -136,8 +137,19 @@ function chainCard(chain, selLink, onPick) {
 
 TABS.chains = (root) => {
   const CH = A.chains;
+  // 開頭結論：現在哪些鏈成立了幾層（資料每次重算都會變，不寫死）
+  let lead = null;
+  if (CH && CH.items.length) {
+    const lit = CH.items.slice().sort((a, b) => b.active.count - a.active.count).filter((c) => c.active.count >= 2);
+    const none = CH.items.filter((c) => !c.active.count);
+    const allLinks = CH.items.flatMap((c) => c.links);
+    const sigN = allLinks.filter((l) => l.verdict.includes("報酬") && l.verdict.includes("顯著")).length;
+    lead = (lit.length ? `現在成立最多層的是${lit.map((c) => `${c.name.replace(/（[^）]*）/g, "")}（${c.active.count}/${c.active.of} 層）`).join("、")}` : "現在沒有任何一條鏈成立兩層以上")
+      + (none.length ? `；${none.map((c) => c.name.replace(/（[^）]*）/g, "")).join("、")}一層都還沒成立` : "")
+      + `。歷史上下游大多會跟著發生，但事件後報酬在統計上站得住的，${allLinks.length} 段裡只有 ${sigN} 段。`;
+  }
   root.replaceChildren(tabHead("傳導鏈：一個事件推到第三、四層",
-    "先寫下經濟學上的假說（例如「日債殖利率上行 → 日圓升值 → 美股下跌 → 費半 → 台股」），再用 1995 年以來的月資料逐段檢定：下游條件多久跟著成立、機率比平常高多少、下游標的之後的報酬分布與最大逆行。這些是歷史統計，不是預測，也沒有做樣本外交易驗證。", false));
+    "先寫下經濟學上的假說（例如「日債殖利率上行 → 日圓升值 → 美股下跌 → 費半 → 台股」），再用 1995 年以來的月資料逐段檢定：下游條件多久跟著成立、機率比平常高多少、下游標的之後的報酬分布與最大逆行。這些是歷史統計，不是預測，也沒有做樣本外交易驗證。", false, null, lead));
   if (!CH || !CH.items.length) { root.append(h("p", { class: "empty" }, "尚未產生傳導鏈分析，請執行 python3 gfd.py analyze")); return; }
   const g = h("div", { class: "grid" });
   root.append(g);
@@ -178,6 +190,7 @@ TABS.chains = (root) => {
     selLink = Math.min(selLink, Math.max(0, chain.links.length - 1));
     body.replaceChildren(chainCard(chain, selLink, (i) => { selLink = i; draw(); }),
       chain.links[selLink] ? chainLinkDetail(chain, chain.links[selLink]) : null);
+    addToc(root);              // 換了鏈，卡片標題跟著變：本頁目錄重建
   };
   const holder = card({ title: "逐鏈檢視", span: 12, sub: "每條鏈是一個假說；箭頭上的數字是下游條件在 " + CH.within + " 個月內跟著成立的機率。" });
   holder.tools.append(chips);

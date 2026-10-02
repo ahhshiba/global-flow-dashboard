@@ -87,10 +87,24 @@ function pbTriggerCard(t, P) {
   return c.el;
 }
 
+/* 開頭結論：現在哪些訊號亮燈、有沒有通過檢驗的資產組合，以及這些數字的可信度 */
+function playbookLead(P) {
+  const act = P.triggers.filter((t) => t.active);
+  const withRobust = act.map((t) => ({ t, n: P.robust.filter((r) => r.trigger === t.id).length })).filter((x) => x.n).sort((a, b) => b.n - a.n);
+  let text = act.length
+    ? `現在有 ${act.length} 個訊號亮燈` + (withRobust.length
+      ? `，其中 ${withRobust.length} 個有通過檢驗的資產組合：${withRobust.slice(0, 3).map((x) => `「${x.t.label}」${x.n} 組`).join("、")}${withRobust.length > 3 ? " 等" : ""}。`
+      : "，但都沒有通過檢驗的資產組合。")
+    : "現在沒有訊號亮燈。";
+  const strict = (P.stats.buckets || []).find((b) => Number(b.p) === Number(P.max_p_strict_label));
+  if (strict && fin(strict.fdr)) text += `即使在檢驗門檻內，估計仍約 ${Math.round(strict.fdr)}% 是運氣，只能當研究線索、不是買賣建議。`;
+  return text;
+}
+
 TABS.playbook = lazyTab("playbook", (root) => {
   const P = A.playbook;
   root.replaceChildren(tabHead("訊號劇本：事件的前兆與之後該看哪些資產",
-    "每個事件先找前兆（哪些訊號常在它之前出現，含誤報率），再把 37 個資產在事件後 3／6／12 個月的表現全部排名。排名看的是「超額」＝事件後表現減掉該資產自己的平常水準，否則長期上漲的資產會一路排在前面。這些是歷史統計，不是建議，也沒有計入交易成本。", false));
+    "每個事件先找前兆（哪些訊號常在它之前出現，含誤報率），再把 37 個資產在事件後 3／6／12 個月的表現全部排名。排名看的是「超額」＝事件後表現減掉該資產自己的平常水準，否則長期上漲的資產會一路排在前面。這些是歷史統計，不是建議，也沒有計入交易成本。", false, null, P && P.triggers.length ? playbookLead(P) : null));
   if (!P || !P.triggers.length) { root.append(h("p", { class: "empty" }, "尚未產生訊號劇本，請執行 python3 gfd.py analyze")); return; }
   const g = h("div", { class: "grid" });
   root.append(g);
@@ -171,6 +185,7 @@ TABS.playbook = lazyTab("playbook", (root) => {
           onclick: () => { sel = t.id; store.set("pbSel", sel); draw(); } },
         `${t.active ? "● " : ""}${t.label.length > 18 ? t.label.slice(0, 18) + "…" : t.label}`)));
     body.replaceChildren(pbTriggerCard(P.triggers.find((t) => t.id === sel), P));
+    addToc(root);              // 換了訊號，卡片標題跟著變：本頁目錄重建
   };
   const holder = card({ title: "逐訊號檢視", span: 12, sub: "「●」代表目前成立中。清單依成立中、通過檢驗的組合數排序。" });
   holder.tools.append(chips);

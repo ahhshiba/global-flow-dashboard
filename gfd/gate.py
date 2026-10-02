@@ -54,7 +54,7 @@ LOGIN = """<div id="gfd-login" role="dialog" aria-modal="true" aria-labelledby="
   #gfd-login button { font: inherit; font-size: 15px; padding: 9px 12px; border: 0; border-radius: 6px; cursor: pointer;
     background: var(--accent, #2b3f8f); color: var(--on-accent, #fff); }
   /* 台灣慣例 --up 是紅、--down 是綠；錯誤訊息要紅色，所以用 --up */
-  #gfd-login .err { color: var(--up, #c8322f); font-size: 13px; min-height: 1.4em; }
+  #gfd-login .err { color: var(--up, #bf2e2b); font-size: 13px; min-height: 1.4em; }
 </style>
 <form id="gfd-login-form" autocomplete="off">
   <div class="gfd-login-brand">

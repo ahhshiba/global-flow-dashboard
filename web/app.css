@@ -5,16 +5,16 @@
   --surface-2: #eef0f5;
   --ink: #141826;
   --ink-2: #4f5567;
-  --muted: #7d8497;
+  --muted: #5f6577;   /* 2026-10-02 由 #7d8497 加深：原本對比 3.7:1，低於小字建議的 4.5:1 */
   --line: #dde0e8;
   --line-strong: #c5cad6;
   --grid: #e7e9ef;
   --accent: #2b3f8f;
   --accent-soft: #e3e7f6;
   --on-accent: #ffffff;
-  --up: #c8322f;
+  --up: #bf2e2b;     /* 2026-10-02 由 #c8322f 微調：選取列底色上原本 4.3:1 */
   --up-soft: #fbe7e6;
-  --down: #17804a;
+  --down: #147545;   /* 2026-10-02 由 #17804a 微調：淺綠底上原本 4.3:1 */
   --down-soft: #e2f3e9;
   --warn: #fab219;
   --warn-ink: #6b4700;
@@ -43,8 +43,8 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --ground: #0d0f16; --surface: #151823; --surface-2: #1c2030; --ink: #e9ebf2; --ink-2: #a6acbd;
-    --muted: #7e8497; --line: #272b3b; --line-strong: #383d51; --grid: #20242f; --accent: #93a6f2;
-    --accent-soft: #232a48; --on-accent: #0d0f16; --up: #f0625d; --up-soft: #3a1b1d; --down: #3cc27a;
+    --muted: #8d93a6; --line: #272b3b; --line-strong: #383d51; --grid: #20242f; --accent: #93a6f2;
+    --accent-soft: #232a48; --on-accent: #0d0f16; --up: #f26b66; --up-soft: #3a1b1d; --down: #3cc27a;
     --down-soft: #14301f; --warn: #fab219; --warn-ink: #fcd27a; --warn-soft: #33280f;
     --band: rgba(147, 166, 242, 0.08);
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
@@ -58,8 +58,8 @@
 }
 :root[data-theme="dark"] {
   --ground: #0d0f16; --surface: #151823; --surface-2: #1c2030; --ink: #e9ebf2; --ink-2: #a6acbd;
-  --muted: #7e8497; --line: #272b3b; --line-strong: #383d51; --grid: #20242f; --accent: #93a6f2;
-  --accent-soft: #232a48; --on-accent: #0d0f16; --up: #f0625d; --up-soft: #3a1b1d; --down: #3cc27a;
+  --muted: #8d93a6; --line: #272b3b; --line-strong: #383d51; --grid: #20242f; --accent: #93a6f2;
+  --accent-soft: #232a48; --on-accent: #0d0f16; --up: #f26b66; --up-soft: #3a1b1d; --down: #3cc27a;
   --down-soft: #14301f; --warn: #fab219; --warn-ink: #fcd27a; --warn-soft: #33280f;
   --band: rgba(147, 166, 242, 0.08);
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
@@ -147,6 +147,28 @@ button { font: inherit; color: inherit; }
 .tab-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 14px 28px; margin-bottom: 22px; }
 .tab-head h2 { margin: 0; font: 700 27px/1.2 var(--f-disp); letter-spacing: 0.03em; text-wrap: balance; }
 .tab-head p { margin: 8px 0 0; max-width: 66ch; color: var(--ink-2); line-height: 1.75; text-wrap: pretty; }
+/* 分頁開頭先講結論（由資料算出來的一句話），方法說明收進可展開的「怎麼算的」 */
+.tab-head p.tab-lead { color: var(--ink); font-size: 15px; font-weight: 500; }
+.tab-head details.how { margin-top: 6px; max-width: 66ch; }
+.tab-head details.how summary { cursor: pointer; color: var(--accent); font-size: 13px; width: fit-content; list-style: none; }
+.tab-head details.how summary::-webkit-details-marker { display: none; }
+.tab-head details.how summary::before { content: "▸ "; display: inline-block; transition: transform var(--dur-fast) var(--ease-out); }
+.tab-head details.how[open] summary::before { transform: rotate(90deg); }
+.tab-head details.how p { margin-top: 6px; font-size: 13.5px; }
+/* 本頁目錄：卡片多的分頁，標題下列出各卡片 */
+.toc { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: -8px 0 18px; }
+.toc .lab { font-size: 12px; color: var(--muted); margin-right: 2px; }
+.toc-top { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 30;
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px;
+  font: 500 13px var(--f-body); box-shadow: var(--card-shadow); cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.toc-top.off { opacity: 0; transform: translateY(8px); pointer-events: none; }
+.toc-top:active { transform: scale(0.97); }
+/* 觸控裝置：有說明的文字（原本只在滑鼠停留時出現）加虛線底線，點一下顯示說明 */
+@media (hover: none) {
+  .k-name[title], .k-watch[title], .q-name[title], .zflag[title], .qnote[title], .chain-node[title], .pbar-seg[title], .tape-date[title] {
+    text-decoration: underline dotted color-mix(in srgb, var(--muted) 70%, transparent); text-underline-offset: 3px; cursor: help; }
+}
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chips .lab { font-size: 12px; color: var(--muted); margin-right: 2px; }
 .chip { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 3px 11px;
@@ -173,6 +195,8 @@ button { font: inherit; color: inherit; }
 @media (hover: hover) and (pointer: fine) { .tool:hover { color: var(--ink); border-color: var(--line-strong); } }
 .tool[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
 .note { margin: 14px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+/* 說明文字行長（2026-10-02）：中文一行約 44 字最好讀，電腦上原本一行排到 95～110 字。表格、新聞列表不受限 */
+.note, .card p:not(.empty), .card .finds li, .cs-persist { max-width: 44em; }
 
 /* 圖例 */
 .legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 0 8px; }
@@ -187,9 +211,9 @@ button { font: inherit; color: inherit; }
 .chart svg { display: block; width: 100%; overflow: visible; }
 .chart svg text { fill: var(--muted); font: 11px var(--f-mono); }
 .chart svg .lbl { fill: var(--ink-2); font: 500 11.5px var(--f-body); }
-.chart .hit { fill: transparent; cursor: crosshair; }
-.chart .hit:focus { outline: none; }
-.chart .hit:focus-visible { stroke: var(--accent); stroke-width: 1; }
+.chart .hit, .heat .hit { fill: transparent; cursor: crosshair; }
+.chart .hit:focus, .heat .hit:focus { outline: none; }
+.chart .hit:focus-visible, .heat .hit:focus-visible { stroke: var(--accent); stroke-width: 1; }
 
 /* KPI 列 */
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--surface);
@@ -254,6 +278,7 @@ table.data .heatcell { text-align: center; font-family: var(--f-mono); font-size
   border: 1px solid var(--line-strong); border-radius: 6px; box-shadow: var(--shadow); padding: 8px 10px;
   font-size: 12.5px; min-width: 150px; max-width: 320px; }
 .tip .tip-h { font: 500 12px var(--f-mono); color: var(--ink-2); margin-bottom: 4px; }
+.tip .tip-note { max-width: min(280px, calc(100vw - 48px)); white-space: normal; line-height: 1.55; font-size: 13px; }
 .tip .tip-r { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 7px; align-items: center; }
 .tip .tip-r i { width: 10px; height: 10px; border-radius: 2px; }
 .tip .tip-r b { font: 500 12px var(--f-mono); font-variant-numeric: tabular-nums; }
@@ -282,9 +307,9 @@ table.data .heatcell { text-align: center; font-family: var(--f-mono); font-size
 .qrow .n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
 .qrow svg { width: 64px; height: 20px; display: block; }
 .qrow.flagged { background: linear-gradient(90deg, var(--warn-soft), transparent 70%); }
-.qnote { display: inline-block; margin-left: 6px; font: 500 10.5px var(--f-body); color: var(--accent);
+.qnote { display: inline-block; margin-left: 6px; font: 500 11px var(--f-body); color: var(--accent);
   background: var(--accent-soft); border-radius: 3px; padding: 0 4px; }
-.zflag { display: inline-block; margin-left: 6px; font: 500 10.5px var(--f-mono); color: var(--warn-ink);
+.zflag { display: inline-block; margin-left: 6px; font: 500 11px var(--f-mono); color: var(--warn-ink);
   background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 3px; padding: 0 3px; }
 
 .news { list-style: none; margin: 0; padding: 0; }
@@ -391,7 +416,7 @@ table.data tr.sel td { background: var(--accent-soft); }
 .cs-warn { background: var(--warn-soft); color: var(--warn-ink); }
 .cs-info { background: var(--surface-2); color: var(--muted); }
 .flow-item { white-space: nowrap; }
-.cs-sig { color: var(--warn-ink); font-size: 10px; }
+.cs-sig { color: var(--warn-ink); font-size: 11px; }
 /* 名詞解釋 */
 .gl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
 .gl-search { flex: 1 1 260px; max-width: 420px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px 10px;
@@ -414,7 +439,11 @@ table.data tr.sel td { background: var(--accent-soft); }
 .gl-flash { animation: gl-flash 1.2s ease-out; }
 @keyframes gl-flash { 0% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (prefers-reduced-motion: reduce) { .gl-flash { animation: none; } }
-.k-watch { position: absolute; top: 13px; right: 12px; padding: 0 6px; border-radius: 999px; font-size: 10.5px; line-height: 1.6;
+@media (prefers-reduced-motion: reduce) {
+  .toc-top, .toc-top.off, .toc-top:active { transform: none; }
+  .tab-head details.how summary::before { transition: none; }
+}
+.k-watch { position: absolute; top: 13px; right: 12px; padding: 0 6px; border-radius: 999px; font-size: 11px; line-height: 1.6;
   background: var(--warn-soft); color: var(--warn-ink); cursor: help; }
 .k-watch.k-managed { background: var(--up-soft); color: var(--up); }
 .bar-track.mono::before { display: none; }
@@ -424,9 +453,11 @@ table.data tr.sel td { background: var(--accent-soft); }
 .cs-persist { margin: 8px 0 4px; font-size: 13px; line-height: 1.7; display: flex; flex-direction: column; gap: 4px; }
 .pbar { display: flex; gap: 2px; max-width: 520px; height: 20px; border-radius: 4px; overflow: hidden; }
 .pbar-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; white-space: nowrap; overflow: hidden; color: var(--on-accent); min-width: 0; }
-.pb-transient { background: color-mix(in srgb, var(--muted) 70%, var(--surface)); } .pb-persistent { background: color-mix(in srgb, var(--accent) 62%, var(--surface)); }
+.pb-transient { background: color-mix(in srgb, var(--muted) 24%, var(--surface)); color: var(--ink); }
+.pb-persistent { background: color-mix(in srgb, var(--accent) 34%, var(--surface)); color: var(--ink); }
 .pb-lasting { background: var(--accent); } .pb-unknown { background: var(--line-strong); color: var(--ink); }
-.pb-tag { display: inline-block; padding: 0 6px; border-radius: 3px; font-size: 11.5px; color: var(--on-accent); }
+.pb-tag { display: inline-block; padding: 0 6px; border-radius: 3px; font-size: 11.5px; color: var(--ink); }
+.pb-tag.pb-lasting, .pbar-seg.pb-lasting { color: var(--on-accent); }   /* 只有實心主色底用反白字；短暫／長期是淺底深字 */
 /* FAQ */
 .faq-q { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .faq-q h3 { margin: 0; font-size: 15.5px; flex: 1 1 320px; }
@@ -542,4 +573,9 @@ table.data td .sub.keep { word-break: keep-all; }   /* 短註記：只在標點�
   .card-h .tools::-webkit-scrollbar { display: none; }
   .card-h .tools .chips { flex-wrap: nowrap; }
   .card-h .tools .chip { flex: none; }
+  /* 本頁目錄在手機上排成一列、可橫向滑，不佔三四行 */
+  .toc { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent); }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc .chip, .toc .lab { flex: none; }
 }

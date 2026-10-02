@@ -49,7 +49,7 @@ function lazyTab(id, draw) {
     Promise.all(keys.map(needData)).then(() => {
       if (root._lazyTicket !== ticket) return;
       root.dataset.range = state.range;            // 和啟動程式的重畫判斷對齊（失敗後按「再試一次」成功時也要補回）
-      try { draw(root, redo); } catch (err) {
+      try { draw(root, redo); addToc(root); } catch (err) {
         root.replaceChildren(h("p", { class: "empty" }, `這個分頁繪製失敗：${err.message}`));
         console.error(err);
       }
@@ -288,7 +288,7 @@ function lineChart(host, o) {
     if (a < 0 || z < i0) continue;
     const xa = X(xs[Math.max(a, i0)]), xz = X(xs[Math.min(z, i1)]);
     svg.append(sv("rect", { x: xa, y: mt, width: Math.max(2, xz - xa), height: ph, style: "fill:var(--band)" }));
-    if (xz - xa > 44) svg.append(sv("text", { x: xa + 4, y: mt + 11, style: "font-size:10px" }, b.name.length > 6 ? b.name.slice(0, 6) + "…" : b.name));
+    if (xz - xa > 44) svg.append(sv("text", { x: xa + 4, y: mt + 12, style: "font-size:11px" }, b.name.length > 6 ? b.name.slice(0, 6) + "…" : b.name));
   }
   for (const r of o.refs || []) {
     const y = Y(r.y);
@@ -742,7 +742,7 @@ function heatmap(host, o) {
   const n = o.ids.length;
   const W = host.clientWidth || 800;
   const labW = 128;
-  const cell = Math.max(20, Math.min(34, Math.floor((W - labW - 8) / n)));
+  const cell = Math.max(20, Math.min(38, Math.floor((W - labW - 8) / n)));
   const topH = 104;
   const Wt = labW + n * cell + 6, Ht = topH + n * cell + 4;
   const svg = sv("svg", { viewBox: `0 0 ${Wt} ${Ht}`, width: Wt, height: Ht, role: "img", "aria-label": o.label || "關聯熱圖" });
@@ -755,9 +755,10 @@ function heatmap(host, o) {
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
     const r = o.matrix[i][j];
     svg.append(sv("rect", { x: labW + j * cell + 1, y: topH + i * cell + 1, width: cell - 2, height: cell - 2, rx: 2, style: `fill:${corrFill(r)}` }));
-    if (i !== j && fin(r) && Math.abs(r) >= 0.5 && cell >= 26) {
+    if (i !== j && fin(r) && Math.abs(r) >= 0.5 && cell >= 28) {
+      const txt = (r < 0 ? "−" : "") + (cell >= 36 ? Math.abs(r).toFixed(2) : Math.abs(r).toFixed(2).slice(1));
       svg.append(sv("text", { x: labW + j * cell + cell / 2, y: topH + i * cell + cell / 2 + 4, "text-anchor": "middle",
-        style: `font:500 10px var(--f-mono);fill:${Math.abs(r) >= 0.65 ? "#fff" : "var(--ink)"}` }, r.toFixed(2).replace("0.", ".")));
+        style: `font:500 11px var(--f-mono);fill:${Math.abs(r) >= 0.65 ? "#fff" : "var(--ink)"}` }, txt));
     }
   }
   const mark = sv("rect", { width: cell, height: cell, rx: 3, style: "fill:none;stroke:var(--ink);stroke-width:1.5", visibility: "hidden" });
@@ -822,10 +823,43 @@ function lagChart(host, p) {
 }
 
 /* ── 分頁頭 ── */
-function tabHead(title, desc, withRange, onRange) {
+// lead＝由資料算出來的一句結論（先看這句）；有 lead 時，方法說明 desc 收進可展開的「怎麼算的」
+function tabHead(title, desc, withRange, onRange, lead) {
+  const text = lead
+    ? [h("p", { class: "tab-lead" }, lead), desc ? h("details", { class: "how" }, h("summary", {}, "怎麼算的"), h("p", {}, desc)) : null]
+    : [desc ? h("p", {}, desc) : null];
   return h("div", { class: "tab-head" },
-    h("div", {}, h("h2", {}, title), desc ? h("p", {}, desc) : null),
+    h("div", {}, h("h2", {}, title), ...text),
     withRange ? rangeChips(onRange) : null);
+}
+
+/* 本頁目錄（2026-10-02）：卡片多的分頁在標題下列出各卡片，點一下捲過去；手機上分頁動輒上萬像素 */
+const tocCards = (root) => [...root.querySelectorAll(".card")]
+  .filter((c) => !c.hidden && !c.parentElement.closest(".card") && c.querySelector(":scope > .card-h h3"));
+function cardLabel(c) {
+  const t = c.querySelector(":scope > .card-h h3").textContent.trim();
+  const short = t.split(/[：（(]/)[0].trim();
+  return (short || t).length > 14 ? (short || t).slice(0, 13) + "…" : (short || t);
+}
+function jumpTo(el, flash = true) {
+  const bar = document.querySelector(".tabs");
+  const off = (bar ? bar.getBoundingClientRect().height : 0) + 12;   // 分頁列固定在頂端，別讓卡片標題被它蓋住
+  const calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: calm ? "auto" : "smooth" });
+  if (flash) { el.classList.remove("gl-flash"); void el.offsetWidth; el.classList.add("gl-flash"); }
+}
+function addToc(root) {
+  const old = root.querySelector(":scope > .toc");
+  if (old) old.remove();
+  if (root.id === "tab-glossary") return;          // 名詞解釋有自己的分類篩選
+  const cards = tocCards(root);
+  if (cards.length < 4) return;
+  // 卡片可能被分頁內的重畫換掉：點的時候才依序號找當下的卡片
+  const nav = h("nav", { class: "toc", "aria-label": "本頁目錄" }, h("span", { class: "lab" }, "本頁"),
+    ...cards.map((c, i) => h("button", { class: "chip", type: "button",
+      onclick: () => { const list = tocCards(root); const t = list[i] || list[list.length - 1]; if (t) jumpTo(t); } }, cardLabel(c))));
+  const head = root.querySelector(":scope > .tab-head");
+  if (head) head.after(nav); else root.prepend(nav);
 }
 function findingsList(tab) {
   const items = (A.findings || []).filter((f) => !tab || f.tab === tab);

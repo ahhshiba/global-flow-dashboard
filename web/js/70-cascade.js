@@ -229,12 +229,34 @@ function cascadeNow(win) {
       + `今天的資料：${Object.entries(AN.last_dates).map(([k, d]) => `${k} ${d}`).join("、")}（期貨與美元在台北早上還沒收盤，會停在前一個交易日）。`)];
 }
 
+/* 開頭結論：全部事件合起來的傳導節奏、持續性與可信度（由資料算，不寫死） */
+function cascadeLead(CA) {
+  const byLayer = {}, pc = { transient: 0, persistent: 0, lasting: 0 };
+  for (const e of CA.events) for (const r of e.assets) {
+    if (!r.responded) continue;
+    if (fin(r.half_day)) (byLayer[r.layer] = byLayer[r.layer] || []).push(r.half_day);
+    if (r.persist in pc) pc[r.persist]++;
+  }
+  const med = (a) => { const s = a.slice().sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const layers = CA.layers.filter((l) => byLayer[l.id]).map((l) => ({ name: l.name.split("：")[0], short: (l.name.split("：")[1] || l.name), d: Math.round(med(byLayer[l.id])) }));
+  if (!layers.length) return null;
+  const lo = Math.min(...layers.map((l) => l.d)), hi = Math.max(...layers.map((l) => l.d));
+  let text = hi - lo <= 3
+    ? `${CA.events.length} 個事件合起來看，各層「走完一半反應」的中位數都在第 ${lo}～${hi} 天，差距不大：上游先動、下游後到只在個別事件裡明顯。`
+    : `${CA.events.length} 個事件合起來看，「走完一半反應」的中位數：${layers.map((l) => `${l.short}第 ${l.d} 天`).join("、")}。`;
+  const tot = pc.transient + pc.persistent + pc.lasting;
+  const B = CA.persist_base && CA.persist_base.pct;
+  if (tot) text += `有反應的標的中 ${Math.round((pc.transient * 100) / tot)}% 半年後已退掉一半以上${B && fin(B.transient) ? `（隨機日期是 ${Math.round(B.transient)}%）` : ""}。`;
+  if (CA.stats && fin(CA.stats.fdr05)) text += `統計上顯著的結果估計約 ${Math.round(CA.stats.fdr05)}% 是運氣，單一類型的結論只能當參考。`;
+  return text;
+}
+
 TABS.cascade = lazyTab("cascade", (root) => {
   const CA = A.cascade;
   root.replaceChildren(tabHead("事件衝擊鏈：一個事件，兩週到兩個月內怎麼一層一層傳下去",
     "用日線做事件研究。事件是真的發生過的事（戰爭、央行轉向、匯率危機、崩盤、疫情、天災…），不是價格門檻。"
     + "傳導順序不是假設的，是量出來的：每個標的先判斷有沒有實質反應（期間內最大累積變動超過自身 2σ×√天數），"
-    + "有反應的再算「走完一半」是第幾天——上游通常幾天就走完，下游會拖。", false));
+    + "有反應的再算「走完一半」是第幾天。", false, null, CA && CA.events.length ? cascadeLead(CA) : null));
   if (!CA || !CA.events.length) { root.append(h("p", { class: "empty" }, "尚未產生事件衝擊分析，請執行 python3 gfd.py history 後再 analyze")); return; }
   const g = h("div", { class: "grid" });
   root.append(g);
