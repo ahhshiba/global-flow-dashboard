@@ -136,6 +136,13 @@ SERIES = [
          src=("yahoo", "^VIX", "close"), note="月底值"),
 ]
 
+# 月均價序列（世界銀行 Pink Sheet、央行月均匯率，以及由它們算出的比值）。
+# 月底做決定時，「當月均價」已經包含半個月以前的價格；從當月均價算起的「之後報酬」等於偷看了半個月。
+# chains.forward／worst_path 對這些序列一律從「下個月的均價」算起（2026-10-02 驗收抓到：沒有這一步，
+# 沙盤推演 3 個月的樣本外差距會從約 +0.3 被灌成 +1.4 個百分點）。
+AVERAGED_SERIES = ({s["id"] for s in SERIES if s["src"][0] == "wb_pink" or (s["src"][0] == "cbc" and s["src"][1] == "BP01M01")}
+                   | {"d_cu_au", "d_oil_au"})
+
 # 龍頭股觀察清單：大型權值股，不宣稱是即時市值排名，請依需要自行調整。
 # (Yahoo 代碼, 名稱, 鉅亨代碼, 現金流來源鍵：美股=SEC CIK／台股=股票代號／港股=None)
 LEADERS = {
@@ -619,7 +626,6 @@ SCENARIO_LAMBDA = 24.0          # 收縮強度：約等於「一個訊號要有 
 SCENARIO_TOPK = 5               # 樣本外回測：每期買期望值最高的 5 個標的，和全體平均比
 SCENARIO_EVAL_START = "2005-01" # 走步回測起點（之前的 10 年只拿來估計）
 SCENARIO_BOOT = 200             # 期望值區間：以 12 個月為一塊的區塊自助法
-SCENARIO_SIMILAR = 0.5          # 「狀態相似的月份」：亮燈訊號的 Jaccard 相似度門檻
 # 訊號 → 事件衝擊的事件類型（只列對應關係明確的；其餘訊號不硬套）
 SCENARIO_EVENT_TYPES = {
     "carry_jgb": ["cb"], "inflation_ust10": ["cb"], "rates_up": ["cb"], "rates_down": ["cb"],

@@ -50,29 +50,43 @@ def trigger_mask(vals, cmp_, thr, end):
     return m
 
 
+def lag_of(sid):
+    """月均價序列（config.AVERAGED_SERIES）在月底做決定時，當月均價已經包含過去半個月，
+    從它算起的報酬等於偷看；改從下個月的均價算起（月中前後才買得到的價格），其他序列不延遲。"""
+    return 1 if sid in C.AVERAGED_SERIES else 0
+
+
 def forward(g, sid, h, kind):
+    """第 t 個月月底做決定、之後 h 個月的變動（價格 %、殖利率 bp）。
+
+    只用最後一個完整月（g.end）以前的資料：結果會用到未完成當月的列一律是 NaN，
+    否則「平常」的基準會混進還沒收完的月份。月均價序列的起點延後一個月（見 lag_of）。
+    """
     a = g.arr[sid]
     n = len(a)
+    lag = lag_of(sid)
     out = np.full(n, np.nan)
-    with np.errstate(all="ignore"):
-        if kind == "yield":
-            out[:n - h] = (a[h:] - a[:n - h]) * 100
-        else:
-            out[:n - h] = 100 * np.log(a[h:] / a[:n - h])
+    m = g.end - h - lag + 1          # t < m 時，結果用到的月份都 ≤ g.end
+    if m > 0:
+        s0, s1 = a[lag:lag + m], a[lag + h:lag + h + m]
+        with np.errstate(all="ignore"):
+            out[:m] = (s1 - s0) * 100 if kind == "yield" else 100 * np.log(s1 / s0)
     return out
 
 
 def worst_path(g, sid, h, kind):
-    """區間內最深的逆行：價格取期間最低點相對起點，殖利率取最大反向變動。"""
+    """區間內最深的逆行：價格取期間最低點相對起點，殖利率取最大反向變動（起點與完整月的規則同 forward）。"""
     a = g.arr[sid]
     n = len(a)
+    lag = lag_of(sid)
     out = np.full(n, np.nan)
-    for t in range(n - h):
-        seg = a[t + 1:t + h + 1]
-        if not np.isfinite(a[t]) or not np.isfinite(seg).all():
+    for t in range(max(0, g.end - h - lag + 1)):
+        s = t + lag
+        seg = a[s + 1:s + h + 1]
+        if not np.isfinite(a[s]) or not np.isfinite(seg).all():
             continue
         with np.errstate(all="ignore"):
-            out[t] = (seg.min() - a[t]) * 100 if kind == "yield" else 100 * np.log(seg.min() / a[t])
+            out[t] = (seg.min() - a[s]) * 100 if kind == "yield" else 100 * np.log(seg.min() / a[s])
     return out
 
 

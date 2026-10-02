@@ -13,6 +13,9 @@
 改列每個亮燈訊號「單獨」的歷史：用訊號劇本同一套口徑（獨立事件起點、事件後中位數減平常中位數、位移檢定 p），
 兩個分頁的數字可以互相對照。
 
+月均價序列（世界銀行、央行月均匯率）的「之後報酬」由 chains.forward 從下個月的均價算起，
+走步回測估計時也多退一個月（結果要在決策當下已知）；沒有這一步，當月均價包含過去半個月，會讓回測偷看未來。
+
 限制（頁面上照實寫）：訊號與門檻是事後設計的，回測只排除了「估計」上的偷看，排除不了「設計」上的後見之明；
 另外比較過不只一種組合方式，挑選本身也是偷看，實際效果可能比回測差。報酬是對數報酬、沒有交易成本與稅；
 全部是歷史統計，不是投資建議。
@@ -61,7 +64,7 @@ def _spread(preds, real, k):
     return float(real[top].mean() - real.mean())
 
 
-def _walk_forward(X, F, Mom, h, end, start, lam, k):
+def _walk_forward(X, F, Mom, h, end, start, lam, k, lags):
     """每個決策月 T 只用 t ≤ T−h（結果已知）的資料；用累加和，不必每期重算。
 
     同時算三種排名做對照：ridge（本頁採用）、單一訊號平均（每個亮燈訊號單獨的條件超額、收縮後取平均）、6 個月動能。
@@ -75,7 +78,7 @@ def _walk_forward(X, F, Mom, h, end, start, lam, k):
     for a in range(A):
         y = F[:, a]
         v = np.isfinite(y)
-        v[end - h + 1:] = False
+        v[end - h - lags[a] + 1:] = False           # forward 已經是 NaN；這裡再保險一次
         yz = np.where(v, y, 0.0)
         xv = Xf * v[:, None]
         Sxx = np.cumsum(xv[:, :, None] * Xf[:, None, :], axis=0)
@@ -84,8 +87,8 @@ def _walk_forward(X, F, Mom, h, end, start, lam, k):
         Sy = np.cumsum(yz)
         Sn = np.cumsum(v.astype(float))
         for T in range(start, end - h + 1):
-            i = T - h
-            if Sn[i] < 60 or not np.isfinite(F[T, a]):
+            i = T - h - lags[a]                         # 第 i 列的結果在 T 月底以前已經知道（月均價多退一個月）
+            if i < 0 or Sn[i] < 60 or not np.isfinite(F[T, a]):
                 continue
             mu = Sy[i] / Sn[i]
             b = Sxy[i] - mu * Sx[i]                     # Σ x·(y − μ)
@@ -210,7 +213,8 @@ def build(g, series, months, play, chain_block, cascade, log=print):
     for h in C.PLAYBOOK_HORIZONS:
         F = np.vstack([CH.forward(g, s, h, series[s]["kind"]) for s in assets]).T
         Mom = np.vstack([CH.transform(g, s, "chg6", series[s]["kind"]) for s in assets]).T
-        periods = _walk_forward(X, F, Mom, h, end, start, lam, C.SCENARIO_TOPK)
+        lags = [CH.lag_of(s) for s in assets]
+        periods = _walk_forward(X, F, Mom, h, end, start, lam, C.SCENARIO_TOPK, lags)
         offs = _offsets(periods, h, "ridge", rng)
         verdict = _verdict(offs)
         cal = np.array([(p_, o_) for p in periods for p_, o_ in zip(p["pr"], p["own"])])
@@ -224,6 +228,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
             avg=dict(**_summ(periods, "avg"), offsets=_offsets(periods, h, "avg", rng)),
             momentum=dict(**_summ(periods, "mom"), offsets=_offsets(periods, h, "mom", rng)),
             calibration=dict(slope=CH.r(slope), corr=CH.r(corr, 3), used=bool(use_cal)),
+            n_assets=[min(len(p["real"]) for p in periods), max(len(p["real"]) for p in periods)] if periods else None,
             series=[dict(m=months[p["T"]], v=CH.r(p["ridge"])) for p in periods])
         b_avg = backtest[str(h)]["avg"]
         b_avg["verdict"] = _verdict(b_avg["offsets"])
@@ -254,7 +259,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
             nb = int(np.ceil(N / BLOCK))
             boots = []
             for _ in range(C.SCENARIO_BOOT):
-                st = rng.integers(0, max(1, N - BLOCK), size=nb)
+                st = rng.integers(0, max(1, N - BLOCK + 1), size=nb)
                 pos = np.concatenate([np.arange(b0, b0 + BLOCK) for b0 in st])[:N]
                 boots.append(float(x_now @ _ridge(Xr[pos], yr[pos], lam)[1]))
             boots = np.array(boots)
@@ -281,9 +286,10 @@ def build(g, series, months, play, chain_block, cascade, log=print):
                              events=by_sid_events.get(sid, []), past=past))
         recs.sort(key=lambda r: r["ev"], reverse=True)
         out_h[str(h)] = recs
+        f2 = lambda v: "—" if v is None else f"{v:+.2f}"      # 樣本不足時這些是 None，不能讓記錄這一行把整個推演弄掛
         log(f"[scenario] {h} 個月：樣本外 {len(periods)} 期，前 {C.SCENARIO_TOPK} 名平均多 "
-            f"{backtest[str(h)]['ridge']['mean']:+.2f}%（各起點 {[o['mean'] for o in offs]}，p {[o['p'] for o in offs]}）"
-            f"→ {verdict}；校準斜率 {slope:.2f}；對照 單一訊號平均 {b_avg['mean']:+.2f}%、動能 {backtest[str(h)]['momentum']['mean']:+.2f}%")
+            f"{f2(backtest[str(h)]['ridge']['mean'])}%（各起點 {[o['mean'] for o in offs]}，p {[o['p'] for o in offs]}）"
+            f"→ {verdict}；校準斜率 {f2(slope)}；對照 單一訊號平均 {f2(b_avg['mean'])}%、動能 {f2(backtest[str(h)]['momentum']['mean'])}%")
 
     # 傳導鏈推演：從目前成立的層往下，還沒成立的層在 W 個月內跟著成立的機率
     W = C.CHAIN_WITHIN
@@ -307,9 +313,10 @@ def build(g, series, months, play, chain_block, cascade, log=print):
             ups = [i for i in range(j) if it["nodes"][i]["triggered"]]
             if not info["triggered"] and ups:
                 i = ups[-1]
-                up_t = [t for t in range(end - W + 1) if cmasks[i][t]]
+                # 條件是「上游亮著、這一層當下還沒亮」，和現在的處境一樣；平常也只算這一層當下沒亮的月份
+                up_t = [t for t in range(end - W + 1) if cmasks[i][t] and not cmasks[j][t] and finite[j][t]]
                 hits = [bool(cmasks[j][t + 1:t + 1 + W].any()) for t in up_t]
-                base = [bool(cmasks[j][t + 1:t + 1 + W].any()) for t in range(end - W + 1) if finite[j][t]]
+                base = [bool(cmasks[j][t + 1:t + 1 + W].any()) for t in range(end - W + 1) if finite[j][t] and not cmasks[j][t]]
                 waits = [int(np.argmax(cmasks[j][t + 1:t + 1 + W])) + 1 for t, hh in zip(up_t, hits) if hh]
                 row.update(after=it["nodes"][i]["label"], prob=CH.r(100 * np.mean(hits), 0) if hits else None,
                            base=CH.r(100 * np.mean(base), 0) if base else None,

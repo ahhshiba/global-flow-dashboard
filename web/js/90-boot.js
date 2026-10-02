@@ -200,7 +200,7 @@
   });
   window.addEventListener("scroll", () => { if (tipFor) { hideTip(); tipFor = null; } }, { passive: true });
 
-  // 公開版：頁面畫好、瀏覽器閒下來之後，在背景先下載幾個分頁的資料（約 400 KB），之後切過去就不用等。
+  // 公開版：頁面畫好、瀏覽器閒下來之後，在背景先下載幾個分頁的資料（事件衝擊、訊號劇本、沙盤推演、最新一天每日，gzip 後約 450 KB），之後切過去就不用等。
   // 完整日線與全部每日（較大、較少用）不預先下載；省流量模式或 2G／3G 連線也不預先下載。
   const conn = navigator.connection;
   const frugal = conn && (conn.saveData || /(^|-)(2g|3g)$/.test(conn.effectiveType || ""));

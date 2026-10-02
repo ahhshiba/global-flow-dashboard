@@ -15,18 +15,22 @@ const scRefs = (r) => {
   return { agree: refs.filter((x) => Math.sign(x.lift) === Math.sign(r.ev)), oppose: refs.filter((x) => Math.sign(x.lift) === -Math.sign(r.ev)) };
 };
 
-/* 開頭結論：亮燈數、目前排名前後、樣本外可信度（全部由資料組出來） */
+/* 開頭結論：亮燈數、目前排名前後、樣本外可信度（全部由資料組出來；隨上方期間切換重寫） */
 function scenarioLead(S, hz) {
+  if (!S.active.length) return "目前沒有任何訊號亮著，模型的期望超額全部是 0，沒有可以推演的方向。";
   const rows = S.assets[String(hz)] || [];
   const B = S.backtest[String(hz)];
+  const v = B.ridge.verdict;
   const val = (r) => (fin(r.cal) ? r.cal : r.ev);
   const top = rows.slice(0, 3), bot = rows.slice(-2).reverse();
-  const verdicts = S.horizons.map((x) => `${x} 個月${S.backtest[String(x)].ridge.verdict}`).join("、");
-  return `${S.active.length} 個訊號亮著。綜合起來，未來 ${hz} 個月期望超額最高的是${top.map((r) => `${r.name}（${scPct(val(r))}）`).join("、")}，`
-    + `最弱的是${bot.map((r) => `${r.name}（${scPct(val(r))}）`).join("、")}`
-    + `${fin(top[0] && top[0].cal) ? "（已依樣本外校準）" : "（模型值，未校準）"}。`
-    + `這套排名在 ${B.start} 起的樣本外回測：${verdicts}；${hz} 個月前 ${S.model.topk} 名平均每期比全體多 ${fmtSigned(B.ridge.mean, 2)} 個百分點。`
-    + "訊號門檻是事後設計的，實際效果可能更差，只能當研究線索。";
+  const head = `${S.active.length} 個訊號亮著。`;
+  const bt = `這套排名在 ${B.start} 起的樣本外回測，${hz} 個月前 ${S.model.topk} 名平均每期只比全體多 ${fmtSigned(B.ridge.mean, 2)} 個百分點`
+    + `（不同起始月 ${scRange(B.ridge.offsets)}）`;
+  if (v === "樣本外無效") return `${head}${hz} 個月的排名在樣本外沒有比亂選好（${fmtSigned(B.ridge.mean, 2)}），這個期間不列推薦。`;
+  const picks = `依模型，未來 ${hz} 個月期望超額較高的是${top.map((r) => `${r.name}（${scPct(val(r))}）`).join("、")}，`
+    + `較弱的是${bot.map((r) => `${r.name}（${scPct(val(r))}）`).join("、")}${fin(top[0] && top[0].cal) ? "（已依樣本外校準）" : "（模型值）"}。`;
+  if (v === "樣本外有效") return `${head}${picks}${bt}，各起始月都顯著。訊號門檻是事後設計的，實際效果可能更差。`;
+  return `${head}${picks}但${bt}，時好時壞——不能當買賣依據，只是研究線索。`;
 }
 
 TABS.scenario = lazyTab("scenario", (root) => {
@@ -92,7 +96,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
       ifs.length ? h("ul", { class: "sc-ifs" }, ifs.map((n) => h("li", {}, `如果「${n.label}」也成立：訊號劇本裡通過三道檢驗的是 `,
         n.if_then.map((r, k) => h("span", {}, k ? "、" : "", `${r.name} ${r.horizon} 個月超額 `, chg(r.lift, 1, "%"))), "。"))) : null));
   }
-  c2.body.append(h("p", { class: "note" }, "「比平常更可能」（紅框）＝高出平常 10 個百分點以上；「比平常更不可能」（虛線）＝低於平常。"
+  c2.body.append(h("p", { class: "note" }, "「比平常更可能」（紅框）＝高出平常 10 個百分點以上；「比平常更不可能」（虛線）＝低於平常 5 個百分點以上。"
     + "傳導鏈的層是事後挑的假說，歷史上多數段落「跟著發生」，但事件後報酬站得住的很少，請搭配下面的期望值與樣本外檢查一起看。"));
   g.append(c2.el);
 
@@ -130,7 +134,8 @@ TABS.scenario = lazyTab("scenario", (root) => {
 
   // ── 6. 這套推演可信嗎 ──
   const c6 = card({ title: "這套推演可信嗎：走步樣本外回測", span: 12,
-    sub: `從 ${S.model.eval_start} 起每個月只用「當時已經知道結果」的資料重估模型，買期望值最高的 ${S.model.topk} 個標的，和全體 ${S.model.assets} 個標的平均比。`
+    sub: `從 ${S.model.eval_start} 起每個月只用「當時已經知道結果」的資料重估模型，買期望值最高的 ${S.model.topk} 個標的，和當期有資料的全體標的（${(S.backtest[String(S.horizons[0])].n_assets || []).join("～")} 個）平均比。`
+      + "世界銀行商品價格與央行匯率是月均價，月底時已經包含過去半個月，所以這些標的的報酬一律從下個月的均價算起，估計時也多退一個月（不這樣做回測會偷看未來，3 個月的差距會被灌大好幾倍）。"
       + "期間互相重疊不能當獨立樣本，所以每隔 h 個月取一期、每個起點各算一次，列出範圍。" });
   const methods = [["ridge", "本頁的模型"], ["avg", "對照：單一訊號平均"], ["momentum", "對照：過去 6 個月漲最多"]];
   c6.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
@@ -150,7 +155,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
   c6.body.append(h("p", { class: "note" }, `校準斜率（樣本外實際超額 ÷ 模型值）：${cal}。模型值通常高估好幾倍，所以排行榜上的「校準後」才是比較實際的數字；`
     + "斜率不是正的或回測判定無效的期間，不給校準後數字。"));
   const chartHost = h("div", { class: "chart" });
-  c6.body.append(h("h4", { class: "sub-h" }, "累積差距：每 h 個月換一次前 5 名，比全體平均多（對數報酬加總，示意；每條線是不同的起始月）"), chartHost);
+  c6.body.append(h("h4", { class: "sub-h" }, "累積差距：每 h 個月換一次前 5 名，比全體平均多（對數報酬加總，示意；每條線是不同的起始月，最多畫 6 條）"), chartHost);
   c6.body.append(h("ul", { class: "finds", style: "margin-top:12px" },
     h("li", { class: "t-alert" }, h("b", {}, "後見之明"), h("span", {}, "訊號和門檻是 2026 年回頭設計的，回測只排除了「估計」上的偷看，排除不了「設計」上的後見之明。")),
     h("li", { class: "t-alert" }, h("b", {}, "比較過不只一種方法"), h("span", {}, "上表的兩種對照也是挑選過程的一部分；挑選本身就是一種偷看，實際效果可能比表上差。")),
@@ -187,7 +192,7 @@ TABS.scenario = lazyTab("scenario", (root) => {
     const pastWin = past.filter((p) => Math.sign(p.own) === dir).length;
     const parts = [];
     parts.push(h("p", { class: "sc-sum" },
-      `模型期望超額 ${scPct(r.ev)}（80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}，自助法下為正的機率 ${fmtNum(r.prob_pos, 0)}%）`,
+      `模型期望超額 ${scPct(r.ev)}（80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}；樣本內重抽 200 次有 ${fmtNum(r.prob_pos, 0)}% 為正，這只代表模型在樣本內穩不穩，不是賺錢的機率）`,
       fin(r.cal) ? `，依樣本外校準約 ${scPct(r.cal)}` : "，這個期間樣本外無效，不給校準值",
       `；它平常 ${hz} 個月平均 ${scPct(r.base)}。`,
       valid ? "" : h("b", { class: "down" }, `　注意：${hz} 個月的排名在樣本外沒有比亂選好，下面的原因只是描述，不能當依據。`)));
@@ -247,6 +252,8 @@ TABS.scenario = lazyTab("scenario", (root) => {
 
   function draw() {
     store.set("scH", hz);
+    const lead = root.querySelector(":scope > .tab-head .tab-lead");
+    if (lead) lead.textContent = scenarioLead(S, hz);
     hChips.replaceChildren(...S.horizons.map((x) => h("button", { class: "chip", type: "button", "aria-pressed": String(x === hz),
       onclick: () => { hz = x; draw(); } }, `${x} 個月`)));
     const B = S.backtest[String(hz)];
@@ -270,7 +277,8 @@ TABS.scenario = lazyTab("scenario", (root) => {
       const rank = rows.indexOf(r) + 1;
       return h("tr", { class: r.sid === pick ? "sel" : null, tabindex: 0, style: "cursor:pointer", "aria-label": `${r.name}，看原因`,
         onclick: () => { pick = r.sid; store.set("scPick", pick); draw(); jumpTo(c4.el); },
-        onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick = r.sid; store.set("scPick", pick); draw(); jumpTo(c4.el); } } },
+        onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick = r.sid; store.set("scPick", pick); draw(); jumpTo(c4.el);
+          const t = c4.el.querySelector("h3"); t.tabIndex = -1; t.focus({ preventScroll: true }); } } },
         h("td", { class: "rank" }, `#${rank}`),
         h("td", {}, r.name, ...(() => { const { agree, oppose } = scRefs(r); return [
           agree.length ? h("span", { class: "pill pill-ok", style: "margin-left:6px", title: agree.map((x) => x.label).join("、") }, "檢驗支持") : null,
@@ -284,8 +292,9 @@ TABS.scenario = lazyTab("scenario", (root) => {
     };
     c3body.replaceChildren(banner,
       h("div", { class: "tbl-wrap" }, h("table", { class: "data sc-rank" },
-        h("thead", {}, h("tr", {}, ["排名", "標的", "校準後期望超額", "模型值（80% 區間）", "模型為正的機率", "最像時點同方向", "單一訊號", `平常 ${hz} 個月`]
-          .map((t, i) => h("th", { class: i === 0 ? "rank" : i > 1 ? "n" : null }, t)))),
+        h("thead", {}, h("tr", {}, ["排名", "標的", "校準後期望超額", "模型值（80% 區間）", "樣本內穩定度", "最像時點同方向", "單一訊號", `平常 ${hz} 個月`]
+          .map((t, i) => h("th", { class: i === 0 ? "rank" : i > 1 ? "n" : null,
+            title: i === 4 ? "樣本內重抽 200 次（12 個月一塊），模型值和現在同方向的比例；只代表模型在樣本內穩不穩，不是賺錢的機率" : null }, t)))),
         h("tbody", {}, list.map(tr)))),
       h("div", { class: "chips", style: "margin-top:10px" },
         h("button", { class: "chip", type: "button", "aria-pressed": String(showAll), onclick: () => { store.set("scAll", !showAll); draw(); } },

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 把 docs/index.html 與 docs/data/*.json 推到 gh-pages 分支（每次都是單一 commit，覆蓋舊的，repo 不會愈長愈大）。
 # 需要 python3 gfd.py build --public 的產物與已設定的 origin。
-# docs/data/ 是頁面用到才下載的大塊資料（事件衝擊、訊號劇本、完整日線、鉅亨每日），頁面裡的網址帶內容雜湊。
+# docs/data/ 是頁面用到才下載的大塊資料（事件衝擊、訊號劇本、沙盤推演、完整日線、鉅亨每日），頁面裡的網址帶內容雜湊。
 set -euo pipefail
 cd "$(dirname "$0")"
 
