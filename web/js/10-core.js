@@ -408,20 +408,36 @@ function foldCard({ title, sub, span = 12, note, key, render }) {
   const noteEl = c.el.querySelector(":scope > .note");
   let open = !!store.get("fold:" + key, false), drawn = false;
   const btn = h("button", { class: "tool", type: "button" }, "展開");
-  const set = (v) => {
+  const set = (v, remember = true) => {
+    if (v && !drawn) {
+      // 先畫成功才算展開：畫圖出錯只影響這張卡，不記住「展開」，否則之後每次進來都會把整個分頁弄壞
+      try {
+        render(c.body, c.tools);
+        drawn = true;
+      } catch (err) {
+        console.error(err);
+        c.body.replaceChildren(h("p", { class: "empty" }, `這張圖繪製失敗：${err.message}　`,
+          h("button", { class: "tool", type: "button", onclick: () => { c.body.replaceChildren(); set(true); } }, "再試一次")));
+        c.body.hidden = false;
+        c.el.classList.remove("folded");
+        btn.textContent = "收合";
+        btn.setAttribute("aria-expanded", "true");
+        open = true;
+        store.set("fold:" + key, false);
+        return;
+      }
+    }
     open = v;
-    store.set("fold:" + key, v);
+    if (remember) store.set("fold:" + key, v);
     btn.textContent = v ? "收合" : "展開";
-    btn.setAttribute("aria-pressed", String(v));
     btn.setAttribute("aria-expanded", String(v));
     c.body.hidden = !v;
     if (noteEl) noteEl.hidden = !v;
     c.el.classList.toggle("folded", !v);
-    if (v && !drawn) { drawn = true; render(c.body, c.tools); }
   };
   btn.addEventListener("click", () => set(!open));
   c.tools.append(btn);
-  set(open);
+  set(open, false);
   return Object.assign(c, { open: () => set(true) });
 }
 // 滑鼠移到／手指按到會打開單一標的檢視的按鈕上，就先在背景下載完整日線
