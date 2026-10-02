@@ -236,7 +236,64 @@ def _fit_predict(X, F, lags, T, h, lam, min_rows=60):
     return preds, mus
 
 
-def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, lam, W, out_h, act_k):
+
+def _episode_spans(mask, upto, gap=CH.GAP):
+    """照 chains.episodes 的合併規則（間隔 ≤ gap 個月算同一段）切段，回傳 [(起點, 最後一個亮著的月)]，只看 t ≤ upto。"""
+    idx = np.where(mask[:upto + 1])[0]
+    if not idx.size:
+        return []
+    spans, s0, prev = [], int(idx[0]), int(idx[0])
+    for t in idx[1:]:
+        t = int(t)
+        if t - prev > gap:
+            spans.append((s0, prev))
+            s0 = t
+        prev = t
+    spans.append((s0, prev))
+    return spans
+
+
+def _signal_age(mask, cur, upto, months):
+    """這個訊號目前這一段（間隔 ≤ 3 個月的短暫中斷算同一段）已經亮了幾個月，
+    和歷史上已結束的各段比：中位數長度、最長一段、撐到這麼久的比例。"""
+    spans = _episode_spans(mask, upto)
+    here = next((sp for sp in spans if sp[0] <= cur <= sp[1]), None)
+    if here is None:
+        return None
+    age = cur - here[0] + 1
+    done = [b - a + 1 for a, b in spans if b < here[0]]
+    return dict(age=age, since=months[here[0]], n_done=len(done),
+                median=CH.r(float(np.median(done)), 0) if done else None,
+                longest=int(max(done)) if done else None,
+                share_longer=CH.r(100 * float(np.mean([d >= age for d in done])), 0) if done else None)
+
+
+def _chain_frontier(cmasks, finite, on, rest, term_f6, upto, H=12, W=6):
+    """從這條鏈目前最深的已成立層往下看：歷史上那一層亮著、rest 都還沒亮的月份（t ≤ upto−H），
+    之後 H 個月 rest 再亮幾層的分布；W 個月內最深那層熄掉又沒往下一層＝斷鏈；
+    末端標的 6 個月報酬依「W 個月內有沒有再亮一層」分組。"""
+    deepest = max(i for i in range(len(on)) if on[i])
+    last = upto - H
+    ts = [t for t in range(max(0, last + 1)) if cmasks[deepest][t] and all((not cmasks[j][t]) and finite[j][t] for j in rest)]
+    if not ts:
+        return dict(n_months=0, n_episodes=0)
+    depth = [int(sum(bool(cmasks[j][t + 1:t + 1 + H].any()) for j in rest)) for t in ts]
+    dist = {str(d): CH.r(100 * float(np.mean([x == d for x in depth])), 0) for d in range(len(rest) + 1)}
+    prop_w = [any(cmasks[j][t + 1:t + 1 + W].any() for j in rest) for t in ts]
+    off_w = [bool((~cmasks[deepest][t + 1:t + 1 + W]).any()) for t in ts]
+    broke = [o and not pr for o, pr in zip(off_w, prop_w)]
+    went = [term_f6[t] for t, pr in zip(ts, prop_w) if pr and np.isfinite(term_f6[t])]
+    stay = [term_f6[t] for t, pr in zip(ts, prop_w) if not pr and np.isfinite(term_f6[t])]
+    m = np.zeros(len(cmasks[0]), bool)
+    m[ts] = True
+    return dict(n_months=len(ts), n_episodes=len(CH.episodes(m)), deepest=deepest, rest=rest, horizon=H,
+                depth=dist, mean_depth=CH.r(float(np.mean(depth)), 1),
+                broke=CH.r(100 * float(np.mean(broke)), 0), prop=CH.r(100 * float(np.mean(prop_w)), 0),
+                term_if=dict(n=len(went), median=CH.r(float(np.median(went))) if went else None),
+                term_else=dict(n=len(stay), median=CH.r(float(np.median(stay))) if stay else None))
+
+
+def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, lam, W, out_h, act_k, ev_list=()):
     """對答案：最像現在的歷史時點（Jaccard ≥ SIM_THR，彼此至少隔 12 個月，結果已經知道），
     在每個時點只用「當時已知」的資料重跑：期望值排名、傳導鏈下一層、下一波訊號；再對照之後實際發生的事。"""
     H_MAX = 12
@@ -312,6 +369,28 @@ def _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, l
             wave_hits.append(w["actual"])
             wave_base.append(w["_base"])
         rec["wave"] = [{k: v for k, v in w.items() if k not in ("k", "why", "source", "_lift", "_base")} for w in wv]
+        # 這個案例的故事：之後一年發生的事件、各鏈實際走到第幾層、6 個月實際最好與最差的標的（都是事後資料，只做對照）
+        m_end = months[min(T + 12, len(months) - 1)]
+        rec["events_after"] = [dict(date=d, name=n, cat=c) for d, n, c in ev_list if months[T] < d[:7] <= m_end][:8]
+        reached = []
+        for chain in C.CHAINS:
+            cmasks, finite = chain_masks[chain["id"]]
+            on_T = [bool(cm[T]) for cm in cmasks]
+            if not any(on_T):
+                continue
+            rest_T = [j for j in range(len(on_T)) if not on_T[j] and any(on_T[:j])]
+            lit = [chain["nodes"][j]["label"] for j in rest_T if cmasks[j][T + 1:T + 13].any()]
+            reached.append(dict(chain=chain["name"], on=int(sum(on_T)), of=len(on_T), rest=len(rest_T), lit=lit))
+        rec["chains_after"] = reached
+        F6 = Fs[6]
+        fin6 = np.isfinite(F6[T])
+        if fin6.sum() >= 10:
+            am6 = float(F6[T, fin6].mean())
+            order = np.argsort(-np.where(fin6, F6[T], -np.inf))
+            best = [a for a in order[:3] if fin6[a]]
+            worst = [a for a in order[::-1][:3] if fin6[a]]
+            rec["actual6"] = dict(best=[dict(name=series[assets[a]]["name"], v=CH.r(F6[T, a] - am6)) for a in best],
+                                  worst=[dict(name=series[assets[a]]["name"], v=CH.r(F6[T, a] - am6)) for a in worst])
         cases.append(rec)
 
     rng = np.random.default_rng(SEED + 11)
@@ -378,9 +457,14 @@ def build(g, series, months, play, chain_block, cascade, log=print):
     for k in act_k:
         t, p = trig[k], pmap[trig[k]["id"]]
         cur = months.index(p["current_at"]) if p.get("current_at") in months else end
+        age = _signal_age(X[:, k], cur, end, months)
+        blk6 = (p.get("assets") or {}).get("6") or {}
+        pick = lambda rows: [dict(name=r["name"], lift=r["lift"], n=r["n"], p=r["p"])
+                             for r in rows if r.get("investable") and r.get("p") is not None and r["p"] <= 0.10][:3]
         active.append(dict(id=t["id"], label=t["label"], source=t["source"], why=t["why"], sid=t["sid"],
                            current=p.get("current"), current_at=p.get("current_at"),
-                           run=_run_length(X[:, k], cur), episodes=p.get("episodes")))
+                           run=_run_length(X[:, k], cur), episodes=p.get("episodes"), age=age,
+                           best6=pick(blk6.get("top", [])), worst6=pick(blk6.get("bottom", []))))
     active_ids = {a["id"] for a in active}
     assets = [s for s in C.PLAYBOOK_UNIVERSE if s in g.arr and s in series and s not in C.PLAYBOOK_OBSERVE_ONLY]
     start = months.index(C.SCENARIO_EVAL_START) if C.SCENARIO_EVAL_START in months else 120
@@ -551,8 +635,17 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         state = _chain_state(cmasks, finite, on, rest, end, 12) if rest else None
         if state and "starts" in state:
             state["dates"] = [months[t] for t in state.pop("starts")]
+        frontier = None
+        if rest:
+            term_sid = chain["nodes"][-1]["sid"]
+            term_f6 = CH.forward(g, term_sid, 6, series[term_sid]["kind"])
+            frontier = _chain_frontier(cmasks, finite, on, rest, term_f6, end)
+            frontier["deepest_label"] = chain["nodes"][frontier["deepest"]]["label"] if frontier.get("deepest") is not None else None
+            frontier["term_name"] = series[term_sid]["name"]
+            frontier.pop("deepest", None)
+            frontier.pop("rest", None)
         paths.append(dict(id=chain["id"], name=chain["name"], thesis=chain["thesis"], nodes=nodes,
-                          active=it["active"]["count"], of=it["active"]["of"], state=state))
+                          active=it["active"]["count"], of=it["active"]["of"], state=state, frontier=frontier))
 
     # 下一波可能亮起的訊號（跨鏈）：和現在狀態相似的月份，之後 6 個月哪些目前沒亮的訊號比平常更常亮起
     wave = [{k: v for k, v in w.items() if k not in ("k", "_lift", "_base")} for w in _next_wave(X, x_now, end, W, trig)]
@@ -560,7 +653,9 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         w["if_then"] = [dict(name=r["name"], lift=r["lift"], horizon=r["horizon"]) for r in robust if r["trigger"] == w["id"]][:3]
 
     # 對答案：過去最像現在的時點，用「當時已知」的資料重跑整套推演，再對照之後實際發生的事
-    cases, case_sum = _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, lam, W, out_h, act_k)
+    cat_name = {c["id"]: c["name"] for c in (cascade or {}).get("categories", [])}
+    ev_list = sorted((e["date"], e["name"], cat_name.get(e["cat"], e["cat"])) for e in (cascade or {}).get("events", []))
+    cases, case_sum = _cases(X, x_now, Fs, lags, assets, series, trig, chain_masks, end, months, lam, W, out_h, act_k, ev_list)
     log(f"[scenario] 對答案：{len(cases)} 個類似時點；"
         + "；".join(f"{h} 個月前 5 名跑贏全體 {v['hit']}/{v['n']} 次、平均 {v['spread_mean']}" for h, v in case_sum["model"].items())
         + f"；鏈的下一層 Brier {case_sum['layers'].get('brier')}（基準 {case_sum['layers'].get('brier_base')}）"
