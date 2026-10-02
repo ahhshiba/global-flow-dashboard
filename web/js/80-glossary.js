@@ -21,7 +21,7 @@ function glossaryLinkLabel(link, events) {
   if (event) return `事件衝擊：${events[event] || event}`;
   const btn = document.getElementById("t-" + tab);
   if (btn) return btn.textContent.trim();
-  return SC_VIEW_LABEL[tab] ? `沙盤推演・${SC_VIEW_LABEL[tab]}` : tab;
+  return isScView(tab) ? `沙盤推演・${SC_VIEW_LABEL[tab]}` : tab;
 }
 
 TABS.glossary = (outer) => {

@@ -5,7 +5,7 @@ function faqGo(link, jumpTerm) {
   const [kind, target] = link.split(":");
   if (kind === "cascade") return glossaryGo(link);
   if (kind === "glossary") return jumpTerm(target);
-  window.gotoTab(kind);
+  window.gotoTab(kind, kind === "scenario" ? () => { window.scView = "summary"; } : null);   // 連到沙盤推演本身開推演總結
 }
 
 function faqView(root, jumpTerm) {
@@ -23,7 +23,7 @@ function faqView(root, jumpTerm) {
     if (kind === "glossary" && target) return `名詞：${F.terms[target] || target}`;
     const btn = document.getElementById("t-" + kind);
     if (btn) return btn.textContent.trim();
-    return SC_VIEW_LABEL[kind] ? `沙盤推演・${SC_VIEW_LABEL[kind]}` : kind;
+    return isScView(kind) ? `沙盤推演・${SC_VIEW_LABEL[kind]}` : kind;
   };
   const item = (i) => h("article", { class: `card span-12 faq-item ${i.status}` },
     h("div", { class: "faq-q" },

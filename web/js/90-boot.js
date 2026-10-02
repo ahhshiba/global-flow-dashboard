@@ -30,7 +30,7 @@
 
   function show(id) {
     let hashKeep = null;
-    if (SC_VIEW_LABEL[id] && id !== "summary") {   // 2026-10-02 事件衝擊、傳導鏈、訊號劇本併進沙盤推演：舊連結打開對應檢視
+    if (isScView(id) && id !== "summary") {   // 2026-10-02 事件衝擊、傳導鏈、訊號劇本併進沙盤推演：舊連結打開對應檢視
       window.scView = id;
       hashKeep = id;
       id = "scenario";
@@ -77,9 +77,13 @@
   tabBtns.forEach((b, i) => {
     b.addEventListener("click", () => show(b.dataset.tab));
     // 要另外下載資料的分頁（沙盤推演、鉅亨每日）：滑過或按下就先開始下載，點下去時多半已經到了
-    const needs = TAB_NEEDS[b.dataset.tab];
+    // 沙盤推演：先下載會打開的那個檢視的資料（記住的檢視，沒有就是推演總結）
+    const needsOf = (tab) => (tab === "scenario"
+      ? [SC_VIEW_NEEDS[window.scCurrentView || store.get("scView", "summary")] || "scenario"].filter((k) => TAB_NEEDS[k] || k === "scenario")
+      : TAB_NEEDS[tab]);
+    const needs = needsOf(b.dataset.tab);
     if (needs && !needs.every(dataReady)) {
-      const go = () => prefetch(needs);
+      const go = () => prefetch(needsOf(b.dataset.tab) || []);
       b.addEventListener("pointerenter", go, { once: true });
       b.addEventListener("pointerdown", go, { once: true });
       b.addEventListener("focus", go, { once: true });
@@ -94,7 +98,17 @@
       show(next.dataset.tab);
     });
   });
-  window.addEventListener("hashchange", () => { const id = location.hash.slice(1); if (id && id !== current) show(id); });
+  window.addEventListener("hashchange", () => {
+    const id = location.hash.slice(1);
+    if (!id) return;
+    // 網址上的 #scenario＝推演總結（分享出去的連結要打開同一個畫面）；已經在沙盤推演的其他檢視時也要切回來
+    if (id === "scenario" && (current !== "scenario" || window.scCurrentView !== "summary")) {
+      window.scView = "summary";
+      const g = document.getElementById("tab-scenario");
+      if (g) g.replaceChildren();
+      show(id);
+    } else if (id !== current) show(id);
+  });
   // 從別的分頁跳過來（例：名詞解釋 → 事件衝擊的某個事件）：先讓 prep 寫好選擇，再強制重畫目標分頁
   window.gotoTab = (id, prep) => {
     if (prep) prep();
@@ -177,6 +191,7 @@
     h("span", {}, "紅漲綠跌為台灣行情慣例。所有統計皆為歷史樣本內描述，僅供研究參考，不構成投資建議。"),
     h("span", {}, "更新：在專案資料夾執行 python3 gfd.py all（歷史資料超過 7 天才會重抓）。"));
 
+  if (location.hash.slice(1) === "scenario") window.scView = "summary";   // 網址指定 #scenario＝推演總結
   show(location.hash.slice(1) || store.get("tab", "overview"));
 
   // 「回到本頁目錄」浮動鈕：捲過目錄很遠才出現（長分頁在手機上動輒上萬像素）

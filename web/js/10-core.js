@@ -49,6 +49,8 @@ function lazyTab(id, draw) {
     Promise.all(keys.map(needData)).then(() => {
       if (root._lazyTicket !== ticket) return;
       root.dataset.range = state.range;            // 和啟動程式的重畫判斷對齊（失敗後按「再試一次」成功時也要補回）
+      const outer = root.closest(".tab");
+      if (outer && outer !== root) outer.dataset.range = state.range;
       try { draw(root, redo); addToc(root); } catch (err) {
         root.replaceChildren(h("p", { class: "empty" }, `這個分頁繪製失敗：${err.message}`));
         console.error(err);
@@ -57,6 +59,8 @@ function lazyTab(id, draw) {
       if (root._lazyTicket !== ticket) return;
       root.replaceChildren(loadFailed(err, () => lazyTab(id, draw)(root, redo)));
       delete root.dataset.range;                   // 啟動程式看到範圍標記不符就會重畫：切走再切回來會自動再試一次
+      const tab = root.closest(".tab");            // 沙盤推演的檢視容器在分頁裡面：啟動程式看的是外層分頁的標記
+      if (tab && tab !== root) delete tab.dataset.range;
     });
   };
 }
