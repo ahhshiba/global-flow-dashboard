@@ -14,6 +14,7 @@ from . import config as C
 from . import hedge as HG
 from . import playbook as PB
 from . import scenario as SC
+from . import targets as TG
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 RAW = ROOT / "data" / "raw"
@@ -704,6 +705,13 @@ def run(log=print):
             import traceback
             log(f"[hedge] 失敗，這次略過避險：{exc!r}\n{traceback.format_exc()}")
             scen["hedge"] = None
+        # 確切標的、低基期、更詳細的推演（2026-10-03）；失敗只略過這一塊
+        try:
+            scen["targets"] = TG.build(g, series, scen, _load("daily_targets.json"), log=log)
+        except Exception as exc:      # noqa: BLE001
+            import traceback
+            log(f"[targets] 失敗，這次略過確切標的：{exc!r}\n{traceback.format_exc()}")
+            scen["targets"] = None
         # 總覽「各市場重點」的避險一則（總覽不下載沙盤推演那包，所以在這裡先組好）；它失敗只少這一則
         try:
             hf = HG.finding(scen["hedge"])

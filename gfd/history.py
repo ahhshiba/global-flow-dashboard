@@ -268,6 +268,7 @@ def refresh_daily(log=print):
     bad = [c for c in cov if c["status"] != "ok"]
     log(f"[history] 月資料 {len(cov) - len(bad)} 成功、{len(bad)} 失敗或沿用舊資料")
     fetch_detail(log)
+    fetch_targets_daily(log)
 
 
 def _twse_taiex_hist(log=print):
@@ -376,6 +377,27 @@ def fetch_hedge_daily(log=print):
     return errors
 
 
+def fetch_targets_daily(log=print):
+    """確切標的的含息日線 → data/raw/daily_targets.json。每天跑（低基期要用最新價格）；抓不到的沿用上次。"""
+    old = _load("daily_targets.json", {}).get("series", {})
+    out, errors = {}, []
+    for sym in dict.fromkeys(t[1] for t in C.TARGETS if t[3] != "cash"):
+        try:
+            rows, meta = S.yahoo_chart(sym, interval="1d", start=C.TARGET_START, adjusted=True, completed_only=True)
+            if len(rows) < 250:
+                raise RuntimeError(f"日線只有 {len(rows)} 筆")
+            out[sym] = dict(dates=[d.isoformat() for d, _ in rows], closes=[float(f"{v:.6g}") for _, v in rows],
+                            currency=(meta or {}).get("currency"))
+            time.sleep(0.3)
+        except Exception as e:  # noqa: BLE001
+            if sym in old:
+                out[sym] = dict(old[sym], stale=True)
+            errors.append(f"{sym}：{_err(e)}")
+    _save("daily_targets.json", dict(fetched_at=dt.datetime.now().isoformat(timespec="seconds"), series=out, errors=errors))
+    log(f"[targets] 標的日線 {len(out)} 檔" + (f"，失敗 {len(errors)}：{errors[0]}" if errors else ""))
+    return errors
+
+
 def run(log=print):
     log("[history] 月資料序列")
     cov = fetch_series(log)
@@ -388,6 +410,7 @@ def run(log=print):
     log("[history] 事件衝擊用日線")
     fetch_cascade_daily(log)
     fetch_hedge_daily(log)
+    fetch_targets_daily(log)
     _save("coverage.json", dict(generated_at=dt.datetime.now().isoformat(timespec="seconds"), items=cov))
     bad = [c for c in cov if c["status"] != "ok"]
     log(f"[history] 完成：{len(cov) - len(bad)} 成功、{len(bad)} 失敗或沿用舊資料")

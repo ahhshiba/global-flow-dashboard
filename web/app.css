@@ -851,7 +851,7 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
 }
 
 /* ── 沙盤推演「可能會發生什麼」（2026-10-03）：一行一件事＋機率對照平常，點開才有原因與判斷過程 ── */
-.st-group { display: grid; margin-bottom: 14px; }
+.st-group { display: grid; grid-template-columns: minmax(0, 1fr); margin-bottom: 14px; }   /* 讓寬表格在列裡面捲，不撐開卡片 */
 .st-cap { font-size: 12px; color: var(--muted); padding: 0 6px 4px; letter-spacing: 0.04em; }
 .st-item { border-top: 1px solid var(--line); }
 .st-group .st-item:last-child { border-bottom: 1px solid var(--line); }
@@ -913,3 +913,38 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
   .st-tl { min-width: 0; flex-basis: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .st-sum .st-name::before { transition: none; } }
+
+/* ── 確切標的（2026-10-03） ── */
+.tg-chip { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); font-size: 12.5px; }
+.tg-chip b { font-family: var(--f-mono); font-weight: 600; }
+.tg-chip .pill { font-size: 11px; padding: 0 7px; }
+.pill-warn { background: var(--warn-soft); color: var(--warn-ink); }
+.tg-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 8px; }
+.tg-list .st-tl { min-width: 0; margin-right: 4px; }
+.tg-note { flex-basis: 100%; font-size: 12px; }
+.tg-wait { display: inline-flex; align-items: flex-end; gap: 6px; vertical-align: bottom; margin: 0 6px; }
+.tg-wbar { display: inline-flex; flex-direction: column; align-items: center; width: 26px; }
+.tg-wbar i { display: block; width: 14px; border-radius: 2px 2px 0 0; background: var(--accent); }
+.tg-wbar small { font-size: 10.5px; line-height: 1.2; color: var(--ink-2); }
+.tg-item { border-top: 1px solid var(--line); }
+.st-group .tg-item:last-child { border-bottom: 1px solid var(--line); }
+.tg-sum { display: grid; grid-template-columns: minmax(9em, 1fr) minmax(0, 2fr) minmax(12em, 1.4fr) 7.5em; gap: 6px 14px; align-items: center;
+  padding: 9px 6px; cursor: pointer; list-style: none; border-radius: var(--radius-sm); }
+.tg-sum::-webkit-details-marker { display: none; }
+.tg-sum:hover, .tg-item[open] > .tg-sum { background: var(--surface-2); }
+.tg-item[open] .tg-chip, .tg-sum:hover .tg-chip { background: var(--surface); }
+.tg-name { font-size: 14.5px; font-weight: 600; line-height: 1.35; }
+.tg-name::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--muted); font-weight: 400; transition: transform var(--dur-fast) var(--ease-out); }
+.tg-item[open] > .tg-sum .tg-name::before { transform: rotate(90deg); }
+.tg-name .sub { display: block; font-size: 11.5px; color: var(--muted); font-weight: 400; margin-left: 1.1em; }
+.tg-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.tg-views { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.tg-v.weak { opacity: 0.7; }
+.tg-sum .pill { justify-self: end; white-space: normal; text-align: center; }
+.tg-verdict { display: grid; justify-items: end; gap: 2px; }
+.tg-verdict .sub { font-size: 11px; color: var(--muted); text-align: right; }
+@media (max-width: 900px) {
+  .tg-sum { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name pill" "chips chips" "views views"; }
+  .tg-sum .tg-name { grid-area: name; } .tg-sum > .pill, .tg-sum .tg-verdict { grid-area: pill; } .tg-sum .tg-chips { grid-area: chips; padding-left: 1.1em; } .tg-sum .tg-views { grid-area: views; padding-left: 1.1em; }
+}
+@media (prefers-reduced-motion: reduce) { .tg-name::before { transition: none; } }

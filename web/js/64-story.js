@@ -109,7 +109,7 @@ function storyHedge(S, tid) {
   const r1 = (v) => Math.round(v * 10) / 10;            // 和畫面上的一位小數一致，差距才不會差 0.1
   const m0 = r1(hgMedian(pairs.map(([a]) => a))), m1 = r1(hgMedian(pairs.map(([a, r]) => 0.8 * a + 0.2 * r)));
   const c0 = b.calm_mix && fin(b.calm_mix[0]) ? r1(b.calm_mix[0]) : null, c1 = b.calm_mix && k >= 0 && fin(b.calm_mix[k]) ? r1(b.calm_mix[k]) : null;
-  const out = { short: `過去${what}時，${hgName(b)} ${st.n} 次裡 ${st.up} 次一起漲${since ? `（${since} 年起）` : ""}`, nodes: [] };
+  const out = { b, st, short: `過去${what}時，${hgName(b)} ${st.n} 次裡 ${st.up} 次一起漲${since ? `（${since} 年起）` : ""}`, nodes: [] };
   out.nodes.push(h("p", {}, `用每天的價格，看過去每一次${what}（從高點到低點）：`, h("b", {}, hgName(b)),
     `${since ? ` ${since} 年以來` : ""}的 ${st.n} 次裡，有 ${st.up} 次同時上漲。`));
   if (fin(m0) && fin(m1)) {
@@ -178,7 +178,8 @@ function storyCard(S, hz) {
           fin(n.prob12) ? h("li", {}, `拉長到 12 個月：${fmtNum(n.prob12, 0)}%，平常 ${fmtNum(n.base12, 0)}%${read12}`) : null),
         h("h5", {}, "可信度"),
         h("p", {}, `${n.n_episodes} 次不算多（通常要幾十次以上才比較穩）。${R ? `${R.text.replace(/。$/, "")}——${R.word}。` : ""}`),
-        hedge ? [h("h5", {}, "如果真的發生，過去什麼擋得住"), ...hedge.nodes] : null));
+        hedge ? [h("h5", {}, "如果真的發生，過去什麼擋得住"), ...hedge.nodes] : null,
+        ...tgOutcomeExtra(S, n, hedge)));
     });
     return det;
   };

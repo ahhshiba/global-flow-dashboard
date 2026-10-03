@@ -48,7 +48,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
 
   // ── 0. 一頁看懂（64-story.js；隨期間切換重畫，在 draw() 裡）＋「研究細節」分隔 ──
   const storyHost = h("div", { class: "span-12" });
-  g.append(storyHost, h("div", { class: "st-divider span-12" }, h("b", {}, "研究細節"),
+  const targetsHost = h("div", { class: "span-12" });     // 確切標的（67-targets.js），同樣隨期間切換
+  g.append(storyHost, targetsHost, h("div", { class: "st-divider span-12" }, h("b", {}, "研究細節"),
     h("span", {}, "上面每一步是怎麼算出來的：亮著的訊號、傳導鏈、避險、期望值模型、對答案、回測。用詞比較專門，名詞解釋分頁有說明。")));
 
   // ── 1. 現在亮著的訊號：每個訊號一列，原因點開才有 ──
@@ -465,6 +466,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     const lead = root.querySelector(":scope > .tab-head .tab-lead");
     if (lead) lead.textContent = storyLead(S, hz);
     storyHost.replaceChildren(storyCard(S, hz).el);
+    const tc = targetsCard(S, hz);
+    targetsHost.replaceChildren(tc ? tc.el : h("p", { class: "empty" }, "尚未產生確切標的（python3 gfd.py history 會抓標的日線）"));
     hChips.replaceChildren(...S.horizons.map((x) => h("button", { class: "chip", type: "button", "aria-pressed": String(x === hz),
       onclick: () => { hz = x; draw(); } }, `${x} 個月`)));
     const B = S.backtest[String(hz)];
