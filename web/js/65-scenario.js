@@ -403,7 +403,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     const pastWin = past.filter((p) => Math.sign(p.own) === dir).length;
     const parts = [];
     parts.push(statTiles([
-      { label: "集成（校準後）", value: fin(scVal(r)) ? chg(scVal(r), 1, "%") : "—", sub: fin(r.ens_cal) ? "模型與相似時點的平均，乘上樣本外校準斜率" : "這個期間樣本外無效，不給校準值" },
+      { label: "集成（校準後）", value: fin(r.ens_cal) ? chg(r.ens_cal, 1, "%") : "—", sub: fin(r.ens_cal) ? "模型與相似時點的平均，乘上樣本外校準斜率" : `這個期間回測無效或校準斜率太小，不給校準值（未校準 ${scPct(r.ens)}）` },
       { label: "模型值", value: chg(r.ev, 1, "%"), sub: `80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}；相似時點 ${scPct(r.knn)}` },
       { label: "樣本內重抽同方向", value: fin(scStable(r)) ? `${fmtNum(scStable(r), 0)}%` : "—", sub: "重抽 200 次和現在同方向的比例；只代表模型穩不穩，不是賺錢的機率" },
       { label: `它平常 ${hz} 個月`, value: scPct(r.base), sub: "超額＝之後報酬減掉這個平常值" },
@@ -508,7 +508,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
         h("td", {}, r.name, ...(() => { const { agree, oppose } = scRefs(r); return [
           agree.length ? h("span", { class: "pill pill-ok", style: "margin-left:6px", title: agree.map((x) => x.label).join("、") }, "檢驗支持") : null,
           oppose.length ? h("span", { class: "pill pill-meh", style: "margin-left:6px", title: oppose.map((x) => x.label).join("、") }, "檢驗相反") : null]; })()),
-        h("td", { class: "n" }, fin(scVal(r)) ? chg(scVal(r), 1, "%") : h("span", { class: "muted" }, "—"), fin(r.knn) ? h("span", { class: "sub" }, `相似時點 ${scPct(r.knn)}`) : null),
+        h("td", { class: "n" }, fin(r.ens_cal) ? chg(r.ens_cal, 1, "%") : fin(r.ens) ? [h("span", { class: "muted" }, "—"), h("span", { class: "sub" }, `未校準 ${scPct(r.ens)}`)] : h("span", { class: "muted" }, "—"), fin(r.knn) ? h("span", { class: "sub" }, `相似時點 ${scPct(r.knn)}`) : null),
         h("td", { class: "n" }, chg(r.ev, 1, "%"), h("span", { class: "sub" }, `${scPct(r.lo)}～${scPct(r.hi)}`)),
         h("td", { class: "n" }, fin(scStable(r)) ? `${fmtNum(scStable(r), 0)}%` : "—"),
         h("td", { class: "n" }, past.length ? `${win}/${past.length}` : "—"),
