@@ -880,6 +880,9 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
 .st-detail h5 { margin: 12px 0 4px; font: 600 13px var(--f-body); color: var(--ink); letter-spacing: 0.03em; }
 .st-detail h5:first-child { margin-top: 4px; }
 .st-detail p { margin: 0 0 6px; }
+.st-ul { margin: 0 0 6px; padding-left: 1.2em; }
+.st-ul li { margin: 2px 0; }
+.st-sum .st-name .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 1.1em; }
 .st-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 8px; }
 .st-chain .st-tl { flex-basis: 100%; }
 .st-arrow { color: var(--muted); }
