@@ -77,7 +77,9 @@ function storyLead(S, hz) {
     if (!H) return "";
     const tgt = storyHedgeTarget(H);
     const T = tgt && hgPrefer(H, tgt.id), b = T && hgBest(T);
-    return b ? `過去${scPlain(tgt.id, tgt.label)}時，最常一起漲的是${hgName(b)}。` : "";
+    if (!b) return "";
+    const st = hgStats(b, hgSubset(T, "all")), since = st.n < T.n ? hgSince(T, b) : null;
+    return `過去${scPlain(tgt.id, tgt.label)}時，最常一起漲的是${hgName(b)}（${since ? `${since} 年起、` : ""}回頭看）。`;
   })();
   const v = S.backtest[String(hz)].ridge.verdict;
   return (ups.length ? `接下來 ${S.within} 個月比平常更可能：${ups.map((u) => `${scPlain(u.n.trigger, u.n.label)}（${fmtNum(u.n.prob, 0)}%，平常 ${fmtNum(u.n.base, 0)}%）`).join("、")}。`
