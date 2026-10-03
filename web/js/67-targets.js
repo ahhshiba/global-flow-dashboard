@@ -33,7 +33,7 @@ function tgViews(A, hz) {
     const clear = fin(m.lo) && fin(m.hi) && (m.lo > 0 || m.hi < 0);
     out.push({ name: "模型", dir: !invalid && clear && Math.abs(v) >= 0.5 ? Math.sign(v) : 0, value: invalid ? "無效" : tgPct(v), base: null,
       text: invalid ? `這個期間的模型在回測裡沒有比亂選好，不給數字`
-        : `模型估計之後 ${hz} 個月比它平常多 ${tgPct(v)}${m.cal != null ? `（已依過去的實際表現打折；打折前 ${tgPct(m.ev)}）` : ""}。打折前的可能範圍 ${tgPct(m.lo)}～${tgPct(m.hi)}${clear ? "" : "，跨過 0，算不出方向"}。這個模型在回測裡${m.verdict}`,
+        : `模型估計之後 ${hz} 個月比它平常${v < 0 ? "少" : "多"} ${fmtNum(Math.abs(v), 1)} 個百分點${m.cal != null ? `（已依過去的實際表現打折；打折前 ${tgPct(m.ev)}）` : ""}。打折前的可能範圍 ${tgPct(m.lo)}～${tgPct(m.hi)}${clear ? "" : "，跨過 0，算不出方向"}。這個模型在回測裡${m.verdict}`,
       weak: m.verdict !== "樣本外有效" });
   }
   const s = A.similar && A.similar[String(hz)];
@@ -123,7 +123,9 @@ function targetsCard(S, hz) {
     const V = A.verdict && A.verdict[String(hz)];
     const views = A.kind === "price" ? tgViews(A, hz) : [];
     const sum = h("summary", { class: "tg-sum" },
-      h("span", { class: "tg-name" }, A.inverse ? `日圓（對美元）` : A.name, h("span", { class: "sub" }, `10 年位階 ${A.lowbase && fin(A.lowbase.pct) ? fmtNum(A.lowbase.pct, 0) + "%" : "—"}（30 年 ${fin(A.pct30) ? fmtNum(A.pct30, 0) + "%" : "—"}）`)),
+      h("span", { class: "tg-name" }, A.inverse ? `日圓（對美元）` : A.name, h("span", { class: "sub" }, `10 年位階 ${A.lowbase && fin(A.lowbase.pct) ? fmtNum(A.lowbase.pct, 0) + "%" : "—"}（30 年 ${fin(A.pct30) ? fmtNum(A.pct30, 0) + "%" : "—"}）`
+        + (() => { const t = A.tickers.find((t) => fin(t.status && t.status.pct10) && A.lowbase && fin(A.lowbase.pct) && Math.abs(t.status.pct10 - A.lowbase.pct) >= 20);
+          return t ? `・${t.sym} 本身 ${fmtNum(t.status.pct10, 0)}%` : ""; })())),
       h("span", { class: "tg-chips" }, ...A.tickers.map(tgChip)),
       h("span", { class: "tg-views" }, views.map((v) => h("span", { class: `tg-v${v.weak ? " weak" : ""}`, title: v.text }, h("span", { class: "muted" }, v.name), ` ${tgArrow(v.dir)} ${v.value}`,
         v.base != null ? h("span", { class: "muted" }, `（平常 ${v.base}）`) : null))),
