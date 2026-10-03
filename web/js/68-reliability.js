@@ -32,7 +32,7 @@ function reliabilityCard(S, hz) {
   }
   const E3 = S.backtest[String(hz)].ensemble;
   if (E3 && fin(E3.dir_hit)) rows.push([`單一標的會漲還是跌（${hz} 個月）`,
-    `排行說會漲（或跌）的 ${E3.dir_n} 次裡，方向對的只有 ${fmtNum(E3.dir_hit, 0)}%——接近擲銅板`,
+    `排行說會比平常多漲（或少漲）的 ${E3.dir_n} 次裡，方向對的只有 ${fmtNum(E3.dir_hit, 0)}%——接近擲銅板（量的是相對自己平常的超額，不是漲跌本身）`,
     pill(E3.dir_hit >= 58 ? "有一點參考價值" : "沒有參考價值", E3.dir_hit >= 58 ? "meh" : "bad")]);
   const HG = S.hedge, D = HG && HG.daily && HG.daily.targets;
   if (D && D.length) {
