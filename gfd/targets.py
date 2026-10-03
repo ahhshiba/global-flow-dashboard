@@ -25,6 +25,7 @@ from . import scenario as SC
 EPOCH = dt.date(1970, 1, 1)
 HORIZONS = [3, 6, 12]
 MIN_TRACK = 0.5          # 月報酬相關低於這個就標「追蹤不佳」
+VIEW_GAP = 2.0           # 相似時點／位階：典型值要比平常差 2 個百分點以上才算有方向
 BUCKETS = ["最低 20%", "20～40%", "40～60%", "60～80%", "最高 20%"]
 
 
@@ -175,17 +176,18 @@ def _verdict(model, sim, low, h):
     m = model.get(str(h)) if model else None
     if m and m["verdict"] != "樣本外無效" and (m["cal"] is not None or m["ev"] is not None):
         v = m["cal"] if m["cal"] is not None else m["ev"]
-        views.append(("模型", int(np.sign(v)) if abs(v) >= 0.5 else 0))
+        clear = m["lo"] is not None and m["hi"] is not None and (m["lo"] > 0 or m["hi"] < 0)     # 80% 區間不跨 0 才算有方向
+        views.append(("模型", int(np.sign(v)) if clear and abs(v) >= 0.5 else 0))
     s = sim.get(str(h)) if sim else None
     if s and s["n_episodes"] >= 3 and s["median"] is not None and s["all"]:
         d = s["median"] - s["all"]["median"]
-        views.append(("相似時點", int(np.sign(d)) if abs(d) >= 1 else 0))
+        views.append(("相似時點", int(np.sign(d)) if abs(d) >= VIEW_GAP else 0))
     hh = "6" if h == 3 else str(h)
     if low and low["hist"].get(hh):
         row = next((b for b in low["hist"][hh]["buckets"] if b["bucket"] == low["bucket"]), None)
         if row and row["n_episodes"] >= 3 and row["median"] is not None and low["hist"][hh]["all"]:
             d = row["median"] - low["hist"][hh]["all"]["median"]
-            views.append(("位階", int(np.sign(d)) if abs(d) >= 1 else 0))
+            views.append(("位階", int(np.sign(d)) if abs(d) >= VIEW_GAP else 0))
     pos = sum(1 for _, v in views if v > 0)
     neg = sum(1 for _, v in views if v < 0)
     word = "沒有足夠的角度" if len(views) < 2 else "三個角度都偏多" if pos == 3 else "三個角度都偏空" if neg == 3 \
@@ -210,10 +212,11 @@ def _outcome_detail(g, series, trig, X, scen, W):
             t = tmap[n["trigger"]]
             vals = CH.transform(g, t["sid"], t["op"], series[t["sid"]]["kind"])
             cm_j, cm_i = X[:, j], X[:, k]
+            m = np.zeros(len(cm_i), bool)
+            m[:end - W + 1] = cm_i[:end - W + 1] & ~cm_j[:end - W + 1] & np.isfinite(vals[:end - W + 1])
+            starts = CH.episodes(m)                       # 和 _node_prob 同一種分段：上游亮、這一層沒亮，間隔 ≤ GAP 算同一段
             sizes, deep, waits = [], [], []
-            for s0 in range(0, end - W + 1):
-                if not (cm_i[s0] and not cm_j[s0] and np.isfinite(vals[s0])):
-                    continue
+            for s0 in starts:
                 seg = cm_j[s0 + 1:s0 + 1 + W]
                 if not seg.any():
                     continue
@@ -229,9 +232,9 @@ def _outcome_detail(g, series, trig, X, scen, W):
             key = n["trigger"]
             if key in out and out[key]["n"] >= len(sizes):
                 continue
-            out[key] = dict(n=len(sizes), unit="bp" if series[t["sid"]]["kind"] == "yield" else "%", op=t["op"], thr=t["thr"], cmp=t["cmp"],
+            out[key] = dict(n=len(sizes), n_episodes=len(starts), unit="bp" if series[t["sid"]]["kind"] == "yield" else "%", op=t["op"], thr=t["thr"], cmp=t["cmp"],
                             size=_dist(np.array(sizes)), deep=_dist(np.array(deep)) if deep else None,
-                            wait=[int(sum(1 for w in waits if w == m)) for m in range(1, W + 1)])
+                            wait=[int(sum(1 for w in waits if w == mm)) for mm in range(1, W + 1)])
     return out
 
 
@@ -273,7 +276,7 @@ def build(g, series, scen, raw, log=print):
                       dd_ath=None, ath_at=None, dd_3y=_r((a[g.end] / np.nanmax(a[max(0, g.end - 36):g.end + 1]) - 1) * 100),
                       pct10=_r(_pct_rank(a[max(0, g.end - 120):g.end + 1], a[g.end]), 0), years10=10.0, ma200=None)
             flag, why = _lowbase_flag(st)
-            A["tickers"].append(dict(sym=sym, name=name, market=market, note=note, status=st, base=flag, base_why=why, track=None, track_n=0, stale=False))
+            A["tickers"].append(dict(sym=sym, name=name, market=market, note=note, status=st, base=flag, base_why=why, track=None, track_n=0, track_ok=None, stale=False))
             continue
         d = raw_s.get(sym)
         if not d:
@@ -286,7 +289,7 @@ def build(g, series, scen, raw, log=print):
         corr, nn = _track(tm, g.arr[sid], inverse) if kind == "price" else (None, 0)       # 殖利率不是價格，不比追蹤
         flag, why = _lowbase_flag(st)
         A["tickers"].append(dict(sym=sym, name=name, market=market, note=note, status=st, base=flag, base_why=why,
-                                 track=_r(corr, 2), track_n=nn, track_ok=(corr is not None and corr >= MIN_TRACK), stale=bool(d.get("stale")),
+                                 track=_r(corr, 2), track_n=nn, track_ok=(None if corr is None else corr >= MIN_TRACK), stale=bool(d.get("stale")),
                                  currency=d.get("currency")))
         if corr is not None and corr < MIN_TRACK:
             log(f"[targets] {sym}（{name}）和 {series[sid]['name']} 的月報酬相關只有 {corr:.2f}（{nn} 個月）")

@@ -11,6 +11,8 @@ const tgData = (S) => (S && S.targets && S.targets.assets ? S.targets : null);
 const tgKey = (x) => (x.inverse ? `${x.sid}~inv` : x.sid);        // 避險資料列 → 資產鍵
 const tgPct = (v, d = 1) => (fin(v) ? fmtSigned(v, d, "%") : "—");
 const tgArrow = (d) => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+const TG_GAP = 2;                 // 相似時點／位階：典型值要比平常差 2 個百分點以上才算有方向（和 gfd/targets.py 一致）
+const tgGloss = (id, label) => h("button", { class: "gl-rel", type: "button", onclick: () => window.gotoTab("glossary", () => { window.glPending = id; }) }, label);
 
 // 標的的小籤：代碼＋位置標籤
 function tgChip(t) {
@@ -27,14 +29,17 @@ function tgViews(A, hz) {
   const m = A.model && A.model[String(hz)];
   if (m && (m.cal != null || m.ev != null)) {
     const v = m.cal != null ? m.cal : m.ev;
-    out.push({ name: "模型", dir: Math.abs(v) >= 0.5 ? Math.sign(v) : 0, value: tgPct(v),
-      text: m.verdict === "樣本外無效" ? `這個期間模型在回測裡無效，數字（${tgPct(v)}）不能用` : `期望超額 ${tgPct(v)}（${m.cal != null ? "已校準；模型原值 " + tgPct(m.ev) + "，" : ""}80% 區間 ${tgPct(m.lo)}～${tgPct(m.hi)}）；回測 ${m.verdict}`,
+    const invalid = m.verdict === "樣本外無效";
+    const clear = fin(m.lo) && fin(m.hi) && (m.lo > 0 || m.hi < 0);
+    out.push({ name: "模型", dir: !invalid && clear && Math.abs(v) >= 0.5 ? Math.sign(v) : 0, value: invalid ? "無效" : tgPct(v), base: null,
+      text: invalid ? `這個期間的模型在回測裡沒有比亂選好，不給數字`
+        : `模型估計之後 ${hz} 個月比它平常多 ${tgPct(v)}${m.cal != null ? `（已依過去的實際表現打折；打折前 ${tgPct(m.ev)}）` : ""}。打折前的可能範圍 ${tgPct(m.lo)}～${tgPct(m.hi)}${clear ? "" : "，跨過 0，算不出方向"}。這個模型在回測裡${m.verdict}`,
       weak: m.verdict !== "樣本外有效" });
   }
   const s = A.similar && A.similar[String(hz)];
   if (s && s.n_episodes) {
     const d = s.all ? s.median - s.all.median : null;
-    out.push({ name: "相似時點", dir: fin(d) && Math.abs(d) >= 1 ? Math.sign(d) : 0, value: tgPct(s.median),
+    out.push({ name: "相似時點", dir: fin(d) && Math.abs(d) >= TG_GAP ? Math.sign(d) : 0, value: tgPct(s.median), base: tgPct(s.all && s.all.median),
       text: `過去和現在最像的 ${s.n_episodes} 段（${s.n} 個月），之後 ${hz} 個月典型 ${tgPct(s.median)}（10～90%：${tgPct(s.p10)}～${tgPct(s.p90)}），${fmtNum(s.hit, 0)}% 的時候上漲；平常典型 ${tgPct(s.all && s.all.median)}、${fmtNum(s.all && s.all.hit, 0)}% 上漲`,
       weak: s.n_episodes < 5 });
   }
@@ -43,7 +48,7 @@ function tgViews(A, hz) {
     const row = L.hist[hh].buckets.find((b) => b.bucket === L.bucket), all = L.hist[hh].all;
     if (row && row.n) {
       const d = all ? row.median - all.median : null;
-      out.push({ name: hz === 3 ? "位階（6 個月）" : "位階", dir: fin(d) && Math.abs(d) >= 1 ? Math.sign(d) : 0, value: tgPct(row.median),
+      out.push({ name: hz === 3 ? "位階（6 個月）" : "位階", dir: fin(d) && Math.abs(d) >= TG_GAP ? Math.sign(d) : 0, value: tgPct(row.median), base: tgPct(all && all.median),
         text: `現在的 10 年位階 ${fmtNum(L.pct, 0)}%（${L.bucket}）；過去在這一段的 ${row.n_episodes} 段，之後 ${hh} 個月典型 ${tgPct(row.median)}、${fmtNum(row.hit, 0)}% 上漲；平常 ${tgPct(all && all.median)}${hz === 3 ? "（位階只看 6 與 12 個月）" : ""}`,
         weak: row.n_episodes < 5 });
     }
@@ -63,11 +68,12 @@ function tgOutcomeExtra(S, n, hedge) {
     const f = (v) => (fin(v) ? fmtSigned(v, u === "bp" ? 0 : 1, u) : "—");
     const W = o.wait.length, tot = o.wait.reduce((a, b) => a + b, 0);
     const soon = tot ? Math.round(100 * (o.wait[0] + (o.wait[1] || 0)) / tot) : null;
+    const ext = o.cmp === ">=" ? "最高" : "最深";
     out.push(h("h5", {}, "真的發生的話，通常多深、多久"),
       h("ul", { class: "st-ul" },
-        h("li", {}, `過去 ${o.n} 次「${me}」真的發生時，剛跨過門檻那個月的變動典型是 ${f(o.size.median)}（10～90%：${f(o.size.p10)}～${f(o.size.p90)}）。`),
-        o.deep ? h("li", {}, `之後 3 個月內最深（或最高）典型 ${f(o.deep.median)}（${f(o.deep.p10)}～${f(o.deep.p90)}）。`) : null,
-        tot ? h("li", {}, `什麼時候發生：`, h("span", { class: "tg-wait", role: "img", "aria-label": o.wait.map((c, i) => `第 ${i + 1} 個月 ${c} 次`).join("，") },
+        h("li", {}, `上面 ${o.n_episodes} 段裡真的發生的 ${o.n} 段：剛跨過門檻那個月的變動典型是 ${f(o.size.median)}（10～90%：${f(o.size.p10)}～${f(o.size.p90)}）。`),
+        o.deep ? h("li", {}, `之後 3 個月內${ext}典型 ${f(o.deep.median)}（${f(o.deep.p10)}～${f(o.deep.p90)}）。`) : null,
+        tot ? h("li", {}, `什麼時候發生（只算真的發生的那 ${o.n} 段）：`, h("span", { class: "tg-wait", role: "img", "aria-label": o.wait.map((c, i) => `第 ${i + 1} 個月 ${c} 段`).join("，") },
           ...o.wait.map((c, i) => h("span", { class: "tg-wbar" }, h("i", { style: `height:${Math.max(2, Math.round(28 * c / Math.max(...o.wait)))}px` }), h("small", {}, `${i + 1}月`), h("small", { class: "muted" }, String(c))))),
           soon != null ? ` 前兩個月就發生的佔 ${soon}%。` : "") : null));
   }
@@ -83,9 +89,10 @@ function tgOutcomeExtra(S, n, hedge) {
   const A = T.assets[n.sid];
   const list = (title, a, note) => (a && a.tickers.length ? h("div", { class: "tg-list" }, h("span", { class: "st-tl" }, title), ...a.tickers.map(tgChip), note ? h("span", { class: "muted tg-note" }, note) : null) : null);
   const bad = A && A.tickers.some((t) => t.track_ok === false);
+  const allBad = A && A.tickers.length && A.tickers.every((t) => t.track_ok === false);
   const lists = [];
   const isDown = /跌|貶|走弱|轉弱|下降/.test(me);
-  if (A) lists.push(list(isDown ? "會跟著跌的" : "會跟著動的", A, bad ? "標著「追蹤不佳」的和這件事不是同一個東西，只是題材相近。" : null));
+  if (A) lists.push(list(allBad ? "題材相近的（不是同一件事）" : isDown ? "會跟著跌的" : "會跟著動的", A, bad ? "標著「追蹤不佳」的和這件事不是同一個東西，只是題材相近；位置標籤是它自己的位置，不是這件事的訊號。" : null));
   if (hedge && hedge.b) {
     const HA = T.assets[tgKey(hedge.b)];
     if (HA) lists.push(list("過去擋得住的", HA, null));
@@ -106,19 +113,20 @@ function targetsCard(S, hz) {
   c.body.append(h("p", { class: "sc-banner t-bad" }, h("b", {}, "可信度："),
     `模型的排行在回測裡${bt}；相似時點只有十來段；位階每一段也只有幾段到十幾段。三個角度一致，也只是「過去類似情況多半這樣」，不是預測。標著「追蹤不佳」的標的，三個角度說的是原料或指數本身，不是那檔標的。`));
   const keys = Object.keys(T.assets);
-  const score = (k) => { const A = T.assets[k]; const v = A.verdict && A.verdict[String(hz)] ? A.verdict[String(hz)].word : "";
-    const pos = A.tickers.some((t) => t.base === "低基期") ? 0 : A.tickers.some((t) => t.base === "高檔回落") ? 1 : 2;
-    const vs = /三個角度/.test(v) ? 0 : /^偏/.test(v) ? 1 : 2; return pos * 10 + vs; };
-  keys.sort((a, b) => score(a) - score(b));
-  const lowKeys = keys.filter((k) => T.assets[k].tickers.some((t) => t.base === "低基期" || t.base === "高檔回落"));
+  const pct = (k) => (T.assets[k].lowbase && fin(T.assets[k].lowbase.pct) ? T.assets[k].lowbase.pct : 999);
+  keys.sort((a, b) => pct(a) - pct(b) || a.localeCompare(b));      // 只照位階排，不照判定排（不是排行榜）
+  const lowKeys = keys.filter((k) => T.assets[k].tickers.some((t) => t.base === "低基期"));
+  const pullKeys = keys.filter((k) => !lowKeys.includes(k) && T.assets[k].tickers.some((t) => t.base === "高檔回落"));
+  const restKeys = keys.filter((k) => !lowKeys.includes(k) && !pullKeys.includes(k));
   const row = (k) => {
     const A = T.assets[k];
     const V = A.verdict && A.verdict[String(hz)];
     const views = A.kind === "price" ? tgViews(A, hz) : [];
     const sum = h("summary", { class: "tg-sum" },
-      h("span", { class: "tg-name" }, A.inverse ? `日圓（對美元）` : A.name, h("span", { class: "sub" }, `30 年位階 ${fin(A.pct30) ? fmtNum(A.pct30, 0) + "%" : "—"}`)),
+      h("span", { class: "tg-name" }, A.inverse ? `日圓（對美元）` : A.name, h("span", { class: "sub" }, `10 年位階 ${A.lowbase && fin(A.lowbase.pct) ? fmtNum(A.lowbase.pct, 0) + "%" : "—"}（30 年 ${fin(A.pct30) ? fmtNum(A.pct30, 0) + "%" : "—"}）`)),
       h("span", { class: "tg-chips" }, ...A.tickers.map(tgChip)),
-      h("span", { class: "tg-views" }, views.map((v) => h("span", { class: `tg-v${v.weak ? " weak" : ""}`, title: v.text }, h("span", { class: "muted" }, v.name), ` ${tgArrow(v.dir)} ${v.value}`))),
+      h("span", { class: "tg-views" }, views.map((v) => h("span", { class: `tg-v${v.weak ? " weak" : ""}`, title: v.text }, h("span", { class: "muted" }, v.name), ` ${tgArrow(v.dir)} ${v.value}`,
+        v.base != null ? h("span", { class: "muted" }, `（平常 ${v.base}）`) : null))),
       V ? h("span", { class: "tg-verdict" }, h("span", { class: `pill pill-${TG_VERDICT_TONE[V.word] || "bad"}` }, V.word),
         A.tickers.length && A.tickers.every((t) => t.track_ok === false) ? h("span", { class: "sub" }, `只對${A.name}本身；標的不追蹤`) : null)
         : h("span", { class: "pill pill-bad" }, "殖利率，不排名"));
@@ -142,7 +150,7 @@ function targetsCard(S, hz) {
             h("td", {}, t.track == null ? h("span", { class: "muted" }, t.market === "cash" ? "就是匯率本身" : "—")
               : h("span", { class: t.track_ok ? null : "down", title: `和「${A.name}」的月報酬相關（最近 ${t.track_n} 個月）` }, fmtNum(t.track, 2)))); })))),
         views.length ? [h("h5", {}, `三個角度（${hz} 個月）`), h("ul", { class: "st-ul" }, views.map((v) => h("li", {}, h("b", {}, `${v.name} ${tgArrow(v.dir)}`), `　${v.text}。`))),
-          A.tickers.every((t) => t.track_ok === false) ? h("p", { class: "sc-banner t-bad" }, `上面三個角度看的是「${A.name}」本身；這裡的標的和它的月報酬相關都不到 0.5，只是題材相近，不能直接套用。`) : null] : null,
+          A.tickers.length && A.tickers.every((t) => t.track_ok === false) ? h("p", { class: "sc-banner t-bad" }, `上面三個角度看的是「${A.name}」本身；這裡的標的和它的月報酬相關都不到 0.5，只是題材相近，不能直接套用。`) : null] : null,
         L ? [h("h5", {}, "位階有沒有用：它過去在各個位階之後怎樣"),
           h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
             h("thead", {}, h("tr", {}, ["10 年位階（當時）", "段數", `${hh} 個月典型`, "10～90%", "上漲比例"].map((t, i) => h("th", { class: i ? "n" : null }, t)))),
@@ -157,9 +165,12 @@ function targetsCard(S, hz) {
     });
     return det;
   };
-  c.body.append(
-    lowKeys.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "現在位置低的（低基期／高檔回落）"), ...lowKeys.map(row)) : null,
-    h("div", { class: "st-group" }, h("div", { class: "st-cap" }, lowKeys.length ? "其他" : "全部"), ...keys.filter((k) => !lowKeys.includes(k)).map(row)),
-    h("p", { class: "st-note" }, `標的的價格每天更新（${(T.fetched || "").slice(0, 10)}），含配息；台灣掛牌的美元資產是台幣計價，多了匯率變動。期貨型 ETF（石油、天然氣、銅、農產品）有轉倉成本，長期持有會和原物料價格脫節。全部是歷史統計，不是投資建議。`));
+  c.body.append(...[
+    lowKeys.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "有標的在低基期的（位置低不代表會漲，看「位階」那個角度）"), ...lowKeys.map(row)) : null,
+    pullKeys.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "有標的漲過又跌下來的（高檔回落，位階還是高）"), ...pullKeys.map(row)) : null,
+    restKeys.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, lowKeys.length || pullKeys.length ? "其他" : "全部"), ...restKeys.map(row)) : null,
+    h("p", { class: "st-note" }, `標的的價格每天更新（${(T.fetched || "").slice(0, 10)}），含配息；台灣掛牌的美元資產是台幣計價，多了匯率變動。期貨型 ETF（石油、天然氣、銅、農產品）有轉倉成本，長期持有會和原物料價格脫節。全部是歷史統計，不是投資建議。　`,
+      tgGloss("lowbase", "低基期是什麼？"), " ", tgGloss("tracking", "追蹤程度是什麼？")),
+  ].filter(Boolean));
   return c;
 }
