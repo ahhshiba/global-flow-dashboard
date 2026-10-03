@@ -849,3 +849,54 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
   .news-tools label[for="news-hl"] { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; }
   .finds b > a { display: block; padding: 5px 0; }
 }
+
+/* ── 沙盤推演「一頁看懂」（2026-10-03）：四步、白話、數字少而大 ── */
+.st-steps { display: grid; gap: 22px; }
+.st-step { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 14px; }
+.st-no { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center;
+  font: 600 15px var(--f-disp); }
+.st-h { margin: 3px 0 10px; font: 600 16px/1.4 var(--f-body); }
+.st-themes { display: grid; gap: 8px; }
+.st-theme { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.st-tl { font-size: 12px; color: var(--muted); min-width: 5.5em; }
+.st-chip { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); font-size: 14px; font-weight: 500; }
+.st-flag { font-size: 11.5px; font-weight: 500; color: var(--warn-ink); background: var(--warn-soft); border-radius: 999px; padding: 0 7px; }
+.st-list { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; line-height: 1.6; }
+.st-list li { padding-left: 12px; border-left: 3px solid var(--warn); }
+.st-why { font-size: 12.5px; color: var(--ink-2); }
+.st-note { margin: 10px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.65; max-width: 52em; }
+.st-note b { color: var(--ink); }
+.st-bars { display: grid; gap: 8px; margin-bottom: 8px; }
+.st-cap { font-size: 12px; color: var(--muted); }
+.st-row { display: grid; grid-template-columns: minmax(10em, 1.2fr) minmax(0, 1.5fr) 8.5em; gap: 12px; align-items: center; }
+.st-name { font-size: 14px; font-weight: 500; line-height: 1.35; }
+.st-name .sub { display: block; font-size: 11.5px; color: var(--muted); font-weight: 400; }
+.st-bar { position: relative; height: 10px; border-radius: 5px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+.st-bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--line-strong); }
+.st-bar .fill.more { background: var(--warn); }
+.st-bar .base { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
+.st-pct { text-align: right; font-size: 13px; white-space: nowrap; }
+.st-pct b { font: 600 18px var(--f-disp); font-variant-numeric: tabular-nums; }
+.st-big { margin: 0; font-size: 15px; line-height: 1.7; }
+.st-big b { font-size: 16px; }
+.st-mix { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 14px; margin-top: 10px; padding: 10px 14px; border-radius: var(--radius); background: var(--surface-2); }
+.st-mix > div:first-child { grid-column: 1 / -1; }
+.st-mixv { display: grid; gap: 2px; font-size: 12.5px; color: var(--ink-2); }
+.st-mixv b { font: 600 18px var(--f-disp); font-variant-numeric: tabular-nums; color: var(--ink); }
+.st-rel { display: grid; gap: 0; }
+.st-relrow { display: grid; grid-template-columns: minmax(11em, 1fr) 7em minmax(0, 2.4fr); gap: 12px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.st-relrow:first-child { border-top: 0; }
+.st-relrow .pill { justify-self: start; }
+.st-relwhy { font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
+.st-divider { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 14px 4px 0; border-top: 2px solid var(--line-strong); margin-top: 6px; }
+.st-divider b { font: 600 17px var(--f-body); }
+.st-divider span { font-size: 13px; color: var(--muted); }
+@media (max-width: 640px) {
+  .st-step { grid-template-columns: 26px minmax(0, 1fr); gap: 10px; }
+  .st-no { width: 24px; height: 24px; font-size: 13px; }
+  .st-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name pct" "bar bar"; row-gap: 4px; }
+  .st-row .st-name { grid-area: name; } .st-row .st-bar { grid-area: bar; } .st-row .st-pct { grid-area: pct; }
+  .st-relrow { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "what pill" "why why"; row-gap: 4px; }
+  .st-relrow .st-relw { grid-area: what; } .st-relrow .pill { grid-area: pill; } .st-relrow .st-relwhy { grid-area: why; }
+  .st-tl { min-width: 0; flex-basis: 100%; }
+}

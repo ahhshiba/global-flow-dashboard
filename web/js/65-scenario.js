@@ -31,69 +31,25 @@ function scAgeText(g) {
   return base + `，撐到這麼久的有 ${fmtNum(g.share_longer, 0)}%。`;
 }
 
-/* 開頭結論：一兩句就好（2026-10-02 起細節數字移到下面的「重點數字」小卡；全部由資料組出來，隨上方期間切換重寫） */
-function scenarioLead(S, hz) {
-  if (!S.active.length) return "目前沒有任何訊號亮著，模型的期望超額全部是 0，沒有可以推演的方向。";
-  const B = S.backtest[String(hz)];
-  const v = B.ridge.verdict;
-  const head = `${S.active.length} 個訊號亮著。`;
-  if (v === "樣本外無效") return `${head}${hz} 個月的排名在樣本外沒有比亂選好，這個期間不列推薦；下面的推演只當描述。`;
-  if (v === "樣本外有效") return `${head}${hz} 個月的排名在樣本外有效，但訊號與門檻是事後設計的，實際效果可能更差。`;
-  return `${head}${hz} 個月的排名在樣本外時好時壞，不能當買賣依據，只是研究線索。先看下面的重點數字，點各卡片看原因。`;
-}
-
-/* 重點數字（2026-10-02）：開頭幾個最重要的數字，一格一個；隨期間切換重畫 */
-function scenarioTiles(S, hz) {
-  const B = S.backtest[String(hz)];
-  const v = B.ridge.verdict;
-  const rows = S.assets[String(hz)] || [];
-  const top = rows[0];
-  const val = (r) => (fin(r.cal) ? r.cal : r.ev);
-  const oldest = S.active.filter((a) => a.age && a.age.n_done).sort((a, b) => b.age.age - a.age.age)[0];
-  const nodes = S.paths.flatMap((p) => p.nodes.filter((n) => !n.triggered && fin(n.prob) && fin(n.base)).map((n) => ({ p, n })));
-  const likely = nodes.sort((a, b) => (b.n.prob - b.n.base) - (a.n.prob - a.n.base))[0];
-  const cs = S.case_summary && S.case_summary.model && S.case_summary.model[String(hz)];
-  const HG = S.hedge && S.hedge.targets && S.hedge.targets[0] ? hgPrefer(S.hedge, S.hedge.targets[0].id) : null;
-  const hb = HG ? hgBest(HG) : null;
-  const hs = hb ? hgStats(hb, hgSubset(HG, "all")) : null;
-  const hr = hb && S.hedge.regime && S.hedge.regime.lit ? hgStats(hb, hgSubset(HG, "regime")) : null;
-  return statTiles([
-    { label: "亮著的訊號", value: `${S.active.length} 個`, tone: oldest && oldest.age.age > oldest.age.longest ? "warn" : null,
-      sub: oldest ? `亮最久：${oldest.label}，已 ${oldest.age.age} 個月（歷史最長 ${oldest.age.longest}）` : null },
-    v === "樣本外無效" ? { label: `${hz} 個月期望值最高`, value: "不列推薦", tone: "bad", sub: "這個期間的排名在樣本外沒有比亂選好" }
-      : top ? { label: `${hz} 個月期望值最高`, value: h("span", {}, `${top.name} `, chg(val(top), 1, "%")),
-        sub: fin(top.cal) ? `已依樣本外校準（模型值 ${scPct(top.ev)}）` : "模型值（沒有校準值）" } : null,
-    { label: "這套排名可信嗎", value: v, tone: SC_VERDICT_TONE[v] || null,
-      sub: `樣本外前 ${S.model.topk} 名平均每期多 ${fmtSigned(B.ridge.mean, 2)} 個百分點（不同起始月 ${scRange(B.ridge.offsets)}）` },
-    cs && cs.n ? { label: `對答案：類似時點的 ${hz} 個月`, value: `${cs.hit}/${cs.n}`, tone: scSig(cs.p) ? "ok" : "meh",
-      sub: `當時的模型跑贏全體的次數（${scP(cs.p)}，${scPWord(cs.p)}）` } : null,
-    likely ? { label: "比平常更常接著成立的一層（歷史比例）", value: `${fmtNum(likely.n.prob, 0)}%`, tone: likely.n.prob - likely.n.base >= 10 ? "warn" : null,
-      sub: `${likely.n.label}：歷史上上游成立後 ${S.within} 個月內跟著成立的比例（平常 ${fmtNum(likely.n.base, 0)}%；${likely.n.n_episodes} 段，${likely.p.name}）` } : null,
-    hs && hs.n ? { label: `${HG.label}時的避險候選（${HG.L ? "日線，" : ""}上漲次數／段數）`, value: `${hgName(hb)} ${hs.up}/${hs.n}`, tone: hb.verdict === "穩定避險" ? "ok" : "meh",
-      sub: `判定：${hb.verdict}（${scP(hb.p)}${hs.n < HG.n && hgSince(HG, hb) ? `；${hgSince(HG, hb)} 年起的 ${hs.n} 段` : ""}）`
-        + (hr && hr.n ? `；${S.hedge.regime.short}開始的跌段只有 ${hr.up}/${hr.n}` : "")
-        + (HG.hedges.some((x) => fin(x.p) && x.p <= 0.05) ? "" : "。這個情境沒有任何一項在統計上站得住（p ≤ 0.05）") } : null,
-  ]);
-}
-
 const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   const S = A.scenario;
   let hz = store.get("scH", 3);
   if (S && !S.horizons.includes(hz)) hz = S.horizons[0];
-  root.replaceChildren(tabHead("沙盤推演：現在亮著的訊號，接下來可能怎麼走、哪些標的期望值較好",
+  root.replaceChildren(tabHead("沙盤推演：現在的局面、接下來可能怎麼走、該怎麼準備",
     "把事件衝擊、傳導鏈、訊號劇本三個檢視接起來：訊號劇本告訴我們現在哪些訊號亮著；傳導鏈從亮著的層往下推，看下一層有多可能跟著成立；"
     + "期望值把所有亮著的訊號一起放進模型（每個標的之後 3／6／12 個月的報酬減掉它平常的平均，對全部訊號做收縮迴歸），"
     + "同時亮著、彼此重疊的訊號會分攤效果、不重複計算。模型值再乘上「樣本外校準斜率」（過去樣本外實際超額大約是模型值的幾倍），"
     + "得到比較實際的數字。最後附上事件衝擊（日線）裡相關事件類型的短期反應。全部是歷史統計，不是投資建議，也沒有計入交易成本。",
-    false, null, S ? scenarioLead(S, hz) : null));
+    false, null, S ? storyLead(S, hz) : null));
   if (!S || !S.active) { root.append(h_empty("尚未產生沙盤推演，請執行 python3 gfd.py analyze")); return; }
   const g = h("div", { class: "grid" });
   root.append(g);
   let pick = store.get("scPick", null);
 
-  // ── 0. 重點數字（隨期間切換重畫，在 draw() 裡） ──
-  const c0 = card({ title: "重點數字", span: 12 });
-  g.append(c0.el);
+  // ── 0. 一頁看懂（64-story.js；隨期間切換重畫，在 draw() 裡）＋「研究細節」分隔 ──
+  const storyHost = h("div", { class: "span-12" });
+  g.append(storyHost, h("div", { class: "st-divider span-12" }, h("b", {}, "研究細節"),
+    h("span", {}, "上面每一步是怎麼算出來的：亮著的訊號、傳導鏈、避險、期望值模型、對答案、回測。用詞比較專門，名詞解釋分頁有說明。")));
 
   // ── 1. 現在亮著的訊號：每個訊號一列，原因點開才有 ──
   const circ = (i) => (i < 20 ? String.fromCharCode(0x2460 + i) : `(${i + 1})`);
@@ -507,8 +463,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   function draw() {
     store.set("scH", hz);
     const lead = root.querySelector(":scope > .tab-head .tab-lead");
-    if (lead) lead.textContent = scenarioLead(S, hz);
-    c0.body.replaceChildren(scenarioTiles(S, hz));
+    if (lead) lead.textContent = storyLead(S, hz);
+    storyHost.replaceChildren(storyCard(S, hz).el);
     hChips.replaceChildren(...S.horizons.map((x) => h("button", { class: "chip", type: "button", "aria-pressed": String(x === hz),
       onclick: () => { hz = x; draw(); } }, `${x} 個月`)));
     const B = S.backtest[String(hz)];
