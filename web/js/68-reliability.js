@@ -6,21 +6,22 @@ function reliabilityCard(S, hz) {
   const rc = S.reliability && S.reliability.chain;
   const rows = [];
   const pill = (word, tone) => h("span", { class: `pill pill-${tone}` }, word);
+  const WORD = { "有參考價值": ["有參考價值", "ok"], "有一點跡象": ["有一點跡象", "meh"], "沒有參考價值": ["沒有參考價值", "bad"] };
   if (rc && rc.more) {
     const m = rc.more, l = rc.less;
-    const good = m.consistent && m.realized - m.base >= 3;
+    const ci = (g) => (g.ci95 ? `95% 區間 ${fmtSigned(g.ci95[0], 0)}～${fmtSigned(g.ci95[1], 0)}` : "");
+    const hv = (g) => `前半 ${g.halves[0].realized ?? "—"}% 對 ${g.halves[0].base ?? "—"}%、後半 ${g.halves[1].realized ?? "—"}% 對 ${g.halves[1].base ?? "—"}%`;
     rows.push(["哪件事比平常更可能（傳導鏈下一步）",
-      `${m.n} 次提示，實際發生 ${fmtNum(m.realized, 0)}%、平常 ${fmtNum(m.base, 0)}%；前半 ${m.halves[0].realized ?? "—"}% 對 ${m.halves[0].base ?? "—"}%、後半 ${m.halves[1].realized ?? "—"}% 對 ${m.halves[1].base ?? "—"}%`,
-      pill(good ? "方向有參考價值" : "參考價值低", good ? "ok" : "bad")]);
+      `${m.n} 次提示，實際發生 ${fmtNum(m.realized, 0)}%、平常 ${fmtNum(m.base, 0)}%（差 ${fmtSigned(m.lift, 0)} 個百分點，${ci(m)}）；${hv(m)}${m.word === "有一點跡象" ? "——方向偏正，但區間跨 0，統計上分不出和運氣的差別" : ""}`,
+      pill(...(WORD[m.word] || WORD["沒有參考價值"]))]);
     if (l && l.n >= 20) rows.push(["哪件事比平常更不可能",
-      `${l.n} 次提示，實際發生 ${fmtNum(l.realized, 0)}%、平常 ${fmtNum(l.base, 0)}%；前後半${l.consistent ? "都成立" : "方向相反"}`,
-      pill(l.consistent ? "有參考價值" : "沒有參考價值", l.consistent ? "ok" : "bad")]);
+      `${l.n} 次提示，實際發生 ${fmtNum(l.realized, 0)}%、平常 ${fmtNum(l.base, 0)}%；${hv(l)}${l.consistent ? "" : "——前後半方向相反"}`,
+      pill(...(WORD[l.word] || WORD["沒有參考價值"]))]);
     if (rc.bins && rc.bins.length) {
-      const off = Math.max(...rc.bins.map((b) => Math.abs(b.realized - (b.lo + b.hi) / 2)));
-      rows.push(["機率數字本身（校準後）",
-        `${rc.n} 次預測分箱：` + rc.bins.map((b) => `${fmtNum(b.lo, 0)}～${fmtNum(b.hi, 0)}% 的實際 ${fmtNum(b.realized, 0)}%`).join("、")
-          + `。原始數字的誤差（Brier）${rc.brier_raw} 比直接用平常 ${rc.brier_base} 還差，收縮後 ${rc.brier_adj}`,
-        pill(off <= 15 ? "數字大致對得上" : "數字偏差大", off <= 15 ? "meh" : "bad")]);
+      rows.push(["機率數字本身（收縮後）",
+        `${rc.n} 次預測分箱：` + rc.bins.map((b) => `寫 ${fmtNum(b.lo, 0)}～${fmtNum(b.hi, 0)}% 的實際 ${fmtNum(b.realized, 0)}%`).join("、")
+          + `（最大偏差 ${fmtNum(rc.bins_maxdev, 0)} 個百分點）。誤差（Brier）：原始 ${rc.brier_raw}、直接用平常 ${rc.brier_base}、收縮後 ${rc.brier_adj}——收縮後和平常持平，原始數字比平常還差`,
+        pill(rc.cal_word, rc.cal_word === "大致對得上" ? "meh" : "bad")]);
     }
   }
   for (const x of S.horizons) {
@@ -46,10 +47,9 @@ function reliabilityCard(S, hz) {
   if (wv && wv.n) rows.push(["下一波可能亮起的訊號", `${wv.n} 個提示亮起 ${wv.hits} 個（${fmtNum(100 * wv.hits / wv.n, 0)}%），平常約 ${fmtNum(wv.base, 0)}%（${scP(wv.p)}）`,
     pill(scSig(wv.p) ? "有參考價值" : "沒有參考價值", scSig(wv.p) ? "ok" : "bad")]);
   const c = card({ title: "可信度計分板：這一頁的每種推論，過去對答案的結果", span: 12,
-    sub: `每一列是一種推論，右邊是它回頭對答案的成績：傳導鏈的「更可能／更不可能」是 2005 年起每個月都重推一次再對答案（${rc ? rc.n : "—"} 次）；排行是走步回測；避險是日線的置換檢定。有參考價值的只有少數幾種，其餘照實標示。` });
-  c.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
-    h("thead", {}, h("tr", {}, h("th", {}, "推論"), h("th", {}, "對答案的成績"), h("th", {}, "可信度"))),
-    h("tbody", {}, rows.map(([q, ev, p]) => h("tr", {}, h("td", {}, h("b", {}, q)), h("td", {}, ev), h("td", {}, p)))))),
-    h("p", { class: "note" }, "「校準」＝小樣本的機率照段數往平常收縮，收縮後各段的實際發生率對得上。前後半＝2005～2015 與 2016 起各算一次，兩半都成立才算站得住。全部是歷史統計，不是投資建議。"));
+    sub: `每一列是一種推論，右邊是它回頭對答案的成績：傳導鏈的「更可能／更不可能」是 2005 年起每個月都重推一次再對答案（${rc ? rc.n : "—"} 次）；排行是走步回測；避險是日線的置換檢定。大多數推論只有一點跡象或沒有參考價值，照實標示。` });
+  c.body.append(h("div", { class: "rl-rows" }, rows.map(([q, ev, p]) => h("div", { class: "rl-row" },
+      h("div", { class: "rl-q" }, h("b", {}, q), p), h("div", { class: "rl-ev" }, ev)))),
+    h("p", { class: "note" }, `「收縮」＝小樣本的機率照段數往平常拉；收縮後${rc ? rc.cal_word : "比較接近實際"}。「有參考價值」要兩半都 ≥ 3 個百分點而且 95% 區間下界 > 0；「有一點跡象」＝方向對但區間跨 0。前後半＝2005～2015 與 2016 起各算一次。全部是歷史統計，不是投資建議。`));
   return c;
 }

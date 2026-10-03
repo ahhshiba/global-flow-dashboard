@@ -488,8 +488,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
       valid === "樣本外有效" ? `樣本外每期前 ${S.model.topk} 名比全體多 ${fmtSigned(RK.mean, 2)} 個百分點（各起點 ${scRange(RK.offsets)}）。`
         : valid === "時好時壞" ? `樣本外平均有正的差距（${fmtSigned(RK.mean, 2)}），但不同起始月差很多（${scRange(RK.offsets)}），參考就好。`
         : `樣本外沒有比亂選好（平均 ${fmtSigned(RK.mean, 2)}），這個期間的排名不要當依據。`,
-      hv ? `　前半（${hv[0].n} 期）${fmtSigned(hv[0].mean, 2)}、後半（${hv[1].n} 期）${fmtSigned(hv[1].mean, 2)}。` : "",
-      B.ensemble ? "排行＝模型與相似時點的平均（2026-10-03 起；前後半都正才採用）。" : "");
+      hv ? `　前半（${hv[0].n} 期）${fmtSigned(hv[0].mean, 2)}、後半（${hv[1].n} 期）${fmtSigned(hv[1].mean, 2)}${hv[0].mean > 0 && hv[1].mean > 0 ? "，兩半都正" : "，有一半是負的，僅供參考"}。` : "",
+      B.ensemble ? "排行＝模型與相似時點的平均（2026-10-03 起）。" : "");
     const showAll = store.get("scAll", false);
     const list = showAll ? rows : [...rows.slice(0, 8), null, ...rows.slice(-5)];
     if (!pick || !rows.some((r) => r.sid === pick)) pick = rows[0].sid;

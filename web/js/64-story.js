@@ -63,20 +63,23 @@ const stPA = (n) => (fin(n.prob_adj) ? n.prob_adj : n.prob);
 const stPA12 = (n) => (fin(n.prob12_adj) ? n.prob12_adj : n.prob12);
 const ST_GAP = 5;            // 校準後和平常差 ≥ 5 個百分點才算「更可能」（和 config.SCENARIO_LIFT_GAP 一致）
 // 「比平常更可能」這類提示回頭對答案的結果：2005 年起每個月走步對答案（幾百次），不是只看 12 個案例。卡片上要常駐。
+// 傳導鏈可信度的三個等級（和 gfd/scenario.py 的 word 對應）：有參考價值＝兩半都 ≥3pp 且 95% 區間下界 > 0；有一點跡象＝方向對但區間跨 0
+const ST_WORD = { "有參考價值": ["方向有參考價值", "ok"], "有一點跡象": ["有一點跡象，統計上還分不出和運氣的差別", "meh"], "沒有參考價值": ["參考價值低", "bad"] };
 function storyReliab(S) {
   const rc = S.reliability && S.reliability.chain;
   if (rc && rc.more && rc.more.n >= 30) {
     const m = rc.more, l = rc.less;
-    const good = m.consistent && m.realized - m.base >= 3;
-    return { word: good ? "方向有參考價值" : "參考價值低", tone: good ? "ok" : "bad",
-      text: `2005 年起每個月回頭對答案（${rc.n} 次）：「比平常更可能」的提示有 ${m.n} 次，實際發生 ${fmtNum(m.realized, 0)}%、平常 ${fmtNum(m.base, 0)}%${m.consistent ? "，前後半都成立" : "，但前後半不一致"}。`
-        + `機率數字已照段數往平常收縮（校準後各段的實際發生率對得上，原始數字會高估）。「更不可能」的提示過去${l && l.consistent ? "也成立" : "沒有參考價值"}。`,
-      lessOk: !!(l && l.consistent) };
+    const [word, tone] = ST_WORD[m.word] || ST_WORD["沒有參考價值"];
+    const ci = m.ci95 ? `${fmtSigned(m.ci95[0], 0)}～${fmtSigned(m.ci95[1], 0)}` : "—";
+    return { word, tone, level: m.word,
+      text: `2005 年起每個月回頭對答案（${rc.n} 次）：「比平常更可能」的提示有 ${m.n} 次，實際發生 ${fmtNum(m.realized, 0)}%、平常 ${fmtNum(m.base, 0)}%（差 ${fmtSigned(m.lift, 0)} 個百分點，95% 區間 ${ci}${m.consistent ? "；前後半都偏正，但差距小" : "；前後半不一致"}）。`
+        + `機率數字已照段數往平常收縮：原始數字會高估，收縮後${rc.cal_word}${fin(rc.bins_maxdev) ? `（各箱最大偏差 ${fmtNum(rc.bins_maxdev, 0)} 個百分點）` : ""}。`,
+      lessOk: !!(l && l.word === "有參考價值"), lessText: l ? `「更不可能」的提示過去${l.word === "有參考價值" ? "也成立" : "沒有參考價值"}。` : "" };
   }
   const ly = (S.case_summary || {}).layers || {};
   if (!ly.n) return null;
-  return ly.skill > 0 ? { word: "有一點參考價值", tone: "meh", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例比直接用「平常」準一點。`, lessOk: false }
-    : { word: "參考價值低", tone: "bad", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例沒有比直接用「平常」準。`, lessOk: false };
+  return ly.skill > 0 ? { word: "有一點參考價值", tone: "meh", level: "有一點跡象", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例比直接用「平常」準一點。`, lessOk: false, lessText: "" }
+    : { word: "參考價值低", tone: "bad", level: "沒有參考價值", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例沒有比直接用「平常」準。`, lessOk: false, lessText: "" };
 }
 const storyDiff = (x) => (x >= 0 ? `多 ${fmtNum(x, 2)}` : `少 ${fmtNum(-x, 2)}`);
 
@@ -94,9 +97,11 @@ function storyLead(S, hz) {
     const st = hgStats(b, hgSubset(T, "all")), since = st.n < T.n ? hgSince(T, b) : null;
     return `過去${scPlain(tgt.id, tgt.label)}時，最常一起漲的是${hgName(b)}（${since ? `${since} 年起、` : ""}回頭看）。`;
   })();
-  const v = S.backtest[String(hz)].ridge.verdict;
+  const v = scRank(S.backtest[String(hz)]).verdict;
   return (ups.length ? `接下來 ${S.within} 個月比平常更可能：${ups.map((u) => `${scPlain(u.n.trigger, u.n.label)}（${fmtNum(stPA(u.n), 0)}%，平常 ${fmtNum(u.n.base, 0)}%）`).join("、")}。`
-    + (R ? (R.word === "方向有參考價值" ? `這類「更可能」的提示過去實際發生率比平常高，方向有參考價值；機率數字已校準。` : `不過這類比例回頭對答案${R.word === "參考價值低" ? "參考價值低" : "只有一點參考價值"}。`) : "")
+    + (R ? (R.level === "有參考價值" ? `這類「更可能」的提示過去實際發生率比平常高，方向有參考價值；機率是收縮後的。`
+      : R.level === "有一點跡象" ? `這類「更可能」的提示過去實際發生率比平常高一點，但統計上還分不出和運氣的差別；機率是收縮後的。`
+      : `不過這類比例回頭對答案參考價值低。`) : "")
     : `接下來 ${S.within} 個月沒有哪件事明顯比平常更可能。`)
     + prep + (v === "樣本外有效" ? "" : "「哪個標的會漲最多」沒有可靠的答案。");
 }
@@ -149,7 +154,7 @@ function storyCard(S, hz) {
   const R = storyReliab(S);
   const c = card({ title: "可能會發生什麼", span: 12,
     sub: `接下來 ${S.within} 個月，和「平常」比起來比較可能、或比較不可能發生的事。「平常」＝不看任何訊號、隨便挑一個月，之後 ${S.within} 個月內發生的比例（長條裡的細線）。點一行看原因和判斷過程。` });
-  if (R) c.body.append(h("p", { class: `sc-banner t-${R.tone}` }, h("b", {}, `可信度：${R.word}。`), `${R.text}這些是過去類似情況的比例，不是預測。`));
+  if (R) c.body.append(h("p", { class: `sc-banner t-${R.tone}` }, h("b", {}, `可信度：${R.word}。`), `${R.text}${R.lessText}這些是過去類似情況的比例，不是預測。`));
   const nameOf = (p, label) => scPlain((p.nodes.find((m) => m.label === label) || {}).trigger, label);
 
   const item = (x) => {
@@ -186,12 +191,12 @@ function storyCard(S, hz) {
         h("ul", { class: "st-ul" },
           h("li", {}, `過去有 ${n.n_episodes} 段（${n.n_months} 個月），「${after}」已經發生、「${me}」還沒發生。`),
           h("li", {}, `這些月份裡，${S.within} 個月內「${me}」真的發生的有 ${fmtNum(n.prob, 0)}%。`),
-          fin(n.prob_adj) ? h("li", {}, `只有 ${n.n_episodes} 段，把它往平常拉一點（校準）：${fmtNum(n.prob_adj, 0)}%——頁面上用這個數字。校準後的數字過去對得上實際發生率，原始數字會高估。`) : null,
+          fin(n.prob_adj) ? h("li", {}, `只有 ${n.n_episodes} 段，把它往平常拉一點（校準）：${fmtNum(n.prob_adj, 0)}%——頁面上用這個數字。原始數字過去會高估；收縮後${S.reliability && S.reliability.chain ? S.reliability.chain.cal_word : "比較接近實際"}。`) : null,
           h("li", {}, `隨便挑一個月來看是 ${fmtNum(n.base, 0)}%——這就是「平常」。`),
           fin(n.wait) ? h("li", {}, `真的發生的話，通常在第 ${fmtNum(n.wait, 0)} 個月。`) : null,
           fin(n.prob12) ? h("li", {}, `拉長到 12 個月：${fmtNum(stPA12(n), 0)}%（校準後），平常 ${fmtNum(n.base12, 0)}%${read12}`) : null),
         h("h5", {}, "可信度"),
-        h("p", {}, `${n.n_episodes} 次不算多（通常要幾十次以上才比較穩）。${R ? `${R.text.replace(/。$/, "")}——${R.word}。` : ""}`),
+        h("p", {}, `${n.n_episodes} 次不算多（通常要幾十次以上才比較穩）。${R ? `回頭對答案：${R.word}。${R.text}` : ""}`),
         hedge ? [h("h5", {}, "如果真的發生，過去什麼擋得住"), ...hedge.nodes] : null,
         ...tgOutcomeExtra(S, n, hedge)));
     });
@@ -201,7 +206,7 @@ function storyCard(S, hz) {
   const nx = storyNext(S);
   const more = nx.filter((x) => x.lift >= ST_GAP).sort((a, b) => b.lift - a.lift).slice(0, 4);
   const less = nx.filter((x) => x.lift <= -ST_GAP).sort((a, b) => a.lift - b.lift).slice(0, 2);
-  const B = S.backtest[String(hz)].ridge, v = B.verdict;
+  const B = scRank(S.backtest[String(hz)]), v = B.verdict;
   const rank = h("details", { class: "st-item" },
     h("summary", { class: "st-sum st-sum-rank" }, h("span", { class: "st-name" }, `哪個標的接下來 ${hz} 個月漲最多？`),
       h("span", { class: "st-ans" }, v === "樣本外有效" ? "有一點參考價值" : "沒有可靠的答案"),
@@ -209,7 +214,7 @@ function storyCard(S, hz) {
     h("div", { class: "st-detail" },
       h("h5", {}, "怎麼判斷的"),
       h("ul", { class: "st-ul" },
-        h("li", {}, `從 ${S.backtest[String(hz)].start} 起，每個月只用當時已經知道的資料，重算一次「接下來 ${hz} 個月誰漲最多」的排行。`),
+        h("li", {}, `從 ${S.backtest[String(hz)].start} 起，每個月只用當時已經知道的資料，重算一次「接下來 ${hz} 個月誰漲最多」的排行（模型和相似時點的平均）。`),
         h("li", {}, `每次買排行前 ${S.model.topk} 名，${hz} 個月後和全部標的的平均比。`),
         h("li", {}, `結果平均每次只${storyDiff(B.mean)} 個百分點，而且換不同的起始月份，從 ${scRange(B.offsets)} 都有。`)),
       h("p", {}, v === "樣本外有效" ? "回測裡有效，但訊號和門檻是事後設計的，實際效果可能比較差。" : "所以排行只能當研究線索，不要照著買。"),

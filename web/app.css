@@ -948,3 +948,11 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
   .tg-sum .tg-name { grid-area: name; } .tg-sum > .pill, .tg-sum .tg-verdict { grid-area: pill; } .tg-sum .tg-chips { grid-area: chips; padding-left: 1.1em; } .tg-sum .tg-views { grid-area: views; padding-left: 1.1em; }
 }
 @media (prefers-reduced-motion: reduce) { .tg-name::before { transition: none; } }
+
+/* ── 可信度計分板（2026-10-03）：列表而不是表格，手機上燈號不會被切掉 ── */
+.rl-rows { display: grid; }
+.rl-row { padding: 9px 4px; border-top: 1px solid var(--line); }
+.rl-row:first-child { border-top: 0; }
+.rl-q { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
+.rl-q b { font-weight: 600; }
+.rl-ev { margin-top: 3px; font-size: 13px; line-height: 1.6; color: var(--ink-2); max-width: 60em; }

@@ -238,23 +238,48 @@ def _chain_reliability(X, trig, key_to_id, end, W, start, split):
     R = np.array(rows)
     T_, p, b, q, y = R.T
     gap = C.SCENARIO_LIFT_GAP / 100
+    yrs = T_ // 12
+    rng_b = np.random.default_rng(SEED + 7)          # 自己的亂數，不動到其他區塊的抽樣順序
     def grp(mask):
         return dict(n=int(mask.sum()), realized=CH.r(100 * y[mask].mean(), 0) if mask.any() else None,
                     base=CH.r(100 * b[mask].mean(), 0) if mask.any() else None)
+    def ci(mask, sign, B=2000):
+        """實際發生率 − 平常 的 95% 區間：以年為塊的自助法（同一年的預測彼此重疊，不能當獨立樣本）。"""
+        if mask.sum() < 10:
+            return None
+        ys = np.unique(yrs[mask])
+        d = []
+        for _ in range(B):
+            pick = rng_b.choice(ys, len(ys))
+            mm = np.concatenate([np.where(mask & (yrs == s))[0] for s in pick])
+            d.append(sign * (y[mm].mean() - b[mm].mean()))
+        return [CH.r(100 * float(np.percentile(d, 2.5)), 1), CH.r(100 * float(np.percentile(d, 97.5)), 1)]
     def flag(sign):
         sel = (q - b >= gap) if sign > 0 else (b - q >= gap)
         halves = [grp(sel & (T_ < split)), grp(sel & (T_ >= split))]
         lifts = [(hv["realized"] - hv["base"]) if hv["n"] >= 10 and hv["realized"] is not None else None for hv in halves]
         consistent = all(l is not None and l * sign > 0 for l in lifts)
-        return dict(**grp(sel), halves=halves, consistent=bool(consistent))
+        strong = all(l is not None and l * sign >= 3 for l in lifts)      # 兩半都 ≥ 3 個百分點
+        interval = ci(sel, sign)
+        g = grp(sel)
+        lift = (g["realized"] - g["base"]) * sign if g["realized"] is not None else None
+        # 判定：有參考價值＝兩半都 ≥3pp 且 95% 區間下界 > 0；有一點跡象＝方向對但區間跨 0；其餘＝沒有
+        word = ("有參考價值" if strong and interval and interval[0] > 0
+                else "有一點跡象" if lift is not None and lift > 0 and consistent else "沒有參考價值")
+        return dict(**g, lift=CH.r(lift, 1) if lift is not None else None, ci95=interval, halves=halves,
+                    consistent=bool(consistent), strong=bool(strong), word=word)
     bins = []
     for lo in np.arange(0.2, 0.9, 0.1):
         m = (q >= lo) & (q < lo + 0.1)
         if m.sum() >= 15:
             bins.append(dict(lo=CH.r(100 * lo, 0), hi=CH.r(100 * (lo + 0.1), 0), n=int(m.sum()), realized=CH.r(100 * y[m].mean(), 0)))
     brier = lambda v: CH.r(float(np.mean((v - y) ** 2)), 4)
+    maxdev = max((abs(bb["realized"] - (bb["lo"] + bb["hi"]) / 2) for bb in bins), default=None)
+    # 校準的說法：各箱偏差都 ≤ 10 個百分點才算「對得上」；否則只說「分得出高低」
+    cal_word = "大致對得上" if maxdev is not None and maxdev <= 10 else "只分得出高低兩檔"
     return dict(n=len(rows), start=start, split=split, brier_raw=brier(p), brier_adj=brier(q), brier_base=brier(b),
-                more=flag(+1), less=flag(-1), bins=bins, gap=C.SCENARIO_LIFT_GAP, k=C.SCENARIO_SHRINK_K)
+                more=flag(+1), less=flag(-1), bins=bins, bins_maxdev=CH.r(maxdev, 0) if maxdev is not None else None, cal_word=cal_word,
+                gap=C.SCENARIO_LIFT_GAP, k=C.SCENARIO_SHRINK_K)
 
 
 def _vals_of(t):
@@ -641,21 +666,22 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         slope = float(cal[:, 0] @ cal[:, 1] / (cal[:, 0] @ cal[:, 0])) if cal.size else None
         corr = float(np.corrcoef(cal[:, 0], cal[:, 1])[0, 1]) if cal.size else None
         use_cal = slope is not None and slope > 0 and verdict != "樣本外無效"
-        offs_e = _offsets(periods, h, "ensemble", rng)
+        rng2 = np.random.default_rng(SEED + 100 + h)        # 新增的集成／相似時點／前後半抽樣用自己的亂數，不動到原本的順序
+        offs_e = _offsets(periods, h, "ensemble", rng2)
         verdict_e = _verdict(offs_e)
         # 單一標的的方向：集成預測 |值| > 1 時，之後實際超額同號的比例（研究時 52～55%，接近擲銅板；計分板要照實寫）
         dir_pairs = [(np.sign(e), np.sign(o)) for p in periods for e, o in zip(p["ens"], p["own"]) if abs(e) > 1 and np.isfinite(o)]
         dir_hit = CH.r(100 * float(np.mean([a == b for a, b in dir_pairs])), 0) if dir_pairs else None
         cal_e = np.array([(p_, o_) for p in periods for p_, o_ in zip(p["ens"], p["own"])])
         slope_e = float(cal_e[:, 0] @ cal_e[:, 1] / (cal_e[:, 0] @ cal_e[:, 0])) if cal_e.size and (cal_e[:, 0] @ cal_e[:, 0]) > 0 else None
-        use_cal_e = slope_e is not None and slope_e > 0 and verdict_e != "樣本外無效"
+        use_cal_e = slope_e is not None and slope_e >= 0.05 and verdict_e != "樣本外無效"      # 斜率太小（12 個月 0.01）等於沒有校準，不給數字
         split_i = months.index(C.SCENARIO_SPLIT) if C.SCENARIO_SPLIT in months else None
         halves = {}
         for key in ("ridge", "knn", "ensemble"):
             hv = []
             for name, sel in (("前半", lambda p: p["T"] < split_i), ("後半", lambda p: p["T"] >= split_i)):
                 sub = [p for p in periods if sel(p)] if split_i is not None else []
-                o = _offsets(sub, h, key, rng) if len(sub) >= 16 else []
+                o = _offsets(sub, h, key, rng2) if len(sub) >= 16 else []
                 hv.append(dict(name=name, mean=CH.r(float(np.mean([x["mean"] for x in o]))) if o else None, verdict=_verdict(o) if o else "樣本不足",
                                n=len(sub)))
             halves[key] = hv
@@ -665,7 +691,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
             ridge=dict(**_summ(periods, "ridge"), offsets=offs, verdict=verdict),
             avg=dict(**_summ(periods, "avg"), offsets=_offsets(periods, h, "avg", rng)),
             momentum=dict(**_summ(periods, "mom"), offsets=_offsets(periods, h, "mom", rng)),
-            knn=dict(**_summ(periods, "knn"), offsets=_offsets(periods, h, "knn", rng)),
+            knn=dict(**_summ(periods, "knn"), offsets=_offsets(periods, h, "knn", rng2)),
             ensemble=dict(**_summ(periods, "ensemble"), offsets=offs_e, verdict=verdict_e,
                           calibration=dict(slope=CH.r(slope_e), used=bool(use_cal_e)), dir_hit=dir_hit, dir_n=len(dir_pairs)),
             halves=halves, split=C.SCENARIO_SPLIT,
@@ -812,11 +838,15 @@ def build(g, series, months, play, chain_block, cascade, log=print):
     for t in trig:
         _VALS[t["id"]] = CH.transform(g, t["sid"], t["op"], series[t["sid"]]["kind"])
     split_i = months.index(C.SCENARIO_SPLIT) if C.SCENARIO_SPLIT in months else end
-    reliability = dict(chain=_chain_reliability(X, trig, key_to_id, end, W, start, split_i))
+    try:
+        reliability = dict(chain=_chain_reliability(X, trig, key_to_id, end, W, start, split_i))
+    except Exception as exc:          # noqa: BLE001
+        log(f"[scenario] 可信度計分板失敗，略過：{exc!r}")
+        reliability = dict(chain=None)
     rc = reliability["chain"]
     if rc:
         log(f"[scenario] 可信度：鏈的下一層走步預測 {rc['n']} 次，Brier 原始 {rc['brier_raw']}／收縮後 {rc['brier_adj']}／平常 {rc['brier_base']}；"
-            f"「更可能」提示 {rc['more']['n']} 次實際 {rc['more']['realized']}%（平常 {rc['more']['base']}%，前後半{'都成立' if rc['more']['consistent'] else '不一致'}）；"
+            f"「更可能」提示 {rc['more']['n']} 次實際 {rc['more']['realized']}%（平常 {rc['more']['base']}%，95% 區間 {rc['more']['ci95']}，前後半{'都成立' if rc['more']['consistent'] else '不一致'}）→ {rc['more']['word']}；校準{rc['cal_word']}（最大偏差 {rc['bins_maxdev']}pp）；"
             f"「更不可能」{rc['less']['n']} 次實際 {rc['less']['realized']}%（平常 {rc['less']['base']}%，{'一致' if rc['less']['consistent'] else '前後半不一致'}）")
     asof = max((a["current_at"] for a in active if a.get("current_at")), default=months[end])
     log(f"[scenario] 亮燈 {len(active)} 個訊號；最像現在的歷史時點 {[(s['m'], s['jaccard']) for s in similar]}；"
