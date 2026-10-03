@@ -53,7 +53,7 @@ function scenarioTiles(S, hz) {
   const nodes = S.paths.flatMap((p) => p.nodes.filter((n) => !n.triggered && fin(n.prob) && fin(n.base)).map((n) => ({ p, n })));
   const likely = nodes.sort((a, b) => (b.n.prob - b.n.base) - (a.n.prob - a.n.base))[0];
   const cs = S.case_summary && S.case_summary.model && S.case_summary.model[String(hz)];
-  const HG = S.hedge && S.hedge.targets && S.hedge.targets[0];
+  const HG = S.hedge && S.hedge.targets && S.hedge.targets[0] ? hgPrefer(S.hedge, S.hedge.targets[0].id) : null;
   const hb = HG ? hgBest(HG) : null;
   const hs = hb ? hgStats(hb, hgSubset(HG, "all")) : null;
   const hr = hb && S.hedge.regime && S.hedge.regime.lit ? hgStats(hb, hgSubset(HG, "regime")) : null;
@@ -69,7 +69,7 @@ function scenarioTiles(S, hz) {
       sub: `當時的模型跑贏全體的次數（${scP(cs.p)}，${scPWord(cs.p)}）` } : null,
     likely ? { label: "比平常更常接著成立的一層（歷史比例）", value: `${fmtNum(likely.n.prob, 0)}%`, tone: likely.n.prob - likely.n.base >= 10 ? "warn" : null,
       sub: `${likely.n.label}：歷史上上游成立後 ${S.within} 個月內跟著成立的比例（平常 ${fmtNum(likely.n.base, 0)}%；${likely.n.n_episodes} 段，${likely.p.name}）` } : null,
-    hs && hs.n ? { label: `${HG.label}時的避險候選（上漲次數／段數）`, value: `${hgName(hb)} ${hs.up}/${hs.n}`, tone: hb.verdict === "穩定避險" ? "ok" : "meh",
+    hs && hs.n ? { label: `${HG.label}時的避險候選（${HG.L ? "日線，" : ""}上漲次數／段數）`, value: `${hgName(hb)} ${hs.up}/${hs.n}`, tone: hb.verdict === "穩定避險" ? "ok" : "meh",
       sub: `判定：${hb.verdict}（${scP(hb.p)}）`
         + (hr && hr.n ? `；${S.hedge.regime.short}開始的跌段只有 ${hr.up}/${hr.n}` : "")
         + (HG.hedges.some((x) => fin(x.p) && x.p <= 0.05) ? "" : "。這個情境沒有任何一項在統計上站得住（p ≤ 0.05）") } : null,
@@ -232,30 +232,39 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   }
   g.append(cW.el);
 
-  // ── 2c. 避險摘要（細節在「避險」檢視，66-hedge.js）──
-  const HG = S.hedge;
-  if (HG && HG.targets && HG.targets.length) {
-    const R = HG.regime;
+  // ── 2c. 避險摘要（細節在「避險」檢視，66-hedge.js）：日線版（高點到低點）為主，月資料版（最深的 3 個月）對照 ──
+  const HG2 = S.hedge;
+  if (HG2 && HG2.targets && HG2.targets.length) {
+    const R = HG2.regime;
+    const DL = hgDaily(HG2);
     const cH = card({ title: "避險：如果真的跌了", span: 12,
-      sub: `每個下跌情境：${HG.W} 個月內發生的機率、全部跌段裡最穩的避險資產（上漲次數／段數）`
-        + (R && R.lit ? `，以及同一項在和現在一樣「${R.short}」開始的跌段裡的表現（只有個位數段，只能參考）。` : "。") });
+      sub: `每個下跌情境：${HG2.W} 個月內發生的機率（月資料事件），以及跌的時候最穩的避險資產（上漲次數／段數）`
+        + (DL ? "——日線看「波段高點到低點」、月資料看「那一段最深的 3 個月」，兩種切法" : "")
+        + (R && R.lit ? `；最後一欄是同一項在和現在一樣「${R.short}」開始的跌段裡的表現（段數少，只能參考）。` : "。") });
     const btn = h("button", { class: "tool", type: "button", onclick: () => window.gotoTab("scenario", () => { window.scView = "hedge"; }) }, "看避險檢視 →");
     cH.tools.append(btn);
-    const cell = (x, s) => (x && s && s.n ? h("span", {}, `${hgName(x)} `, h("b", { class: "mono" }, `${s.up}/${s.n}`), h("span", { class: "muted" }, `　中位 ${hgPct(s.med)}`)) : h("span", { class: "muted" }, "—"));
+    // p 值只屬於全部跌段：環境子集那一欄不附（附了會被讀成子集也做過檢定）
+    const cell = (x, s, withP = true) => (x && s && s.n ? h("span", {}, `${hgName(x)} `, h("b", { class: "mono" }, `${s.up}/${s.n}`),
+      h("span", { class: "muted" }, `　中位 ${hgPct(s.med)}${withP && fin(x.p) ? `・${scP(x.p)}` : ""}`)) : h("span", { class: "muted" }, "—"));
     cH.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
-      h("thead", {}, h("tr", {}, h("th", {}, "下跌情境"), h("th", { class: "n" }, `${HG.W} 個月內`), h("th", {}, "全部跌段最穩"),
-        R && R.lit ? h("th", {}, `${R.short}開始的跌段`) : null)),
-      h("tbody", {}, HG.targets.map((T) => {
-        const o = T.odds || {};
-        const b = hgBest(T);
+      h("thead", {}, h("tr", {}, h("th", {}, "下跌情境"), h("th", { class: "n" }, `${HG2.W} 個月內`),
+        DL ? h("th", {}, "日線・高點到低點最穩") : null, h("th", {}, "月資料・3 個月窗最穩"),
+        R && R.lit ? h("th", {}, `${R.short}開始的跌段${DL ? "（日線）" : ""}`) : null)),
+      h("tbody", {}, HG2.targets.map((M) => {
+        const o = M.odds || {};
+        const D = DL && DL.targets.find((x) => x.id === M.id);
+        const bm = hgBest(M), bd = D ? hgBest(D) : null;
+        const T = D || M, b = bd || bm;
         const idx = R ? hgSubset(T, "regime") : [];
         return h("tr", {},
-          h("td", {}, T.label, h("span", { class: "sub" }, `過去 ${T.n} 段・中位 ${hgPct(T.med)}`)),
+          h("td", {}, M.label, h("span", { class: "sub" }, D ? `日線 ${D.n} 段・中位 ${hgPct(D.med)}` : `過去 ${M.n} 段・中位 ${hgPct(M.med)}`)),
           h("td", { class: "n" }, o.ongoing ? h("b", {}, "進行中") : fin(o.prob) ? h("span", {}, h("b", {}, `${fmtNum(o.prob, 0)}%`), h("span", { class: "muted" }, `（平常 ${fmtNum(o.base, 0)}%）`)) : h("span", { class: "muted" }, `—（平常 ${fmtNum(o.base, 0)}%）`)),
-          h("td", {}, cell(b, b && hgStats(b, hgSubset(T, "all")))),
-          R && R.lit ? h("td", {}, idx.length ? cell(b, b && hgStats(b, idx)) : h("span", { class: "muted" }, "沒有這樣的跌段")) : null);
+          DL ? h("td", {}, cell(bd, bd && hgStats(bd, hgSubset(D, "all")))) : null,
+          h("td", {}, cell(bm, bm && hgStats(bm, hgSubset(M, "all")))),
+          R && R.lit ? h("td", {}, idx.length ? cell(b, b && hgStats(b, idx), false) : h("span", { class: "muted" }, "沒有這樣的跌段")) : null);
       })))),
-      h("p", { class: "note" }, "段數都只有個位數到二十幾段；每一段的報酬、配置試算（換多少比例能少跌多少、平常少賺多少）在避險檢視。"));
+      h("p", { class: "note" }, "日線的段數比月資料多（月中的急跌也算進去），兩種切法的結論不一樣時以段數多、p 小的為準；"
+        + "每一段的報酬、配置試算（換多少比例能少跌多少、平常少賺多少）在避險檢視。"));
     g.append(cH.el);
   }
 

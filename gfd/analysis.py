@@ -698,7 +698,11 @@ def run(log=print):
     # 避險放在沙盤推演裡（同一包延後載入的資料）；一樣不能拖垮每日更新
     if scen is not None:
         try:
-            scen["hedge"] = HG.build(g, series, scen, _load("detail.json"), log=log)
+            scen["hedge"] = HG.build(g, series, scen, _load("detail.json"), log=log,
+                                     cascade_raw=_load("daily_cascade.json"), hedge_raw=_load("daily_hedge.json"))
+            hf = HG.finding(scen["hedge"])        # 總覽「各市場重點」的避險一則（總覽不下載沙盤推演那包，所以在這裡先組好）
+            if hf:
+                chain_findings.insert(0, hf)
         except Exception as exc:      # noqa: BLE001
             import traceback
             log(f"[hedge] 失敗，這次略過避險：{exc!r}\n{traceback.format_exc()}")

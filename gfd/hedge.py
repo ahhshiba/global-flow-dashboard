@@ -14,6 +14,11 @@
    這樣的段通常只有個位數，頁面上一段一點畫出來，不給判定。
 
 報酬是各資產的原幣報酬，沒有換算成新台幣；「美元（對新台幣）」本身列為一項。全部是歷史統計，不是投資建議。
+
+日線版（build_daily，2026-10-03）：月資料的 3 個月窗會把月中的急跌糊掉，日線改看「波段高點 → 波段低點」：
+從高點跌超過門檻算一段下跌，之後反彈超過同一門檻才確認見底（zigzag，一段只算一次）。各資產取同一天（或之前最近一天）的收盤，
+台股收盤比美國早半天，對幾週到幾個月的下跌段影響很小。債券基金用含息日線（daily_hedge.json），其他用事件衝擊的日線（價格）。
+置換檢定：每一段換成同樣長度、隨機起點的視窗。環境用「高點前一個完整月」的訊號（當時已經知道的）。
 """
 import datetime as dt
 
@@ -120,7 +125,7 @@ def _odds(scen, tid, g, mask, fin):
     return dict(ongoing=False, prob=None, base=base["base"] if base else None, chains=[])
 
 
-def build(g, series, scen, detail, log=print):
+def build(g, series, scen, detail, log=print, cascade_raw=None, hedge_raw=None):
     detail = (detail or {}).get("items", detail or {})
     trig = PB._triggers(series)
     ids = [t["id"] for t in trig]
@@ -210,9 +215,205 @@ def build(g, series, scen, detail, log=print):
                             odds=_odds(scen, tid, g, mask, fin), episodes=episodes, hedges=hedges))
         top = [f"{x['name']} {x['med']:+.1f}%（{x['up']:.0f}%）" for x in hedges[:3]]
         log(f"[hedge] {t['label']}：{len(episodes)} 段，跌段中位數最高 {'、'.join(top)}")
-    return dict(H=H, W=W, asof=g.months[g.end], mix_w=[int(round(100 * w)) for w in MIX_W],
+    daily = None
+    if cascade_raw:
+        # 日線版失敗只略過日線，月資料版照常（每日更新跑得到這裡）
+        try:
+            daily = build_daily(g, series, targets, cascade_raw, hedge_raw, X, ids, lit_now, k_reg, log=log)
+        except Exception as exc:      # noqa: BLE001
+            import traceback
+            log(f"[hedge] 日線版失敗，這次只有月資料版：{exc!r}\n{traceback.format_exc()}")
+    return dict(H=H, W=W, asof=g.months[g.end], mix_w=[int(round(100 * w)) for w in MIX_W], daily=daily,
                 regime=dict(id=C.HEDGE_REGIME, label=trig[k_reg]["label"], short=C.HEDGE_REGIME_SHORT,
                             lit=C.HEDGE_REGIME in lit_now) if k_reg is not None else None,
                 rules=dict(C.HEDGE_VERDICT, min_n=C.HEDGE_MIN_N),
                 lit=[dict(id=i, label=trig[ids.index(i)]["label"]) for i in lit_now],
                 targets=targets)
+
+
+# ── 日線：波段高點 → 波段低點 ──
+def _zigzag_down(px, thr):
+    """下跌段 [(高點索引, 低點索引, 已確認)]：從高點跌 ≥ thr 開始，之後從低點反彈 ≥ thr 才確認見底。"""
+    out, hi, lo, down = [], 0, None, False
+    for i in range(1, len(px)):
+        if not down:
+            if px[i] > px[hi]:
+                hi = i
+            elif px[i] <= px[hi] * (1 - thr):
+                down, lo = True, i
+        else:
+            if px[i] < px[lo]:
+                lo = i
+            elif px[i] >= px[lo] * (1 + thr):
+                out.append((hi, lo, True))
+                down, hi = False, i
+    if down:
+        out.append((hi, lo, False))
+    return out
+
+
+def _align(dates_t, d_src, v_src, max_gap=7):
+    """把來源序列對到目標的交易日：取當天或之前最近一天的收盤；超過 max_gap 天沒有資料就是缺值（序列停了或還沒開始）。"""
+    dt_t = np.array(dates_t, dtype="datetime64[D]")
+    dt_s = np.array(d_src, dtype="datetime64[D]")
+    v = np.array(v_src, float)
+    j = np.searchsorted(dt_s, dt_t, side="right") - 1
+    out = np.full(len(dt_t), np.nan)
+    ok = j >= 0
+    out[ok] = v[j[ok]]
+    gap = np.full(len(dt_t), 10 ** 6)
+    gap[ok] = (dt_t[ok] - dt_s[j[ok]]).astype(int)
+    out[gap > max_gap] = np.nan
+    out[~(out > 0)] = np.nan
+    return out
+
+
+def build_daily(g, series, mtargets, cascade_raw, hedge_raw, X, ids, lit_now, k_reg, log=print):
+    cas = (cascade_raw or {}).get("series", {})
+    hed = (hedge_raw or {}).get("series", {})
+    src = {"cascade": cas, "hedge": hed}
+    rng = np.random.default_rng(SEED + 1)
+    mt = {T["id"]: T for T in mtargets}
+    targets = []
+    for tid, sym, sid, thr in C.HEDGE_DD_TARGETS:
+        if sym not in cas:
+            log(f"[hedge] 日線沒有 {sym}，略過")
+            continue
+        D0, P0 = cas[sym]["dates"], np.array(cas[sym]["closes"], float)
+        keep = np.isfinite(P0) & (P0 > 0)
+        D = [d for d, k in zip(D0, keep) if k]
+        P = P0[keep]
+        legs = [(a, b, ok) for a, b, ok in _zigzag_down(P, thr / 100) if D[a] >= C.HEDGE_DD_START]
+        if len(legs) < 4:
+            continue
+        N = len(P)
+        in_leg = np.zeros(N, bool)
+        for a, b, _ in legs:
+            in_leg[a:b + 1] = True
+        L = int(np.median([b - a for a, b, _ in legs]))
+        start0 = next(i for i, d in enumerate(D) if d >= C.HEDGE_DD_START)
+        cs = np.concatenate([[0], np.cumsum(in_leg)])
+        calm_s = np.array([s for s in range(start0, N - L) if cs[s + L + 1] - cs[s] == 0])
+        tcalm = (P[calm_s + L] / P[calm_s] - 1) * 100 if len(calm_s) else np.array([])
+        episodes = []
+        for a, b, ok in legs:
+            m = g.pos.get(D[a][:7])
+            t0 = min(m - 1, g.end) if m is not None and m >= 1 else None     # 高點前一個完整月：當時已經知道的訊號
+            episodes.append(dict(m0=D[a], m1=D[b], days=int(b - a), ret=CH.r((P[b] / P[a] - 1) * 100),
+                                 recent=not ok, regime=bool(X[t0, k_reg]) if t0 is not None and k_reg is not None else None,
+                                 lit=[ids[j] for j in range(len(ids)) if ids[j] in lit_now and t0 is not None and X[t0, j]]))
+        hedges = []
+        for key, file, hsym, hsid, hname, inv in C.HEDGE_DD_ASSETS:
+            if hsym == sym or hsym not in src[file]:
+                continue
+            A = _align(D, src[file][hsym]["dates"], src[file][hsym]["closes"])
+            ret = lambda s0, s1: (A[s0] / A[s1] - 1) * 100 if inv else (A[s1] / A[s0] - 1) * 100     # noqa: E731
+            rets = [ret(a, b) for a, b, _ in legs]
+            have = [(a, b) for (a, b, _), r in zip(legs, rets) if np.isfinite(r)]
+            x = np.array([r for r in rets if np.isfinite(r)])
+            if len(x) < 4:
+                continue
+            med, up = float(np.median(x)), 100 * float(np.mean(x > 0))
+            p = None
+            first = int(np.argmax(np.isfinite(A)))
+            if len(x) >= C.HEDGE_MIN_N:
+                # 每一段換成同樣長度、隨機起點的視窗（只在這個資產有資料的範圍內抽），看中位數有多常不低於實際
+                draws = []
+                for a, b in have:
+                    Lb = b - a
+                    hi_s = N - 1 - Lb
+                    s0 = rng.integers(max(first, start0), max(max(first, start0) + 1, hi_s), size=C.HEDGE_PERM)
+                    draws.append(ret(s0, s0 + Lb))
+                null = np.nanmedian(np.vstack(draws), axis=0)
+                p = float((1 + np.sum(null >= med)) / (C.HEDGE_PERM + 1))
+            hc = (A[calm_s + L] / A[calm_s] - 1) * 100 if len(calm_s) else np.array([])
+            if inv and len(calm_s):
+                hc = (A[calm_s] / A[calm_s + L] - 1) * 100
+            okc = np.isfinite(hc) & np.isfinite(tcalm) if len(calm_s) else np.array([], bool)
+            mix = [CH.r(float(np.median((1 - w) * tcalm[okc] + w * hc[okc]))) for w in MIX_W] if okc.sum() else None
+            custom = hname is not None or hsid is None or hsid not in series
+            name = hname or (series[hsid]["name"] if hsid in series else hsym)
+            hedges.append(dict(key=key, sid=hsid, name=name, custom=custom, inverse=inv,
+                               rets=[CH.r(v, 3) for v in rets], n=int(len(x)), med=CH.r(med), up=CH.r(up, 0),
+                               worst=CH.r(float(np.min(x))), best=CH.r(float(np.max(x))), p=CH.r(p, 4),
+                               calm=CH.r(float(np.median(hc[okc]))) if okc.sum() else None,
+                               calm_mix=mix, calm_n=int(okc.sum()), verdict=_verdict(len(x), med, up, p)))
+        hedges.sort(key=lambda r: -(r["med"] if r["med"] is not None else -1e9))
+        tr = np.array([e["ret"] for e in episodes])
+        name = series[sid]["name"] if sid in series else cas[sym]["name"]
+        targets.append(dict(id=tid, sid=sid, name=name, label=f"{shortlabel(sid, series, cas[sym]['name'])}從波段高點跌 ≥ {thr}%",
+                            thr=thr, n=len(episodes), first=episodes[0]["m0"], L=L,
+                            med=CH.r(float(np.median(tr))), worst=CH.r(float(np.min(tr))),
+                            calm=CH.r(float(np.median(tcalm))) if len(tcalm) else None, calm_n=int(len(calm_s)),
+                            odds=(mt.get(tid) or {}).get("odds"), episodes=episodes, hedges=hedges))
+        top = [f"{x['name']} {int(round(x['up'] * x['n'] / 100))}/{x['n']}（p={x['p']}）" for x in
+               sorted(hedges, key=lambda r: (_RANK[r["verdict"]], -(r["med"] or 0)))[:2]]
+        log(f"[hedge] 日線 {targets[-1]['label']}：{len(episodes)} 段（中位 {L} 個交易日），最穩 {'、'.join(top)}")
+    return dict(targets=targets, start=C.HEDGE_DD_START,
+                fetched=(cascade_raw or {}).get("fetched_at"), adj=list(hed.keys()))
+
+
+_RANK = {"穩定避險": 0, "有點幫助": 1, "沒幫助": 2, "樣本不足": 3, "跟著跌": 4}
+
+
+def shortlabel(sid, series, fallback):
+    return {"eq_twii": "台股", "eq_spx": "S&P 500 ", "eq_ndx": "那斯達克 100 ", "eq_sox": "費城半導體"}.get(sid, fallback)
+
+
+_SHORT = {"b_ust_long": "美長債基金", "b_ig": "投資級債基金", "b_hy": "高收益債基金", "c_gold": "黃金", "fx_dxy": "美元指數",
+          "eq_spx": "S&P 500", "eq_ndx": "那斯達克 100", "eq_sox": "費城半導體", "eq_twii": "台股"}
+
+
+def _name(x):
+    return x["name"] if x.get("custom") else _SHORT.get(x.get("sid"), x["name"])
+
+
+def _sub(T, x, keep):
+    v = [r for e, r in zip(T["episodes"], x["rets"]) if keep(e) and r is not None]
+    return len(v), sum(r > 0 for r in v), (float(np.median(v)) if v else None)
+
+
+def finding(hedge, target_id="carry_twii", w=0.2):
+    """總覽「各市場重點」的避險一則（2026-10-03）：機率（月資料事件）＋日線下跌段最穩的避險＋換 20% 的試算＋利率上行時的提醒。全部由資料組出來。"""
+    if not hedge:
+        return None
+    M = next((T for T in hedge["targets"] if T["id"] == target_id), None)
+    if not M:
+        return None
+    D = next((T for T in ((hedge.get("daily") or {}).get("targets") or []) if T["id"] == target_id), None)
+    T = D or M
+    if not T["hedges"]:
+        return None
+    best = sorted(T["hedges"], key=lambda x: (_RANK[x["verdict"]], -(x["med"] or -1e9)))[0]
+    o = M.get("odds") or {}
+    if o.get("ongoing"):
+        title, alert = f"避險：「{M['label']}」現在就成立", True
+    elif o.get("prob") is not None:
+        title = f"避險：「{M['label']}」{hedge['W']} 個月內機率 {o['prob']:.0f}%（平常 {o['base']:.0f}%）"
+        alert = o["prob"] - (o.get("base") or 0) >= 10
+    else:
+        title, alert = f"避險：「{M['label']}」（平常 {hedge['W']} 個月內 {o.get('base') or 0:.0f}%）", False
+    n, up, med = _sub(T, best, lambda e: True)
+    head = (f"日線看 {T['first'][:4]} 年以來「{T['label']}」的 {T['n']} 段下跌" if D else f"「{T['label']}」的 {T['n']} 段")
+    txt = (f"{head}，{_name(best)}{f'有資料的 {n} 段裡' if n < T['n'] else ''}有 {up} 段同時上漲（中位 {med:+.1f}%，{best['verdict']}"
+           + (f"，p={best['p']:.3g}" if best.get("p") is not None else "") + "）")
+    pairs = [(e["ret"], r) for e, r in zip(T["episodes"], best["rets"]) if e["ret"] is not None and r is not None]
+    if pairs and best.get("calm_mix"):
+        b0 = [a for a, _ in pairs]
+        b1 = [(1 - w) * a + w * r for a, r in pairs]
+        k = MIX_W.index(w)
+        txt += (f"。換 {w:.0%} 成{_name(best)}：下跌段中位 {np.median(b0):+.1f}% → {np.median(b1):+.1f}%、"
+                f"最慘 {min(b0):+.1f}% → {min(b1):+.1f}%；其他時候（{'同樣 ' + str(T['L']) + ' 個交易日' if T.get('L') else '3 個月'}）中位 "
+                f"{best['calm_mix'][0]:+.1f}% → {best['calm_mix'][k]:+.1f}%")
+    reg = hedge.get("regime") or {}
+    if reg.get("lit"):
+        rn, ru, rm = _sub(T, best, lambda e: e.get("regime"))
+        if rn:
+            txt += f"。現在是{reg['short']}，這種環境下開始的 {rn} 段，它有 {ru} 段上漲"
+        bond = next((x for x in T["hedges"] if x["key"] in ("VUSTX", "b_ust_long")), None)
+        if bond and bond is not best:
+            bn, bu, _ = _sub(T, bond, lambda e: True)
+            gn, gu, _ = _sub(T, bond, lambda e: e.get("regime"))
+            if gn and bn and gu / gn < bu / bn - 0.1:
+                txt += f"；美長債平常 {bu}/{bn} 段上漲，這種環境只有 {gu}/{gn}"
+    return dict(tab="hedge", tone="alert" if alert else "neutral", title=title, text=txt + "。段數有限，是歷史統計，不是預測。")

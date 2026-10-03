@@ -825,3 +825,19 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
   .cs-tbl.compact td.n .muted { display: block; }
   table.data.cs-tbl.compact th, table.data.cs-tbl.compact th.n { white-space: normal; }
 }
+
+/* ── 手機（2026-10-03 手機檢查）：數字卡的小字不截斷、觸控的按鈕至少 32px 高 ── */
+@media (max-width: 640px) {
+  /* 「2026-08 月資料・30 年位階 x%」與指標名稱在窄卡片裡換行，不用刪節號吃掉位階 */
+  .kpi .k-asof, .kpi .k-name { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.35; }
+}
+@media (pointer: coarse) {
+  .chip { min-height: 32px; }
+  .tool { min-height: 32px; }
+  .tab-head details.how summary, details.more > summary, .hg-why > summary, details.sc-case > summary { padding: 6px 0; }
+  .hg-range { height: 32px; }
+  .fg-go { padding: 6px 0; }
+  .lg { min-height: 32px; }
+  .gl-rel { min-height: 32px; padding: 0 6px; }
+  details.prov > summary { padding: 6px 0; }
+}

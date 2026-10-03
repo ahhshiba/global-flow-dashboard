@@ -356,6 +356,26 @@ def fetch_cascade_daily(log=print):
     return errors
 
 
+def fetch_hedge_daily(log=print):
+    """避險日線要的含息日線（債券基金）→ data/raw/daily_hedge.json。抓不到的沿用上次的資料。"""
+    old = _load("daily_hedge.json", {}).get("series", {})
+    out, errors = {}, []
+    for sym in C.HEDGE_DAILY_ADJ:
+        try:
+            rows, _meta = S.yahoo_chart(sym, interval="1d", start="1985-01-01", adjusted=True, completed_only=True)
+            if len(rows) < 250:
+                raise RuntimeError(f"日線只有 {len(rows)} 筆")
+            out[sym] = dict(dates=[d.isoformat() for d, _ in rows], closes=[float(f"{v:.6g}") for _, v in rows])
+            time.sleep(0.3)
+        except Exception as e:  # noqa: BLE001
+            if sym in old:
+                out[sym] = dict(old[sym], stale=True)
+            errors.append(f"{sym}：{_err(e)}")
+    _save("daily_hedge.json", dict(fetched_at=dt.datetime.now().isoformat(timespec="seconds"), series=out, errors=errors))
+    log(f"[hedge] 含息日線 {len(out)}/{len(C.HEDGE_DAILY_ADJ)} 檔" + (f"，失敗：{errors[0]}" if errors else ""))
+    return errors
+
+
 def run(log=print):
     log("[history] 月資料序列")
     cov = fetch_series(log)
@@ -367,6 +387,7 @@ def run(log=print):
     fetch_detail(log)
     log("[history] 事件衝擊用日線")
     fetch_cascade_daily(log)
+    fetch_hedge_daily(log)
     _save("coverage.json", dict(generated_at=dt.datetime.now().isoformat(timespec="seconds"), items=cov))
     bad = [c for c in cov if c["status"] != "ok"]
     log(f"[history] 完成：{len(cov) - len(bad)} 成功、{len(bad)} 失敗或沿用舊資料")

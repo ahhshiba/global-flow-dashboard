@@ -116,7 +116,7 @@ TABS.overview = (root, redo) => {
     const provenanceTable = h("table", { class: "data" },
       h("thead", {}, h("tr", {}, ["資產", "截至月份", "來源／口徑"].map((label) => h("th", {}, label)))),
       h("tbody", {}, provenanceRows));
-    const provenance = h("details", {}, h("summary", {}, "查看來源、截至月份與口徑"),
+    const provenance = h("details", { class: "prov" }, h("summary", {}, "查看來源、截至月份與口徑"),
       h("div", { class: "tbl-wrap" }, provenanceTable));
     fbody.replaceChildren(divBars(rows), provenance);
   };
@@ -142,7 +142,7 @@ TABS.overview = (root, redo) => {
   const oc = card({ title: "各市場重點", span: 7, sub: "來自各分頁的自動敘述，依主題分組；數字加粗，按「看分頁」到原來的地方。" });
   const own = findingsList("overview");
   if (own) oc.body.append(own);
-  const GROUPS = [["fx", "匯市"], ["bond", "債市"], ["equity", "股市"], ["commodity", "商品"], ["vol", "VIX"], ["flow", "現金流"],
+  const GROUPS = [["hedge", "避險"], ["fx", "匯市"], ["bond", "債市"], ["equity", "股市"], ["commodity", "商品"], ["vol", "VIX"], ["flow", "現金流"],
     ["research", "配對關聯"], ["chains", "傳導鏈"], ["playbook", "訊號劇本"], ["cascade", "事件衝擊"], ["scenario", "沙盤推演"]];
   const known = new Set(GROUPS.map(([t]) => t));
   const extra = [...new Set(others.map((f) => f.tab))].filter((t) => !known.has(t)).map((t) => [t, t]);
@@ -150,7 +150,8 @@ TABS.overview = (root, redo) => {
     const items = others.filter((f) => f.tab === tab);
     if (!items.length) continue;
     const head = h("div", { class: "fg-h" }, h("b", {}, label), h("span", { class: "muted" }, `${items.length} 則`),
-      h("button", { class: "fg-go", type: "button", onclick: () => window.gotoTab(tab) }, tab === "research" ? "看關聯熱圖 →" : "看分頁 →"));
+      h("button", { class: "fg-go", type: "button", onclick: () => window.gotoTab(tab) },
+        tab === "research" ? "看關聯熱圖 →" : tab === "hedge" ? "看避險檢視 →" : "看分頁 →"));
     let body;
     if (tab === "chains" && A.chains && A.chains.items) body = chainStatus(A.chains, { compact: true });
     else if (tab === "playbook") {

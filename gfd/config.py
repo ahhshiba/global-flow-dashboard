@@ -661,6 +661,26 @@ HEDGE_PERM = 2000               # 「比隨便挑時間更常漲」的置換次�
 # 判定（全部跌段）：保護率＝跌段中上漲的比例；p＝跌段中位數不比隨機同樣多段的 3 個月窗高的機率
 HEDGE_VERDICT = dict(stable_up=70, stable_p=0.10, help_up=55, fall_med=-2.0, fall_up=35)
 
+# 避險（日線，2026-10-03）：月資料的 3 個月窗會把月中的急跌糊掉（例：2020-03），日線改看「波段高點 → 波段低點」。
+# 下跌段＝從高點跌超過門檻、之後反彈超過同一門檻才算見底（zigzag）；一段只算一次。目標和月資料版對應（同一個觸發 id），頁面切換時對得起來。
+HEDGE_DD_TARGETS = [("carry_twii", "^TWII", "eq_twii", 10), ("carry_spx", "^GSPC", "eq_spx", 10),
+                    ("inflation_ndx", "^NDX", "eq_ndx", 10), ("carry_sox", "^SOX", "eq_sox", 15)]
+HEDGE_DD_START = "1990-01-01"
+# 含息日線（債券基金不用含息的價格，每月約少算 0.3%，避險比較會偏差）→ data/raw/daily_hedge.json，跟事件衝擊日線一起每週更新
+HEDGE_DAILY_ADJ = ["VUSTX", "VWESX", "VWEHX"]
+# 日線避險候選：(key, 檔案, 代碼, 本站序列 id 或 None, 名稱, 反向)。來自 daily_cascade 的是價格（不含股息／配息）
+HEDGE_DD_ASSETS = [
+    ("VUSTX", "hedge", "VUSTX", "b_ust_long", None, False), ("VWESX", "hedge", "VWESX", "b_ig", None, False),
+    ("VWEHX", "hedge", "VWEHX", "b_hy", None, False),
+    ("GC=F", "cascade", "GC=F", "c_gold", None, False), ("DX-Y.NYB", "cascade", "DX-Y.NYB", "fx_dxy", None, False),
+    ("JPY=X~inv", "cascade", "JPY=X", "fx_usdjpy", "日圓（對美元）", True),
+    ("TWD=X", "cascade", "TWD=X", "fx_usdtwd", "美元（對新台幣）", False),
+    ("XLU", "cascade", "XLU", None, "公用事業股", False), ("XLP", "cascade", "XLP", None, "必需消費股", False),
+    ("^GSPC", "cascade", "^GSPC", "eq_spx", None, False), ("^NDX", "cascade", "^NDX", "eq_ndx", None, False),
+    ("^SOX", "cascade", "^SOX", "eq_sox", None, False), ("^TWII", "cascade", "^TWII", "eq_twii", None, False),
+    ("^N225", "cascade", "^N225", "eq_n225", None, False), ("^HSI", "cascade", "^HSI", "eq_hsi", None, False),
+]
+
 # ── 單一標的線圖（日／週／月／年）──
 # 日線保留年數、週線保留年數；月線與年線從 1995 起。收盤價已含分割調整、不含股息。
 DETAIL_KEEP_YEARS = {"d": 3, "w": 15}
