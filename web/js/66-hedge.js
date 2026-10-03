@@ -38,6 +38,8 @@ const hgDaily = (H) => (H && H.daily && H.daily.targets && H.daily.targets.lengt
 const hgPrefer = (H, id) => { const D = hgDaily(H); return (D && D.targets.find((x) => x.id === id)) || H.targets.find((x) => x.id === id); };
 // 「同樣長度的對照視窗」的說法：日線是同樣交易日數、月資料是 3 個月
 const hgWin = (T) => (T.L ? `同樣 ${T.L} 個交易日` : "3 個月");
+// 資產的資料比目標短（例：美元／新台幣日線 2004 年起）：寫出從哪一年起，不然「24/25」看起來像涵蓋全部年份
+const hgSince = (T, x) => { const i = x.rets.findIndex((r) => r != null); return i > 0 ? T.episodes[i].m0.slice(0, 4) : null; };
 
 /* 開頭結論（全部由資料組出來；換目標時重寫） */
 function hedgeLead(H, T) {
@@ -51,7 +53,8 @@ function hedgeLead(H, T) {
   const sAll = hgStats(b, hgSubset(T, "all"));
   const nm = hgSp(hgName(b));
   const head = T.L ? `日線看 ${T.first.slice(0, 4)} 年以來「${T.label}」的 ${T.n} 段下跌` : `過去「${T.label}」的 ${T.n} 段下跌`;
-  let txt = `${head}，${nm}${sAll.n < T.n ? `有資料的 ${sAll.n} 段裡` : ""}有 ${sAll.up} 段同時上漲（中位 ${hgPct(sAll.med)}，${b.verdict}${fin(b.p) ? `，${scP(b.p)}` : ""}）`;
+  const since = sAll.n < T.n ? hgSince(T, b) : null;
+  let txt = `${head}，${nm}${sAll.n < T.n ? `有資料的 ${sAll.n} 段裡（${since ? since + " 年起" : "資料較短"}）` : ""}有 ${sAll.up} 段同時上漲（中位 ${hgPct(sAll.med)}，${b.verdict}${fin(b.p) ? `，${scP(b.p)}` : ""}）`;
   const R = H.regime;
   const idx = R ? hgSubset(T, "regime") : [];
   if (R && R.lit && idx.length >= 3) {
@@ -79,7 +82,10 @@ const HEDGE_VIEW = lazyTab("scenario", (root) => {
   root.replaceChildren(tabHead("避險：如果真的跌了，什麼會漲、能補回多少",
     R ? (DL ? `日線版（預設）：從波段高點跌超過門檻（${DL.targets.map((T) => `${T.label.replace(/從波段高點跌.*/, "")} ${T.thr}%`).join("、")}）算一段下跌，`
       + "之後從低點反彈超過同一門檻才確認見底（zigzag，一段只算一次）；每個資產看同一段高點到低點的報酬（當天或之前最近一天的收盤，台股比美國早收半天，對幾週以上的下跌影響很小）。"
-      + "債券基金用含配息的日線；公用事業、必需消費股只有價格（不含股息）。p 值把每一段換成同樣長度、隨機起點的視窗比。日線每週更新。" : "")
+      + "高點與低點都是事後才知道的：這描述「跌的那段期間什麼會漲」，不是進出場訊號。"
+      + "債券基金用含配息的日線；黃金、匯率、公用事業、必需消費股只有價格（不含股息）。p 值把每一段換成同樣長度、隨機起點的視窗比；"
+      + "下跌段在時間上會群聚（同一個空頭被切成好幾段），檢定把每段當成獨立的，所以 p 值可能偏樂觀。"
+      + "上漲次數對收盤的對齊很敏感：差一個交易日，上漲次數會變動幾段（結論方向不變，見 README）。資料比較短的資產（例：美元／新台幣日線 2004 年起）只算有資料的段。日線每週更新。" : "")
       + `月資料版：跌段用傳導鏈同一個條件（例：台股 3 個月跌 ≥ 5%），亮燈的月份間隔 ≤ 3 個月算同一段，每段取最深的那 3 個月——一段只算一次，`
       + "2008 年這種長跌段不會重複算十幾次。每個資產看同一個 3 個月（月底收盤到月底收盤）的報酬：上漲次數就是「保護率」，另看中位數與最差一次。"
       + `判定只看全部跌段：穩定避險＝中位數 > 0、上漲 ≥ ${R.stable_up}%，而且跌段中的中位數明顯高於隨機挑同樣多個 3 個月（p ≤ ${R.stable_p}，跌的時候特別會漲，不只是平常就在漲）；`

@@ -700,13 +700,17 @@ def run(log=print):
         try:
             scen["hedge"] = HG.build(g, series, scen, _load("detail.json"), log=log,
                                      cascade_raw=_load("daily_cascade.json"), hedge_raw=_load("daily_hedge.json"))
-            hf = HG.finding(scen["hedge"])        # 總覽「各市場重點」的避險一則（總覽不下載沙盤推演那包，所以在這裡先組好）
-            if hf:
-                chain_findings.insert(0, hf)
         except Exception as exc:      # noqa: BLE001
             import traceback
             log(f"[hedge] 失敗，這次略過避險：{exc!r}\n{traceback.format_exc()}")
             scen["hedge"] = None
+        # 總覽「各市場重點」的避險一則（總覽不下載沙盤推演那包，所以在這裡先組好）；它失敗只少這一則
+        try:
+            hf = HG.finding(scen["hedge"])
+            if hf:
+                chain_findings.insert(0, hf)
+        except Exception as exc:      # noqa: BLE001
+            log(f"[hedge] 總覽的避險一則失敗，略過：{exc!r}")
     out = dict(
         generated_at=dt.datetime.now(TPE).isoformat(timespec="seconds"),
         fetched_at=sraw.get("fetched_at"),

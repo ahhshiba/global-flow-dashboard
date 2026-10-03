@@ -395,7 +395,8 @@ def finding(hedge, target_id="carry_twii", w=0.2):
         title, alert = f"避險：「{M['label']}」（平常 {hedge['W']} 個月內 {o.get('base') or 0:.0f}%）", False
     n, up, med = _sub(T, best, lambda e: True)
     head = (f"日線看 {T['first'][:4]} 年以來「{T['label']}」的 {T['n']} 段下跌" if D else f"「{T['label']}」的 {T['n']} 段")
-    txt = (f"{head}，{_name(best)}{f'有資料的 {n} 段裡' if n < T['n'] else ''}有 {up} 段同時上漲（中位 {med:+.1f}%，{best['verdict']}"
+    first = next((e["m0"][:4] for e, r in zip(T["episodes"], best["rets"]) if r is not None), None)
+    txt = (f"{head}，{_name(best)}{f'有資料的 {n} 段裡（{first} 年起）' if n < T['n'] else ''}有 {up} 段同時上漲（中位 {med:+.1f}%，{best['verdict']}"
            + (f"，p={best['p']:.3g}" if best.get("p") is not None else "") + "）")
     pairs = [(e["ret"], r) for e, r in zip(T["episodes"], best["rets"]) if e["ret"] is not None and r is not None]
     if pairs and best.get("calm_mix"):

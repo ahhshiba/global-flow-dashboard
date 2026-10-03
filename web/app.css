@@ -840,4 +840,12 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
   .lg { min-height: 32px; }
   .gl-rel { min-height: 32px; padding: 0 6px; }
   details.prov > summary { padding: 6px 0; }
+  .fg-compact summary { min-height: 32px; padding: 6px 0; }
+  select.hg-sel { min-height: 32px; }
+  /* 鉅亨每日：新聞標題整行可點（單行標題原本只有 20px 高）、搜尋框與「只看重點」勾選框放大 */
+  .news .n-title { display: block; padding: 4px 0; }
+  #news-q { min-height: 36px; }
+  #news-hl { width: 22px; height: 22px; }
+  .news-tools label[for="news-hl"] { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; }
+  .finds b > a { display: block; padding: 5px 0; }
 }

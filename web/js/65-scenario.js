@@ -70,7 +70,7 @@ function scenarioTiles(S, hz) {
     likely ? { label: "比平常更常接著成立的一層（歷史比例）", value: `${fmtNum(likely.n.prob, 0)}%`, tone: likely.n.prob - likely.n.base >= 10 ? "warn" : null,
       sub: `${likely.n.label}：歷史上上游成立後 ${S.within} 個月內跟著成立的比例（平常 ${fmtNum(likely.n.base, 0)}%；${likely.n.n_episodes} 段，${likely.p.name}）` } : null,
     hs && hs.n ? { label: `${HG.label}時的避險候選（${HG.L ? "日線，" : ""}上漲次數／段數）`, value: `${hgName(hb)} ${hs.up}/${hs.n}`, tone: hb.verdict === "穩定避險" ? "ok" : "meh",
-      sub: `判定：${hb.verdict}（${scP(hb.p)}）`
+      sub: `判定：${hb.verdict}（${scP(hb.p)}${hs.n < HG.n && hgSince(HG, hb) ? `；${hgSince(HG, hb)} 年起的 ${hs.n} 段` : ""}）`
         + (hr && hr.n ? `；${S.hedge.regime.short}開始的跌段只有 ${hr.up}/${hr.n}` : "")
         + (HG.hedges.some((x) => fin(x.p) && x.p <= 0.05) ? "" : "。這個情境沒有任何一項在統計上站得住（p ≤ 0.05）") } : null,
   ]);
