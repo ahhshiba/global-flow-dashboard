@@ -53,24 +53,37 @@ function storyNext(S) {
   for (const p of S.paths) for (const n of p.nodes) {
     if (n.triggered || !fin(n.prob) || !fin(n.base)) continue;
     const key = n.trigger || n.label;
-    const lift = n.prob - n.base;
+    const lift = stPA(n) - n.base;                      // 2026-10-03 起用校準後（往平常收縮）的機率
     if (!by.has(key) || Math.abs(lift) > Math.abs(by.get(key).lift)) by.set(key, { p, n, lift });
   }
   return [...by.values()];
 }
-// 「比平常更可能」這類比例回頭對答案的結果（case_summary.layers）：卡片上要常駐，不能只在點開裡
+// 校準後的機率（往平常收縮；沒有就用原始）
+const stPA = (n) => (fin(n.prob_adj) ? n.prob_adj : n.prob);
+const stPA12 = (n) => (fin(n.prob12_adj) ? n.prob12_adj : n.prob12);
+const ST_GAP = 5;            // 校準後和平常差 ≥ 5 個百分點才算「更可能」（和 config.SCENARIO_LIFT_GAP 一致）
+// 「比平常更可能」這類提示回頭對答案的結果：2005 年起每個月走步對答案（幾百次），不是只看 12 個案例。卡片上要常駐。
 function storyReliab(S) {
+  const rc = S.reliability && S.reliability.chain;
+  if (rc && rc.more && rc.more.n >= 30) {
+    const m = rc.more, l = rc.less;
+    const good = m.consistent && m.realized - m.base >= 3;
+    return { word: good ? "方向有參考價值" : "參考價值低", tone: good ? "ok" : "bad",
+      text: `2005 年起每個月回頭對答案（${rc.n} 次）：「比平常更可能」的提示有 ${m.n} 次，實際發生 ${fmtNum(m.realized, 0)}%、平常 ${fmtNum(m.base, 0)}%${m.consistent ? "，前後半都成立" : "，但前後半不一致"}。`
+        + `機率數字已照段數往平常收縮（校準後各段的實際發生率對得上，原始數字會高估）。「更不可能」的提示過去${l && l.consistent ? "也成立" : "沒有參考價值"}。`,
+      lessOk: !!(l && l.consistent) };
+  }
   const ly = (S.case_summary || {}).layers || {};
   if (!ly.n) return null;
-  return ly.skill > 0 ? { word: "有一點參考價值", tone: "meh", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例比直接用「平常」準一點。` }
-    : { word: "參考價值低", tone: "bad", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例沒有比直接用「平常」準。` };
+  return ly.skill > 0 ? { word: "有一點參考價值", tone: "meh", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例比直接用「平常」準一點。`, lessOk: false }
+    : { word: "參考價值低", tone: "bad", text: `拿過去 ${ly.n} 次類似時點回頭對答案，這類比例沒有比直接用「平常」準。`, lessOk: false };
 }
 const storyDiff = (x) => (x >= 0 ? `多 ${fmtNum(x, 2)}` : `少 ${fmtNum(-x, 2)}`);
 
 /* 開頭一句：先講可能發生什麼（附可信度），再講下跌時什麼擋得住，最後講排行 */
 function storyLead(S, hz) {
   if (!S.active.length) return "目前沒有任何訊號亮著，沒有可以推演的方向。";
-  const ups = storyNext(S).filter((x) => x.lift >= 10).sort((a, b) => b.lift - a.lift).slice(0, 3);
+  const ups = storyNext(S).filter((x) => x.lift >= ST_GAP).sort((a, b) => b.lift - a.lift).slice(0, 3);
   const R = storyReliab(S);
   const H = S.hedge && S.hedge.targets && S.hedge.targets.length ? S.hedge : null;
   const prep = (() => {
@@ -82,8 +95,8 @@ function storyLead(S, hz) {
     return `過去${scPlain(tgt.id, tgt.label)}時，最常一起漲的是${hgName(b)}（${since ? `${since} 年起、` : ""}回頭看）。`;
   })();
   const v = S.backtest[String(hz)].ridge.verdict;
-  return (ups.length ? `接下來 ${S.within} 個月比平常更可能：${ups.map((u) => `${scPlain(u.n.trigger, u.n.label)}（${fmtNum(u.n.prob, 0)}%，平常 ${fmtNum(u.n.base, 0)}%）`).join("、")}。`
-    + (R ? `不過這類比例回頭對答案${R.word === "參考價值低" ? "參考價值低" : "只有一點參考價值"}。` : "")
+  return (ups.length ? `接下來 ${S.within} 個月比平常更可能：${ups.map((u) => `${scPlain(u.n.trigger, u.n.label)}（${fmtNum(stPA(u.n), 0)}%，平常 ${fmtNum(u.n.base, 0)}%）`).join("、")}。`
+    + (R ? (R.word === "方向有參考價值" ? `這類「更可能」的提示過去實際發生率比平常高，方向有參考價值；機率數字已校準。` : `不過這類比例回頭對答案${R.word === "參考價值低" ? "參考價值低" : "只有一點參考價值"}。`) : "")
     : `接下來 ${S.within} 個月沒有哪件事明顯比平常更可能。`)
     + prep + (v === "樣本外有效" ? "" : "「哪個標的會漲最多」沒有可靠的答案。");
 }
@@ -146,10 +159,10 @@ function storyCard(S, hz) {
     const after = nameOf(p, n.after);
     const sum = h("summary", { class: "st-sum" },
       h("span", { class: "st-name" }, scPlain(n.trigger, n.label),
-        h("span", { class: "sub" }, `接在「${after}」之後${fin(n.prob12) ? `・12 個月內 ${fmtNum(n.prob12, 0)}%（平常 ${fmtNum(n.base12, 0)}%）` : ""}`)),
-      h("span", { class: "st-bar", role: "img", "aria-label": `${S.within} 個月內 ${n.prob}%，平常 ${n.base}%` },
-        h("i", { class: `fill${more ? " more" : ""}`, style: `width:${n.prob}%` }), h("i", { class: "base", style: `left:${n.base}%` })),
-      h("span", { class: "st-pct" }, h("b", {}, `${fmtNum(n.prob, 0)}%`), h("span", { class: "muted" }, ` 平常 ${fmtNum(n.base, 0)}%`)),
+        h("span", { class: "sub" }, `接在「${after}」之後${fin(n.prob12) ? `・12 個月內 ${fmtNum(stPA12(n), 0)}%（平常 ${fmtNum(n.base12, 0)}%）` : ""}`)),
+      h("span", { class: "st-bar", role: "img", "aria-label": `${S.within} 個月內 ${stPA(n)}%（校準後），平常 ${n.base}%` },
+        h("i", { class: `fill${more ? " more" : ""}`, style: `width:${stPA(n)}%` }), h("i", { class: "base", style: `left:${n.base}%` })),
+      h("span", { class: "st-pct", title: fin(n.prob_adj) ? `校準後；原始 ${fmtNum(n.prob, 0)}%（${n.n_episodes} 段，往平常收縮）` : "" }, h("b", {}, `${fmtNum(stPA(n), 0)}%`), h("span", { class: "muted" }, ` 平常 ${fmtNum(n.base, 0)}%`)),
       hedge ? h("span", { class: "st-prep" }, `${hedge.short}・回頭看`) : null);
     const det = h("details", { class: "st-item" }, sum);
     det.addEventListener("toggle", () => {
@@ -159,7 +172,7 @@ function storyCard(S, hz) {
         scPlain(m.trigger, m.label), h("small", {}, m.triggered ? "已發生" : i === idx ? "這一步" : "還沒")));
       const others = S.paths.filter((q) => q !== p && q.nodes.some((m) => m.trigger === n.trigger && !m.triggered && fin(m.prob)));
       const me = scPlain(n.trigger, n.label);
-      const near12 = fin(n.prob12) && fin(n.base12) && Math.abs(n.prob12 - n.base12) < 5;
+      const near12 = fin(n.prob12) && fin(n.base12) && Math.abs(stPA12(n) - n.base12) < 5;
       const read12 = !near12 ? "。" : more ? "——時間拉長就和平常差不多，比較像「比較早發生」，不是「比較會發生」。"
         : "——時間拉長就和平常差不多，比較像「比較晚發生」，不是「比較不會發生」。";
       det.append(h("div", { class: "st-detail" },
@@ -173,9 +186,10 @@ function storyCard(S, hz) {
         h("ul", { class: "st-ul" },
           h("li", {}, `過去有 ${n.n_episodes} 段（${n.n_months} 個月），「${after}」已經發生、「${me}」還沒發生。`),
           h("li", {}, `這些月份裡，${S.within} 個月內「${me}」真的發生的有 ${fmtNum(n.prob, 0)}%。`),
+          fin(n.prob_adj) ? h("li", {}, `只有 ${n.n_episodes} 段，把它往平常拉一點（校準）：${fmtNum(n.prob_adj, 0)}%——頁面上用這個數字。校準後的數字過去對得上實際發生率，原始數字會高估。`) : null,
           h("li", {}, `隨便挑一個月來看是 ${fmtNum(n.base, 0)}%——這就是「平常」。`),
           fin(n.wait) ? h("li", {}, `真的發生的話，通常在第 ${fmtNum(n.wait, 0)} 個月。`) : null,
-          fin(n.prob12) ? h("li", {}, `拉長到 12 個月：${fmtNum(n.prob12, 0)}%，平常 ${fmtNum(n.base12, 0)}%${read12}`) : null),
+          fin(n.prob12) ? h("li", {}, `拉長到 12 個月：${fmtNum(stPA12(n), 0)}%（校準後），平常 ${fmtNum(n.base12, 0)}%${read12}`) : null),
         h("h5", {}, "可信度"),
         h("p", {}, `${n.n_episodes} 次不算多（通常要幾十次以上才比較穩）。${R ? `${R.text.replace(/。$/, "")}——${R.word}。` : ""}`),
         hedge ? [h("h5", {}, "如果真的發生，過去什麼擋得住"), ...hedge.nodes] : null,
@@ -185,8 +199,8 @@ function storyCard(S, hz) {
   };
 
   const nx = storyNext(S);
-  const more = nx.filter((x) => x.lift >= 10).sort((a, b) => b.lift - a.lift).slice(0, 4);
-  const less = nx.filter((x) => x.lift <= -10).sort((a, b) => a.lift - b.lift).slice(0, 2);
+  const more = nx.filter((x) => x.lift >= ST_GAP).sort((a, b) => b.lift - a.lift).slice(0, 4);
+  const less = nx.filter((x) => x.lift <= -ST_GAP).sort((a, b) => a.lift - b.lift).slice(0, 2);
   const B = S.backtest[String(hz)].ridge, v = B.verdict;
   const rank = h("details", { class: "st-item" },
     h("summary", { class: "st-sum st-sum-rank" }, h("span", { class: "st-name" }, `哪個標的接下來 ${hz} 個月漲最多？`),
@@ -214,7 +228,7 @@ function storyCard(S, hz) {
 
   c.body.append(
     more.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "比平常更可能"), ...more.map(item)) : h("p", { class: "st-note" }, "沒有哪件事明顯比平常更可能。"),
-    less.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "比平常更不可能"), ...less.map(item)) : null,
+    less.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, R && !R.lessOk ? "比平常更不可能（這個方向回頭對答案沒有參考價值，只是列出來）" : "比平常更不可能"), ...less.map(item)) : null,
     h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "其他問題"), rank),
     h("p", { class: "st-note" }, "全部是歷史統計，不是投資建議。"),
     basis);

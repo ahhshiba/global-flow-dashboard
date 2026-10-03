@@ -116,11 +116,12 @@ def _odds(scen, tid, g, mask, fin):
             if n.get("triggered"):
                 return dict(ongoing=True, current=n.get("current"), current_at=n.get("current_at"), chain=p["name"])
             if n.get("prob") is not None:
-                rows.append(dict(chain=p["name"], after=n.get("after"), prob=n["prob"], base=n.get("base"),
-                                 prob12=n.get("prob12"), base12=n.get("base12"), n_episodes=n.get("n_episodes")))
+                # 2026-10-03 起用收縮後（校準）的機率；原始值另存
+                rows.append(dict(chain=p["name"], after=n.get("after"), prob=n.get("prob_adj", n["prob"]), prob_raw=n["prob"], base=n.get("base"),
+                                 prob12=n.get("prob12_adj", n.get("prob12")), base12=n.get("base12"), n_episodes=n.get("n_episodes")))
     if rows:
         rows.sort(key=lambda r: -r["prob"])
-        return dict(ongoing=False, prob=rows[0]["prob"], base=rows[0]["base"], chains=rows)
+        return dict(ongoing=False, prob=rows[0]["prob"], prob_raw=rows[0]["prob_raw"], base=rows[0]["base"], chains=rows)
     base = SC._node_prob(np.ones(len(mask), bool), mask, fin, g.end, W)
     return dict(ongoing=False, prob=None, base=base["base"] if base else None, chains=[])
 

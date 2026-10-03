@@ -109,8 +109,11 @@ def _walk_forward(X, F, Mom, h, end, start, lam, k, lags):
             continue
         r = F[T, ok]
         mom = np.where(np.isfinite(Mom[T, ok]), Mom[T, ok], 0.0)
-        periods.append(dict(T=T, real=r, pr=pr[T, ok], pa=pa[T, ok], own=r - mus[T, ok],
-                            ridge=_spread(pr[T, ok], r, k), avg=_spread(pa[T, ok], r, k), mom=_spread(mom, r, k)))
+        kp = _knn_pred(Xf, T, F, h, lags)[ok]
+        ens = (pr[T, ok] + np.where(np.isfinite(kp), kp, 0.0)) / 2        # 集成：模型與相似時點的 % 平均（相似時點沒值時只剩模型的一半）
+        periods.append(dict(T=T, real=r, pr=pr[T, ok], pa=pa[T, ok], kp=kp, ens=ens, own=r - mus[T, ok],
+                            ridge=_spread(pr[T, ok], r, k), avg=_spread(pa[T, ok], r, k), mom=_spread(mom, r, k),
+                            knn=_spread(np.where(np.isfinite(kp), kp, -99.0), r, k), ensemble=_spread(ens, r, k)))
     return periods
 
 
@@ -162,8 +165,103 @@ def _node_prob(cm_i, cm_j, fin_j, upto, W):
     waits = [int(np.argmax(cm_j[t + 1:t + 1 + W])) + 1 for t, hh in zip(ts, hits) if hh]
     m = np.zeros(len(cm_i), bool)
     m[ts] = True
-    return dict(prob=CH.r(100 * np.mean(hits), 0) if hits else None, base=CH.r(100 * np.mean(base), 0) if base else None,
-                wait=CH.r(float(np.median(waits)), 1) if waits else None, n_months=len(ts), n_episodes=len(CH.episodes(m)))
+    n_e = len(CH.episodes(m))
+    p = float(np.mean(hits)) if hits else None
+    b = float(np.mean(base)) if base else None
+    adj = _shrink(p, b, n_e)
+    return dict(prob=CH.r(100 * p, 0) if p is not None else None, base=CH.r(100 * b, 0) if b is not None else None,
+                prob_adj=CH.r(100 * adj, 0) if adj is not None else None,
+                wait=CH.r(float(np.median(waits)), 1) if waits else None, n_months=len(ts), n_episodes=n_e)
+
+
+def _shrink(p, base, n_e, k=None):
+    """小樣本的機率往「平常」收縮：(n×p + K×平常)/(n+K)。段數少的提示被拉回平常，段數多的保留。"""
+    if p is None or base is None:
+        return None
+    k = C.SCENARIO_SHRINK_K if k is None else k
+    return (n_e * p + k * base) / (n_e + k)
+
+
+def _knn_pred(Xa, T, F, h, lags, thr=SIM_THR, minn=6):
+    """相似時點：亮燈組合和第 T 個月重疊 ≥ thr 的歷史月份（結果在 T 以前已知），各資產之後 h 個月的中位數減平常中位數。"""
+    inter = Xa[:T] @ Xa[T]
+    union = Xa[:T].sum(1) + Xa[T].sum() - inter
+    with np.errstate(invalid="ignore", divide="ignore"):
+        jac = np.where(union > 0, inter / np.maximum(union, 1), 0.0)
+    out = np.full(F.shape[1], np.nan)
+    for a in range(F.shape[1]):
+        upto = T - h - lags[a]
+        if upto < 30:
+            continue
+        m = jac[:upto + 1] >= thr
+        v = F[:upto + 1, a][m]
+        v = v[np.isfinite(v)]
+        allv = F[:upto + 1, a]
+        allv = allv[np.isfinite(allv)]
+        if len(v) >= minn and len(allv) > 30:
+            out[a] = float(np.median(v) - np.median(allv))
+    return out
+
+
+def _chain_reliability(X, trig, key_to_id, end, W, start, split):
+    """傳導鏈下一層的可信度：2005 年起每個月、每段「上游亮、這層沒亮」的連結，都只用當時以前的資料推一次，再對答案。
+    回：預測次數、Brier（原始／收縮後／直接用平常）、「比平常更可能」與「更不可能」提示的實際發生率（全期與前後半）、校準分箱。"""
+    ids = [t["id"] for t in trig]
+    links = []
+    for ch in C.CHAINS:
+        for a, b in zip(ch["nodes"], ch["nodes"][1:]):
+            ia, ib = key_to_id.get(_key(a)), key_to_id.get(_key(b))
+            if ia in ids and ib in ids:
+                links.append((ids.index(ia), ids.index(ib)))
+    fin = {}
+    for _, j in links:
+        if j not in fin:
+            t = trig[j]
+            fin[j] = np.isfinite(_vals_of(t))
+    rows = []
+    for T in range(start, end - W + 1):
+        last = T - W
+        for i, j in links:
+            if not (X[T, i] and not X[T, j] and fin[j][T]):
+                continue
+            m = X[:last + 1, i] & ~X[:last + 1, j] & fin[j][:last + 1]
+            ts = np.where(m)[0]
+            if len(ts) < 3:
+                continue
+            p = float(np.mean([X[t + 1:t + 1 + W, j].any() for t in ts]))
+            bts = np.where(~X[:last + 1, j] & fin[j][:last + 1])[0]
+            b = float(np.mean([X[t + 1:t + 1 + W, j].any() for t in bts]))
+            n_e = len(CH.episodes(m))
+            rows.append((T, p, b, _shrink(p, b, n_e), float(X[T + 1:T + 1 + W, j].any())))
+    if len(rows) < 50:
+        return None
+    R = np.array(rows)
+    T_, p, b, q, y = R.T
+    gap = C.SCENARIO_LIFT_GAP / 100
+    def grp(mask):
+        return dict(n=int(mask.sum()), realized=CH.r(100 * y[mask].mean(), 0) if mask.any() else None,
+                    base=CH.r(100 * b[mask].mean(), 0) if mask.any() else None)
+    def flag(sign):
+        sel = (q - b >= gap) if sign > 0 else (b - q >= gap)
+        halves = [grp(sel & (T_ < split)), grp(sel & (T_ >= split))]
+        lifts = [(hv["realized"] - hv["base"]) if hv["n"] >= 10 and hv["realized"] is not None else None for hv in halves]
+        consistent = all(l is not None and l * sign > 0 for l in lifts)
+        return dict(**grp(sel), halves=halves, consistent=bool(consistent))
+    bins = []
+    for lo in np.arange(0.2, 0.9, 0.1):
+        m = (q >= lo) & (q < lo + 0.1)
+        if m.sum() >= 15:
+            bins.append(dict(lo=CH.r(100 * lo, 0), hi=CH.r(100 * (lo + 0.1), 0), n=int(m.sum()), realized=CH.r(100 * y[m].mean(), 0)))
+    brier = lambda v: CH.r(float(np.mean((v - y) ** 2)), 4)
+    return dict(n=len(rows), start=start, split=split, brier_raw=brier(p), brier_adj=brier(q), brier_base=brier(b),
+                more=flag(+1), less=flag(-1), bins=bins, gap=C.SCENARIO_LIFT_GAP, k=C.SCENARIO_SHRINK_K)
+
+
+def _vals_of(t):
+    return _VALS[t["id"]]
+
+
+_VALS = {}
 
 
 def _chain_state(cmasks, finite, on, rest, upto, H):
@@ -543,18 +641,42 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         slope = float(cal[:, 0] @ cal[:, 1] / (cal[:, 0] @ cal[:, 0])) if cal.size else None
         corr = float(np.corrcoef(cal[:, 0], cal[:, 1])[0, 1]) if cal.size else None
         use_cal = slope is not None and slope > 0 and verdict != "樣本外無效"
+        offs_e = _offsets(periods, h, "ensemble", rng)
+        verdict_e = _verdict(offs_e)
+        # 單一標的的方向：集成預測 |值| > 1 時，之後實際超額同號的比例（研究時 52～55%，接近擲銅板；計分板要照實寫）
+        dir_pairs = [(np.sign(e), np.sign(o)) for p in periods for e, o in zip(p["ens"], p["own"]) if abs(e) > 1 and np.isfinite(o)]
+        dir_hit = CH.r(100 * float(np.mean([a == b for a, b in dir_pairs])), 0) if dir_pairs else None
+        cal_e = np.array([(p_, o_) for p in periods for p_, o_ in zip(p["ens"], p["own"])])
+        slope_e = float(cal_e[:, 0] @ cal_e[:, 1] / (cal_e[:, 0] @ cal_e[:, 0])) if cal_e.size and (cal_e[:, 0] @ cal_e[:, 0]) > 0 else None
+        use_cal_e = slope_e is not None and slope_e > 0 and verdict_e != "樣本外無效"
+        split_i = months.index(C.SCENARIO_SPLIT) if C.SCENARIO_SPLIT in months else None
+        halves = {}
+        for key in ("ridge", "knn", "ensemble"):
+            hv = []
+            for name, sel in (("前半", lambda p: p["T"] < split_i), ("後半", lambda p: p["T"] >= split_i)):
+                sub = [p for p in periods if sel(p)] if split_i is not None else []
+                o = _offsets(sub, h, key, rng) if len(sub) >= 16 else []
+                hv.append(dict(name=name, mean=CH.r(float(np.mean([x["mean"] for x in o]))) if o else None, verdict=_verdict(o) if o else "樣本不足",
+                               n=len(sub)))
+            halves[key] = hv
         backtest[str(h)] = dict(
             periods=len(periods), start=months[periods[0]["T"]] if periods else None,
             end=months[periods[-1]["T"]] if periods else None,
             ridge=dict(**_summ(periods, "ridge"), offsets=offs, verdict=verdict),
             avg=dict(**_summ(periods, "avg"), offsets=_offsets(periods, h, "avg", rng)),
             momentum=dict(**_summ(periods, "mom"), offsets=_offsets(periods, h, "mom", rng)),
+            knn=dict(**_summ(periods, "knn"), offsets=_offsets(periods, h, "knn", rng)),
+            ensemble=dict(**_summ(periods, "ensemble"), offsets=offs_e, verdict=verdict_e,
+                          calibration=dict(slope=CH.r(slope_e), used=bool(use_cal_e)), dir_hit=dir_hit, dir_n=len(dir_pairs)),
+            halves=halves, split=C.SCENARIO_SPLIT,
             calibration=dict(slope=CH.r(slope), corr=CH.r(corr, 3), used=bool(use_cal)),
             n_assets=[min(len(p["real"]) for p in periods), max(len(p["real"]) for p in periods)] if periods else None,
             series=[dict(m=months[p["T"]], v=CH.r(p["ridge"])) for p in periods])
         b_avg = backtest[str(h)]["avg"]
         b_avg["verdict"] = _verdict(b_avg["offsets"])
         backtest[str(h)]["momentum"]["verdict"] = _verdict(backtest[str(h)]["momentum"]["offsets"])
+        backtest[str(h)]["knn"]["verdict"] = _verdict(backtest[str(h)]["knn"]["offsets"])
+        knn_now = _knn_pred(X.astype(float), end, F, h, lags) if end >= h else np.full(len(assets), np.nan)   # 現在：相似時點的中位超額
 
         # 每個亮燈訊號單獨的歷史（訊號劇本同一套口徑），給「原因」用
         rows_all = np.arange(0, end - h + 1)
@@ -602,16 +724,21 @@ def build(g, series, months, play, chain_block, cascade, log=print):
                     for r in robust if r["sid"] == sid and r["horizon"] == h and r["trigger"] in active_ids]
             past = [dict(m=s["m"], jaccard=s["jaccard"], own=CH.r(F[s["t"], a] - mu) if s["t"] <= end - h and np.isfinite(F[s["t"], a]) else None)
                     for s in similar]
+            kn = float(knn_now[a]) if np.isfinite(knn_now[a]) else None
+            ens_now = (ev + kn) / 2 if kn is not None else ev / 2
             recs.append(dict(sid=sid, name=series[sid]["name"], ev=CH.r(ev), cal=CH.r(ev * slope) if use_cal else None,
+                             knn=CH.r(kn) if kn is not None else None, ens=CH.r(ens_now), ens_cal=CH.r(ens_now * slope_e) if use_cal_e else None,
                              base=CH.r(mu), lo=CH.r(np.percentile(boots, 10)), hi=CH.r(np.percentile(boots, 90)),
                              prob_pos=CH.r(100 * (boots > 0).mean(), 0), evidence=evidence, robust=refs,
                              events=by_sid_events.get(sid, []), past=past))
-        recs.sort(key=lambda r: r["ev"], reverse=True)
+        recs.sort(key=lambda r: (r["ens_cal"] if r["ens_cal"] is not None else r["ens"]), reverse=True)    # 2026-10-03 起照集成排
         out_h[str(h)] = recs
         f2 = lambda v: "—" if v is None else f"{v:+.2f}"      # 樣本不足時這些是 None，不能讓記錄這一行把整個推演弄掛
         log(f"[scenario] {h} 個月：樣本外 {len(periods)} 期，前 {C.SCENARIO_TOPK} 名平均多 "
             f"{f2(backtest[str(h)]['ridge']['mean'])}%（各起點 {[o['mean'] for o in offs]}，p {[o['p'] for o in offs]}）"
-            f"→ {verdict}；校準斜率 {f2(slope)}；對照 單一訊號平均 {f2(b_avg['mean'])}%、動能 {f2(backtest[str(h)]['momentum']['mean'])}%")
+            f"→ {verdict}；校準斜率 {f2(slope)}；對照 單一訊號平均 {f2(b_avg['mean'])}%、動能 {f2(backtest[str(h)]['momentum']['mean'])}%"
+            f"；相似時點 {f2(backtest[str(h)]['knn']['mean'])}%、集成 {f2(backtest[str(h)]['ensemble']['mean'])}% → {verdict_e}"
+            f"（前半 {f2(halves['ensemble'][0]['mean'])}／後半 {f2(halves['ensemble'][1]['mean'])}）")
 
     # 傳導鏈推演：從目前成立的層往下，還沒成立的層在 6 個月與 12 個月內跟著成立的機率；
     # 再往下一層：照這條鏈「現在的狀態」（亮著的層都亮、其餘都沒亮），剩下的層 12 個月內全部走完的比例
@@ -643,7 +770,7 @@ def build(g, series, months, play, chain_block, cascade, log=print):
                 r12 = _node_prob(cmasks[i], cmasks[j], finite[j], end, 12)
                 row.update(after=it["nodes"][i]["label"], **(r6 or {}))
                 if r12:
-                    row.update(prob12=r12["prob"], base12=r12["base"], wait12=r12["wait"])
+                    row.update(prob12=r12["prob"], base12=r12["base"], wait12=r12["wait"], prob12_adj=r12["prob_adj"])
                 # 如果這一層也成立：訊號劇本裡這個訊號的穩健組合（可投資標的）
                 row["if_then"] = [dict(name=r["name"], sid=r["sid"], lift=r["lift"], horizon=r["horizon"], p=r["p"])
                                   for r in robust if r["trigger"] == tid][:4]
@@ -681,10 +808,20 @@ def build(g, series, months, play, chain_block, cascade, log=print):
         + f"；鏈的下一層 Brier {case_sum['layers'].get('brier')}（基準 {case_sum['layers'].get('brier_base')}）"
         + f"；下一波訊號命中 {case_sum['wave'].get('hits')}/{case_sum['wave'].get('n')}（基準 {case_sum['wave'].get('base')}%）")
 
+    # 可信度計分板（2026-10-03）：傳導鏈下一層的走步對答案（幾百次，不只 12 個案例）
+    for t in trig:
+        _VALS[t["id"]] = CH.transform(g, t["sid"], t["op"], series[t["sid"]]["kind"])
+    split_i = months.index(C.SCENARIO_SPLIT) if C.SCENARIO_SPLIT in months else end
+    reliability = dict(chain=_chain_reliability(X, trig, key_to_id, end, W, start, split_i))
+    rc = reliability["chain"]
+    if rc:
+        log(f"[scenario] 可信度：鏈的下一層走步預測 {rc['n']} 次，Brier 原始 {rc['brier_raw']}／收縮後 {rc['brier_adj']}／平常 {rc['brier_base']}；"
+            f"「更可能」提示 {rc['more']['n']} 次實際 {rc['more']['realized']}%（平常 {rc['more']['base']}%，前後半{'都成立' if rc['more']['consistent'] else '不一致'}）；"
+            f"「更不可能」{rc['less']['n']} 次實際 {rc['less']['realized']}%（平常 {rc['less']['base']}%，{'一致' if rc['less']['consistent'] else '前後半不一致'}）")
     asof = max((a["current_at"] for a in active if a.get("current_at")), default=months[end])
     log(f"[scenario] 亮燈 {len(active)} 個訊號；最像現在的歷史時點 {[(s['m'], s['jaccard']) for s in similar]}；"
         f"{len(paths)} 條鏈有成立的層；{len(ev_types)} 個相關事件類型")
-    return dict(asof=asof, active=active, horizons=C.PLAYBOOK_HORIZONS, assets=out_h, backtest=backtest,
+    return dict(asof=asof, active=active, horizons=C.PLAYBOOK_HORIZONS, assets=out_h, backtest=backtest, reliability=reliability,
                 similar=[{k: v for k, v in s.items() if k != "t"} for s in similar],
                 paths=paths, wave=wave, cases=cases, case_summary=case_sum,
                 events=ev_types, within=W, event_luck=((cascade or {}).get("stats") or {}).get("fdr05"),

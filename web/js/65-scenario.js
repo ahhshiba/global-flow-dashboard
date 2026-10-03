@@ -2,6 +2,9 @@
 
 // 判定用中性的「可信度」色，不用漲跌色（本站紅漲綠跌，紅綠在這裡會被讀成好壞）
 const SC_VERDICT_TONE = { "樣本外有效": "ok", "時好時壞": "meh", "樣本外無效": "bad", "樣本不足": "bad" };
+// 排行採用的方法：集成（模型＋相似時點）；舊資料沒有集成時退回模型
+const scRank = (B) => (B.ensemble || B.ridge);
+const scVal = (r) => (fin(r.ens_cal) ? r.ens_cal : fin(r.ens) ? r.ens : fin(r.cal) ? r.cal : r.ev);
 const scPct = (v, d = 1) => (fin(v) ? fmtSigned(v, d, "%") : "—");
 const scP = (p) => (fin(p) ? (p < 0.001 ? "p<0.001" : `p=${p.toFixed(3)}`) : "");
 // p 值白話：≤ 0.05 顯著、≤ 0.10 邊際、其餘分不出和亂挑（或運氣）的差別
@@ -49,7 +52,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   // ── 0. 一頁看懂（64-story.js；隨期間切換重畫，在 draw() 裡）＋「研究細節」分隔 ──
   const storyHost = h("div", { class: "span-12" });
   const targetsHost = h("div", { class: "span-12" });     // 確切標的（67-targets.js），同樣隨期間切換
-  g.append(storyHost, targetsHost, h("div", { class: "st-divider span-12" }, h("b", {}, "研究細節"),
+  const relHost = h("div", { class: "span-12" });         // 可信度計分板（68-reliability.js）
+  g.append(storyHost, relHost, targetsHost, h("div", { class: "st-divider span-12" }, h("b", {}, "研究細節"),
     h("span", {}, "上面每一步是怎麼算出來的：亮著的訊號、傳導鏈、避險、期望值模型、對答案、回測。用詞比較專門，名詞解釋分頁有說明。")));
 
   // ── 1. 現在亮著的訊號：每個訊號一列，原因點開才有 ──
@@ -113,19 +117,20 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
       let state = null, tone = "";
       if (n.triggered) { state = "已成立"; tone = "on"; }
       else if (fin(n.prob)) {
-        const lift = n.prob - (n.base ?? n.prob);
-        tone = lift >= 10 ? "likely" : lift <= -5 ? "unlikely" : "";
-        state = `${S.within} 個月內 ${fmtNum(n.prob, 0)}%（平常 ${fmtNum(n.base, 0)}%）`;
+        const pa = fin(n.prob_adj) ? n.prob_adj : n.prob;
+        const lift = pa - (n.base ?? pa);
+        tone = lift >= 5 ? "likely" : lift <= -5 ? "unlikely" : "";
+        state = `${S.within} 個月內 ${fmtNum(pa, 0)}%（平常 ${fmtNum(n.base, 0)}%）`;
       } else state = "上游未成立";
       const tip = n.triggered ? `${n.current_at} 數值 ${fmtNum(n.current, 2)}`
-        : (n.after ? `接在「${n.after}」之後；歷史 ${n.n_episodes} 次` : "") + (fin(n.wait) ? `；成立的話中位數第 ${fmtNum(n.wait, 0)} 個月` : "");
+        : (n.after ? `接在「${n.after}」之後；歷史 ${n.n_episodes} 段` : "") + (fin(n.prob_adj) ? `；原始 ${fmtNum(n.prob, 0)}%，往平常收縮後 ${fmtNum(n.prob_adj, 0)}%` : "") + (fin(n.wait) ? `；成立的話中位數第 ${fmtNum(n.wait, 0)} 個月` : "");
       steps.push(h("div", { class: `sc-node ${tone}`, title: tip },
         h("div", { class: "sc-node-l" }, n.label),
         n.triggered || !fin(n.prob) ? h("div", { class: "sc-node-s" }, state) : [
-          h("div", { class: "sc-gauge", "aria-hidden": "true" }, h("i", { class: "fill", style: `width:${n.prob}%` }),
+          h("div", { class: "sc-gauge", "aria-hidden": "true" }, h("i", { class: "fill", style: `width:${fin(n.prob_adj) ? n.prob_adj : n.prob}%` }),
             fin(n.base) ? h("i", { class: "base", style: `left:${n.base}%` }) : null),
-          h("div", { class: "sc-node-s" }, h("b", { class: "sc-node-p" }, `${fmtNum(n.prob, 0)}%`), `　${S.within} 個月內・平常 ${fmtNum(n.base, 0)}%`),
-          fin(n.prob12) ? h("div", { class: "sc-node-s muted" }, `12 個月 ${fmtNum(n.prob12, 0)}%（平常 ${fmtNum(n.base12, 0)}%）${fin(n.wait) ? `・中位第 ${fmtNum(n.wait, 0)} 個月` : ""}`) : null]));
+          h("div", { class: "sc-node-s" }, h("b", { class: "sc-node-p" }, `${fmtNum(fin(n.prob_adj) ? n.prob_adj : n.prob, 0)}%`), `　${S.within} 個月內・平常 ${fmtNum(n.base, 0)}%`),
+          fin(n.prob12) ? h("div", { class: "sc-node-s muted" }, `12 個月 ${fmtNum(fin(n.prob12_adj) ? n.prob12_adj : n.prob12, 0)}%（平常 ${fmtNum(n.base12, 0)}%）${fin(n.wait) ? `・中位第 ${fmtNum(n.wait, 0)} 個月` : ""}`) : null]));
     });
     const ifs = p.nodes.filter((n) => !n.triggered && fin(n.prob) && n.if_then && n.if_then.length);
     const st = p.state;
@@ -167,7 +172,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
       kc.length ? h("div", { class: "kchips" }, kc) : null,
       more));
   }
-  c2.body.append(h("p", { class: "note" }, "「比平常更可能」（紅框）＝高出平常 10 個百分點以上；「比平常更不可能」（虛線）＝低於平常 5 個百分點以上。"
+  c2.body.append(h("p", { class: "note" }, "機率是校準後的（照段數往平常收縮；滑到方塊上看原始值）。「比平常更可能」（紅框）＝高出平常 5 個百分點以上；「比平常更不可能」（虛線）＝低於平常 5 個百分點以上。"
     + "傳導鏈的層是事後挑的假說，歷史上多數段落「跟著發生」，但事件後報酬站得住的很少，請搭配下面的期望值與樣本外檢查一起看。"));
   g.append(c2.el);
 
@@ -342,13 +347,14 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     h("p", {}, `全體＝當期有資料的標的（${(S.backtest[String(S.horizons[0])].n_assets || []).join("～")} 個）。`
       + "世界銀行商品價格與央行匯率是月均價，月底時已經包含過去半個月，所以這些標的的報酬一律從下個月的均價算起，估計時也多退一個月（不這樣做回測會偷看未來，3 個月的差距會被灌大好幾倍）。"
       + "期間互相重疊不能當獨立樣本，所以每隔 h 個月取一期、每個起點各算一次，列出範圍。")));
-  const methods = [["ridge", "本頁的模型"], ["avg", "對照：單一訊號平均"], ["momentum", "對照：過去 6 個月漲最多"]];
+  const methods = [["ensemble", "集成：模型＋相似時點（排行採用）"], ["ridge", "模型（收縮迴歸）"], ["knn", "相似時點"], ["avg", "對照：單一訊號平均"], ["momentum", "對照：過去 6 個月漲最多"]];
   c6.body.append(h("div", { class: "tbl-wrap" }, h("table", { class: "data" },
     h("thead", {}, h("tr", {}, ["方法", "期間", "前 5 名平均每期多", "各起點範圍", "各起點勝率", "置換檢定 p", "判定"].map((t, i) => h("th", { class: i > 1 ? "n" : null }, t)))),
     h("tbody", {}, methods.flatMap(([k, name]) => S.horizons.map((x) => {
       const b = S.backtest[String(x)][k];
+      if (!b) return null;
       const ps = b.offsets.map((o) => o.p).filter(fin);
-      return h("tr", { class: k === "ridge" && x === hz ? "sel" : null },
+      return h("tr", { class: k === "ensemble" && x === hz ? "sel" : null },
         h("td", {}, name), h("td", {}, `${x} 個月`),
         h("td", { class: "n" }, chg(b.mean, 2, "")),
         h("td", { class: "n" }, scRange(b.offsets)),
@@ -387,7 +393,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
 
   function why(r) {
     const B = S.backtest[String(hz)];
-    const valid = B.ridge.verdict !== "樣本外無效";
+    const valid = scRank(B).verdict !== "樣本外無效";
     c4.el.querySelector("h3").textContent = `為什麼：${r.name}（未來 ${hz} 個月）`;
     const ev = r.evidence || [];
     const up = ev.filter((e) => (e.lift || 0) > 0).length, dn = ev.filter((e) => (e.lift || 0) < 0).length;
@@ -397,8 +403,8 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     const pastWin = past.filter((p) => Math.sign(p.own) === dir).length;
     const parts = [];
     parts.push(statTiles([
-      { label: "校準後期望超額", value: fin(r.cal) ? chg(r.cal, 1, "%") : "—", sub: fin(r.cal) ? "模型值乘上樣本外校準斜率，比較實際的數字" : "這個期間樣本外無效，不給校準值" },
-      { label: "模型值", value: chg(r.ev, 1, "%"), sub: `80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}` },
+      { label: "集成（校準後）", value: fin(scVal(r)) ? chg(scVal(r), 1, "%") : "—", sub: fin(r.ens_cal) ? "模型與相似時點的平均，乘上樣本外校準斜率" : "這個期間樣本外無效，不給校準值" },
+      { label: "模型值", value: chg(r.ev, 1, "%"), sub: `80% 區間 ${scPct(r.lo)}～${scPct(r.hi)}；相似時點 ${scPct(r.knn)}` },
       { label: "樣本內重抽同方向", value: fin(scStable(r)) ? `${fmtNum(scStable(r), 0)}%` : "—", sub: "重抽 200 次和現在同方向的比例；只代表模型穩不穩，不是賺錢的機率" },
       { label: `它平常 ${hz} 個月`, value: scPct(r.base), sub: "超額＝之後報酬減掉這個平常值" },
     ]));
@@ -466,19 +472,24 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     const lead = root.querySelector(":scope > .tab-head .tab-lead");
     if (lead) lead.textContent = storyLead(S, hz);
     storyHost.replaceChildren(storyCard(S, hz).el);
+    relHost.replaceChildren(reliabilityCard(S, hz).el);
     const tc = targetsCard(S, hz);
     targetsHost.replaceChildren(tc ? tc.el : h("p", { class: "empty" }, "尚未產生確切標的（python3 gfd.py history 會抓標的日線）"));
     hChips.replaceChildren(...S.horizons.map((x) => h("button", { class: "chip", type: "button", "aria-pressed": String(x === hz),
       onclick: () => { hz = x; draw(); } }, `${x} 個月`)));
     const B = S.backtest[String(hz)];
     const rows = S.assets[String(hz)];
-    const valid = B.ridge.verdict;
+    const RK = scRank(B);
+    const valid = RK.verdict;
+    const hv = B.halves && B.halves.ensemble ? B.halves.ensemble : null;
     c3.el.querySelector("h3").textContent = `期望值排行：未來 ${hz} 個月`;
     const banner = h("p", { class: `sc-banner t-${SC_VERDICT_TONE[valid] || "neutral"}` },
       h("b", {}, `${hz} 個月：${valid}。`),
-      valid === "樣本外有效" ? `樣本外每期前 ${S.model.topk} 名比全體多 ${fmtSigned(B.ridge.mean, 2)} 個百分點（各起點 ${scRange(B.ridge.offsets)}）。`
-        : valid === "時好時壞" ? `樣本外平均有正的差距（${fmtSigned(B.ridge.mean, 2)}），但不同起始月差很多（${scRange(B.ridge.offsets)}），參考就好。`
-        : `樣本外沒有比亂選好（平均 ${fmtSigned(B.ridge.mean, 2)}），這個期間的排名不要當依據。`);
+      valid === "樣本外有效" ? `樣本外每期前 ${S.model.topk} 名比全體多 ${fmtSigned(RK.mean, 2)} 個百分點（各起點 ${scRange(RK.offsets)}）。`
+        : valid === "時好時壞" ? `樣本外平均有正的差距（${fmtSigned(RK.mean, 2)}），但不同起始月差很多（${scRange(RK.offsets)}），參考就好。`
+        : `樣本外沒有比亂選好（平均 ${fmtSigned(RK.mean, 2)}），這個期間的排名不要當依據。`,
+      hv ? `　前半（${hv[0].n} 期）${fmtSigned(hv[0].mean, 2)}、後半（${hv[1].n} 期）${fmtSigned(hv[1].mean, 2)}。` : "",
+      B.ensemble ? "排行＝模型與相似時點的平均（2026-10-03 起；前後半都正才採用）。" : "");
     const showAll = store.get("scAll", false);
     const list = showAll ? rows : [...rows.slice(0, 8), null, ...rows.slice(-5)];
     if (!pick || !rows.some((r) => r.sid === pick)) pick = rows[0].sid;
@@ -497,7 +508,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
         h("td", {}, r.name, ...(() => { const { agree, oppose } = scRefs(r); return [
           agree.length ? h("span", { class: "pill pill-ok", style: "margin-left:6px", title: agree.map((x) => x.label).join("、") }, "檢驗支持") : null,
           oppose.length ? h("span", { class: "pill pill-meh", style: "margin-left:6px", title: oppose.map((x) => x.label).join("、") }, "檢驗相反") : null]; })()),
-        h("td", { class: "n" }, fin(r.cal) ? chg(r.cal, 1, "%") : h("span", { class: "muted" }, "—")),
+        h("td", { class: "n" }, fin(scVal(r)) ? chg(scVal(r), 1, "%") : h("span", { class: "muted" }, "—"), fin(r.knn) ? h("span", { class: "sub" }, `相似時點 ${scPct(r.knn)}`) : null),
         h("td", { class: "n" }, chg(r.ev, 1, "%"), h("span", { class: "sub" }, `${scPct(r.lo)}～${scPct(r.hi)}`)),
         h("td", { class: "n" }, fin(scStable(r)) ? `${fmtNum(scStable(r), 0)}%` : "—"),
         h("td", { class: "n" }, past.length ? `${win}/${past.length}` : "—"),
@@ -506,7 +517,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
     };
     c3body.replaceChildren(banner,
       h("div", { class: `tbl-wrap${valid === "樣本外無效" ? " sc-void" : ""}` }, h("table", { class: "data sc-rank" },
-        h("thead", {}, h("tr", {}, ["排名", "標的", "校準後期望超額", "模型值（80% 區間）", "樣本內穩定度", "最像時點同方向", "單一訊號", `平常 ${hz} 個月`]
+        h("thead", {}, h("tr", {}, ["排名", "標的", "集成期望超額（校準後）", "模型值（80% 區間）", "樣本內穩定度", "最像時點同方向", "單一訊號", `平常 ${hz} 個月`]
           .map((t, i) => h("th", { class: i === 0 ? "rank" : i > 1 ? "n" : null,
             title: i === 4 ? "樣本內重抽 200 次（12 個月一塊），模型值和現在同方向的比例；只代表模型在樣本內穩不穩，不是賺錢的機率" : null }, t)))),
         h("tbody", {}, list.map(tr)))),

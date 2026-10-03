@@ -158,7 +158,7 @@ const HEDGE_VIEW = lazyTab("scenario", (root) => {
       const lift = fin(o.prob) && fin(o.base) ? o.prob - o.base : null;
       const big = o.ongoing ? "進行中" : fin(o.prob) ? `${fmtNum(o.prob, 0)}%` : "—";
       const cap = o.ongoing ? `${o.current_at} 近 3 個月 ${hgPct(o.current)}`
-        : fin(o.prob) ? `${H.W} 個月內・平常 ${fmtNum(o.base, 0)}%` : `上游未成立・平常 ${fmtNum(o.base, 0)}%`;
+        : fin(o.prob) ? `${H.W} 個月內（校準後）・平常 ${fmtNum(o.base, 0)}%` : `上游未成立・平常 ${fmtNum(o.base, 0)}%`;
       return h("button", { class: `hg-tile${o.ongoing ? " now" : lift >= 10 ? " likely" : ""}`, type: "button",
         "aria-pressed": String(T.id === st.t), onclick: () => { if (T.id !== st.t) set({ t: T.id }); } },
         h("span", { class: "hg-tile-l" }, T.label),
