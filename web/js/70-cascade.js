@@ -390,7 +390,7 @@ TABS.cascade = lazyTab("cascade", (root) => {
       if (L && L.cn_n) {
         const sig = fin(L.p) && L.p <= 0.05;
         const B = CA.persist_base;
-        c.body.append(h("h4", { class: "sub-h" }, "課堂假說檢驗：中國事件是不是「半年後才浮現」"),
+        c.body.append(h("h4", { class: "sub-h" }, "假說檢驗：中國事件是不是「半年後才浮現」"),
           h("p", { class: "cs-info" },
             `量法：事件後兩個月內有實質反應的標的中，半年後的變動比兩個月的峰值更大（＝事件過了兩個月還在擴大）的比例。`
             + `中國事件（${L.cn_n} 次）中位數 ${L.cn_median}%、平均 ${L.cn_mean}%；其他事件（${L.other_n} 次）中位數 ${L.other_median}%、平均 ${L.other_mean}%`

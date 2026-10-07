@@ -52,7 +52,7 @@ ENTRIES = [
     _e("policy_rate", "政策利率（貨幣利率）", "Policy rate", "macro",
        "央行直接設定的短期利率：美國是聯邦資金利率，台灣是重貼現率。",
        "短天期公債殖利率（例如美國 3 個月國庫券）幾乎貼著政策利率走；長天期殖利率則加上對未來"
-       "成長與通膨的預期。課堂說的「貨幣利率」指的就是這一端。",
+       "成長與通膨的預期。一般說的「貨幣利率」指的就是政策利率這一端。",
        links=["bond"], related=["fed", "curve", "yield"], class_note=True),
     _e("fed", "聯準會", "Federal Reserve / FOMC", "macro",
        "美國的中央銀行；聯邦公開市場委員會（FOMC）一年開 8 次會決定利率。",
@@ -75,24 +75,24 @@ ENTRIES = [
        links=["cascade:taper13"], related=["liquidity_trap", "fed"]),
     _e("potential_output", "潛在產出／產能", "Potential output / capacity", "macro",
        "總體經濟：不引發通膨加速時，經濟能持續生產的最大量。產業：一個產業目前能生產的上限。",
-       "實際產出高於潛在產出（產出缺口為正）通常伴隨通膨壓力。課堂在能源談的「潛在產能」是後一個意思："
+       "實際產出高於潛在產出（產出缺口為正）通常伴隨通膨壓力。能源產業談的「潛在產能」是後一個意思："
        "已探明儲量、可動用的鑽機與產能，決定價格上漲時供給能多快跟上。",
        related=["shale"], class_note=True),
     _e("infrastructure", "基礎建設週期", "Infrastructure cycle", "macro",
        "大規模興建電網、交通、資料中心時，銅、鋁、鋼鐵等原物料需求大增，相關出口國的貨幣跟著走強。",
-       "例：AI 資料中心與電網 → 銅需求 → 礦產出口國（智利、澳洲）受惠。課堂提到可觀察「人口多、仍落後、"
-       "政治正在開放」的國家，一旦啟動基礎建設就是長期的原物料需求來源。",
+       "例：AI 資料中心與電網 → 銅需求 → 礦產出口國（智利、澳洲）受惠。人口多、發展程度仍落後的國家一旦啟動基礎建設，"
+       "會成為長期的原物料需求來源。",
        links=["commodity", "chains"], related=["copper", "aluminum", "nickel"], class_note=True),
     _e("ripple", "傳導鏈／漣漪效應", "Transmission chain / ripple effect", "macro",
        "一件事發生後，影響一層層往下傳：上游原物料 → 中游產業 → 下游需求 → 資金面。",
-       "課堂例子：油價漲 → 肥料漲 → 農產品漲 → 通膨 → 經濟走弱 → 可能升息 → 經濟再受衝擊。能算到第幾層，"
+       "例：油價漲 → 肥料漲 → 農產品漲 → 通膨 → 經濟走弱 → 可能升息 → 經濟再受衝擊。能算到第幾層，"
        "就能提早避開風險。本站「傳導鏈」逐段量測這類假說，「事件衝擊」看真實事件後各層多快反應。",
        links=["chains", "cascade"], related=["shock_duration", "fertilizer", "cpi"], class_note=True),
     _e("shock_duration", "短暫／長期／永久衝擊", "Temporary vs. persistent shocks", "macro",
        "依事件影響持續多久分類：幾週內回到原位是短暫；持續數月到數年是長期；從此改變結構是永久。",
        "例：2019 年沙烏地油設施遇襲，油價幾天就回落（短暫）；1985 年廣場協議改變日圓水位與日本經濟路徑"
        "（長期到永久）。本站「事件衝擊」用兩個月內的最大反應當尺：半年後還保有一半以上算長期，一年後還保有一半以上算"
-       "「一年以上」（只量到一年，不用「永久」這個詞）；隨機日期也有約四成標的會被判成一年以上，所以要和這個基準比。課堂另提到中國事件常被政策壓住、約半年後才浮現——"
+       "「一年以上」（只量到一年，不用「永久」這個詞）；隨機日期也有約四成標的會被判成一年以上，所以要和這個基準比。另一個常見的說法是中國事件常被政策壓住、約半年後才浮現——"
        "「類型比較」頁用「兩個月後還在擴大的標的比例」檢驗了這個說法。",
        links=["cascade:abqaiq", "cascade:plaza85"], related=["ripple"], class_note=True),
 
@@ -105,13 +105,13 @@ ENTRIES = [
     _e("quote_convention", "匯率報價方式", "Quote convention", "fx",
        "大多數貨幣報「1 美元換多少外幣」（美元/日圓 158＝1 美元換 158 日圓）；歐元、英鎊、澳幣、紐幣反過來，"
        "報「1 單位外幣換多少美元」（歐元/美元 1.08）。",
-       "讀圖時方向相反：美元/日圓數字上升＝日圓變弱；歐元/美元數字上升＝歐元變強。課堂說「只有歐元相反」，"
-       "其實英鎊、澳幣、紐幣也是這種報法。本站的「歐元/美元」上升代表歐元走強。",
+       "讀圖時方向相反：美元/日圓數字上升＝日圓變弱；歐元/美元數字上升＝歐元變強。不只歐元，"
+       "英鎊、澳幣、紐幣也是這種報法。本站的「歐元/美元」上升代表歐元走強。",
        links=["fx"], related=["dxy"], class_note=True),
     _e("carry", "套利交易", "Carry trade", "fx",
        "借低利率貨幣（如日圓），換成高利率貨幣或資產賺利差。",
        "平時穩定賺利差，一旦低利率貨幣升值或風險升高，大家同時平倉、買回日圓，會造成日圓急升與股市急跌"
-       "（2024-08-05 日經單日 −12.4%）。這也是課堂說「利率高但國力弱，錢不會留」的機制。",
+       "（2024-08-05 日經單日 −12.4%）。這也說明為什麼利率高但國力弱的貨幣，吸引到的多半是隨時會撤出的短期套利資金。",
        links=["chains", "cascade:carry24"], related=["hot_money"], class_note=True),
     _e("hot_money", "熱錢", "Hot money", "fx",
        "追逐利差或匯差、隨時可能撤走的短期資金。",
@@ -142,12 +142,12 @@ ENTRIES = [
        links=["cascade:erm92", "cascade:baht97"], related=["reserves", "asia97"], class_note=True),
     _e("managed_float", "管理浮動匯率（人民幣中間價）", "Managed float / CNY fixing", "fx",
        "中國人民銀行每天公布人民幣中間價，境內人民幣只能在中間價上下 2% 內波動；境外人民幣（CNH）較自由。",
-       "這就是課堂說「他想升就升、想貶就貶」：價格由政策引導，不完全由供需決定，所以不建議當交易標的。"
+       "價格由政策引導，不完全由供需決定，所以匯價變動不能完全當作市場供需的訊號。"
        "2015 年 811 匯改是中間價機制的一次大改。",
        links=["cascade:cny815", "chains"], related=["hot_money"], class_note=True),
     _e("brexit", "英國脫歐與英鎊", "Brexit and the pound", "fx",
        "2016-06-23 英國公投決定脫離歐盟，英鎊隔天對美元重挫，之後長期停在較低的水準。",
-       "課堂建議看歐元時把英鎊一起放進來比較。本站目前還沒有英鎊序列。",
+       "英國脫歐後英鎊與歐元走勢脫鉤，所以看歐元時常把英鎊一併比較。本站目前還沒有英鎊序列。",
        links=["cascade:brexit", "cascade:ukbudget22"], related=["quote_convention"], class_note=True),
 
     # ── 債市 ──
@@ -181,7 +181,7 @@ ENTRIES = [
        links=["bond"], related=["ig_hy"]),
     _e("ig_hy", "投資級債／高收益債", "Investment grade vs. high yield", "bond",
        "信用評等 BBB−（含）以上是投資級；以下是高收益債（俗稱垃圾債）。",
-       "課堂建議買穩定大型公司的債券、避開題材股型的公司。本站用投資級基金 VWESX／LQD 與高收益 VWEHX／HYG 代表兩類。",
+       "投資級債的違約風險較低、殖利率也較低；高收益債殖利率較高，但違約與價格波動的風險大。本站用投資級基金 VWESX／LQD 與高收益 VWEHX／HYG 代表兩類。",
        links=["bond"], related=["credit_spread", "corporate_bond"], class_note=True),
     _e("corporate_bond", "公司債", "Corporate bond", "bond",
        "公司發行的債券；能不能還錢取決於公司穩定的現金流，而不是股價題材。",
@@ -211,7 +211,7 @@ ENTRIES = [
        related=["bs", "is", "cf"], class_note=True),
     _e("rotation", "類股輪動", "Sector rotation", "equity",
        "資金在不同產業或題材之間輪流進出。",
-       "課堂說題材股「一波一波的，一下就沒了」：輪動快的標的，進出時點比基本面更決定報酬，風險也更高。",
+       "題材股常是一波一波的、行情來得快去得快：輪動快的標的，進出時點比基本面更決定報酬，風險也更高。",
        links=["equity"], related=["pe"], class_note=True),
     _e("pe", "本益比", "Price-to-earnings ratio", "equity",
        "股價 ÷ 每股盈餘；投資人願意為每 1 元盈餘付幾元。",
@@ -247,7 +247,7 @@ ENTRIES = [
        links=["commodity", "cascade:nordstream"], related=["fertilizer"], class_note=True),
     _e("fertilizer", "肥料（氮、磷、鉀）", "Fertilizers", "commodity",
        "農作物三大養分：氮肥（尿素、氨）、磷肥、鉀肥。",
-       "氮肥主要用天然氣製造，所以能源漲價會推高肥料成本，再推高農產品成本——課堂的「油漲 → 肥料漲 → 農產品漲」"
+       "氮肥主要用天然氣製造，所以能源漲價會推高肥料成本，再推高農產品成本——常被提到的「油漲 → 肥料漲 → 農產品漲」，"
        "更精確的路徑是天然氣。鉀肥的三大出口國是加拿大、俄羅斯與白俄羅斯，2022 年戰爭同時衝擊能源與肥料。"
        "本站「傳導鏈」的肥料鏈實測：天然氣→尿素成立，尿素→農產品指數不成立（農產品有自己的供需）。",
        links=["chains", "cascade:ukraine22"], related=["natgas", "corn", "ripple"], class_note=True),
@@ -320,8 +320,8 @@ ENTRIES = [
        links=["cascade:baht97", "cascade:hk97"], related=["speculative_attack", "reserves"], class_note=True),
     _e("china_property", "中國房地產危機", "China property crisis", "history",
        "2020 年起監管「三道紅線」限制建商負債，資金鏈斷裂，恆大等大型建商違約，房價與土地出讓收入下滑。",
-       "地方政府高度依賴賣地收入，房市下滑同時打擊地方財政與家庭財富。政策會先壓住表面數字，"
-       "影響常延後才浮現——呼應課堂說中國事件「不會不發生，只是晚一點發生」。",
+       "地方政府高度依賴賣地收入，房市下滑同時打擊地方財政與家庭財富。政策會先壓住表面數字。"
+       "常聽到的說法是影響會延後才浮現；本站用歷史事件檢驗過（事件衝擊的「類型比較」），資料不支持也不推翻。",
        links=["cascade:evergrande21"], related=["managed_float"], class_note=True),
 
     # ── 經濟理論 ──

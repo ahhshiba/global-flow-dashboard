@@ -1,5 +1,5 @@
 /* 分頁「FAQ」：兩塊、兩種顏色，沒有說明文字、沒有查詢列（2026-10-07）。
-   第一塊＝老師的提問加答案（gfd/faq.py，主色底）；第二塊＝原有的名詞解釋（gfd/glossary.py，青綠底）。build 時內嵌。 */
+   第一塊＝問題加答案（gfd/faq.py，主色底）；第二塊＝原有的名詞解釋（gfd/glossary.py，青綠底）。build 時內嵌。 */
 
 function glossaryGo(link) {
   const [tab, event] = link.split(":");

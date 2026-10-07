@@ -188,10 +188,10 @@ TABS.overview = (root, redo) => {
 // 有排名欄的表：第 0 欄排名、第 1 欄國家（靠左）、其餘數字（靠右）
 const rankHeadClass = (i) => (i === 0 ? "rank" : i === 1 ? null : "n");
 
-/* 國力面板：GDP、成長、CPI、政策利率、實質利率、經常帳、存底（2026-10-01 課堂：貨幣反映國力） */
+/* 國力面板：GDP、成長、CPI、政策利率、實質利率、經常帳、存底（貨幣反映國力） */
 function strengthCard(S) {
   const c = card({ title: "國力面板：GDP 前十大國家＋台灣", span: 12,
-    sub: "課堂：貨幣長期反映國力（GDP、利率、CPI），利率高但國力弱只會吸到短期套利的錢。實質利率＝政策利率 − CPI，是費雪方程式的粗略版：為負代表錢放著在變薄。"
+    sub: "貨幣長期反映國力（GDP、利率、CPI）；利率高但國力弱，吸到的多半是短期套利的錢。實質利率＝政策利率 − CPI，是費雪方程式的粗略版：為負代表錢放著在變薄。"
       + "排名固定用 2024 年名目 GDP，表中的 GDP 是各國最新年度，所以名次和數字可能對不上。",
     note: S.note });
   const head = ["GDP 排名", "國家", "GDP（十億美元）", "實質成長", "CPI 年增率", "政策利率", "實質利率", "經常帳／GDP", "外匯存底"];
@@ -211,7 +211,7 @@ function strengthCard(S) {
   return c.el;
 }
 
-/* 外匯存底總表：GDP 前十大＋台灣（2026-10-01 課堂的作業：存底、進口月數、持有美債比例） */
+/* 外匯存底總表：GDP 前十大＋台灣（存底、進口月數、持有美債比例） */
 function reservesTableCard(T) {
   const c = card({ title: "外匯存底總表：GDP 前十大國家＋台灣", span: 12,
     sub: `依世界銀行 2024 年名目 GDP 排序。「進口月數」低於 ${T.months_min} 個月是 1997 年亞洲金融風暴後常用的警戒線——`
@@ -286,7 +286,7 @@ TABS.fx = (root, redo) => {
   g.append(statsTable(["fx_dxy", "fx_usdtwd", "fx_usdjpy", "fx_eurusd", "fx_gbpusd", "fx_audusd", "fx_usdcny"]));
 };
 
-/* 殖利率曲線形狀：今天 vs 1／3／10／20 年前（2026-10-01 課堂作業：短天期 vs 長天期） */
+/* 殖利率曲線形狀：今天 vs 1／3／10／20 年前（短天期 vs 長天期） */
 function curveShapeCard(CV) {
   const series = CV.snapshots.map((s, i) => ({ key: s.key, name: `${s.label}${s.as_of ? "（" + s.as_of + "）" : ""}`,
     color: i === 0 ? "var(--accent)" : `var(--s${i + 1})`, values: s.values, fmt: (v) => (fin(v) ? `${v.toFixed(2)}%` : "—") }));
@@ -450,9 +450,9 @@ TABS.commodity = (root, redo) => {
   g.append(kpiRow([["c_gold", "黃金"], ["c_copper", "銅"], ["c_brent", "布蘭特原油"], ["c_natgas_eu", "歐洲天然氣"], ["c_urea", "尿素"], ["c_maize", "玉米"]]));
   const idx = (key, title, ids, extra) => chartCard(Object.assign({ key, title, span: 6, height: 260, mode: "index", log: true, logToggle: true, bands: EVENT_BANDS,
     series: ids.map((id, i) => ser(id, i + 1)) }, extra || {}));
-  // 金屬依 2026-10-01 課堂的分類：保值／電子與基礎建設／戰略與電池
+  // 金屬分類：保值／電子與基礎建設／戰略與電池
   g.append(idx("cm-metal-store", "保值金屬（起點＝100）", ["c_gold", "c_silver", "c_platinum"],
-    { sub: "黃金看美元與實質利率；白銀、白金有工業用途，課堂認為次要。" }));
+    { sub: "黃金看美元與實質利率；白銀、白金有工業用途，走勢另受工業需求影響。" }));
   g.append(idx("cm-metal-ind", "電子與基礎建設金屬（起點＝100）", ["c_copper", "c_alu", "c_iron", "c_nickel"],
     { sub: "銅：電網、AI 資料中心、電動車；鋁、鐵：基礎建設；鎳：不鏽鋼與電池。" }));
   g.append(idx("cm-metal-strat", "戰略與電池金屬 ETF（起點＝100）", ["c_lithium_etf", "c_rareearth_etf"],
@@ -460,7 +460,7 @@ TABS.commodity = (root, redo) => {
   g.append(idx("cm-energy", "能源（起點＝100）", ["c_brent", "c_wti", "c_natgas", "c_natgas_eu"],
     { sub: "天然氣是獨立的地區市場，不是石油的副產品：美國與歐洲價格可以差好幾倍。" }));
   g.append(idx("cm-fert", "肥料（起點＝100）", ["c_urea", "c_dap", "c_potash", "ci_fert"],
-    { sub: "課堂的「油漲 → 肥料漲 → 農產品漲」：氮肥用天然氣製造；鉀肥的三大出口國是加拿大、俄羅斯、白俄羅斯。檢驗結果見「傳導鏈」的肥料鏈。" }));
+    { sub: "常見的連鎖「油漲 → 肥料漲 → 農產品漲」：氮肥用天然氣製造；鉀肥的三大出口國是加拿大、俄羅斯、白俄羅斯。檢驗結果見「傳導鏈」的肥料鏈。" }));
   g.append(idx("cm-agri", "農產品（起點＝100）", ["c_maize", "c_soy", "c_wheat"]));
   g.append(idx("cm-wbidx", "世界銀行商品指數（起點＝100）", ["ci_energy", "ci_nonenergy", "ci_agri", "ci_metals", "ci_precious", "ci_fert"]));
   g.append(chartCard({ key: "cm-cuau", title: "銅/黃金 比值", span: 6, height: 230, area: true, bands: EVENT_BANDS, series: [ser("d_cu_au", 1, { fmt: (v) => fmtNum(v, 3) })],
