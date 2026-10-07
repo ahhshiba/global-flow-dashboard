@@ -418,7 +418,6 @@ table.data tr.sel td { background: var(--accent-soft); }
 .flow-item { white-space: nowrap; }
 .cs-sig { color: var(--warn-ink); font-size: 11px; }
 /* 名詞解釋 */
-.gl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
 .gl-search { flex: 1 1 260px; max-width: 420px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px 10px;
   background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; }
 .gl-search:focus { outline: none; border-color: var(--accent); }

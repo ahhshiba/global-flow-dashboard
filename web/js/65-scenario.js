@@ -54,7 +54,7 @@ const SCENARIO_SUMMARY = lazyTab("scenario", (root) => {
   const targetsHost = h("div", { class: "span-12" });     // 確切標的（67-targets.js），同樣隨期間切換
   const relHost = h("div", { class: "span-12" });         // 可信度計分板（68-reliability.js）
   g.append(storyHost, relHost, targetsHost, h("div", { class: "st-divider span-12" }, h("b", {}, "研究細節"),
-    h("span", {}, "上面每一步是怎麼算出來的：亮著的訊號、傳導鏈、避險、期望值模型、對答案、回測。用詞比較專門，名詞解釋分頁有說明。")));
+    h("span", {}, "上面每一步是怎麼算出來的：亮著的訊號、傳導鏈、避險、期望值模型、對答案、回測。用詞比較專門，FAQ 分頁有說明。")));
 
   // ── 1. 現在亮著的訊號：每個訊號一列，原因點開才有 ──
   const circ = (i) => (i < 20 ? String.fromCharCode(0x2460 + i) : `(${i + 1})`);
