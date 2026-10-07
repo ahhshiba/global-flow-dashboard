@@ -111,7 +111,7 @@ ENTRIES = [
     _e("carry", "套利交易", "Carry trade", "fx",
        "借低利率貨幣（如日圓），換成高利率貨幣或資產賺利差。",
        "平時穩定賺利差，一旦低利率貨幣升值或風險升高，大家同時平倉、買回日圓，會造成日圓急升與股市急跌"
-       "（2024-08-05 日經單日 −12.4%）。這也說明為什麼利率高但國力弱的貨幣，吸引到的多半是隨時會撤出的短期套利資金。",
+       "（2024-08-05 日經單日 −12.4%）。套利資金隨時可能撤出，所以利率高但國力弱的貨幣，吸引到的多半是短期資金。",
        links=["chains", "cascade:carry24"], related=["hot_money"], class_note=True),
     _e("hot_money", "熱錢", "Hot money", "fx",
        "追逐利差或匯差、隨時可能撤走的短期資金。",
@@ -147,7 +147,7 @@ ENTRIES = [
        links=["cascade:cny815", "chains"], related=["hot_money"], class_note=True),
     _e("brexit", "英國脫歐與英鎊", "Brexit and the pound", "fx",
        "2016-06-23 英國公投決定脫離歐盟，英鎊隔天對美元重挫，之後長期停在較低的水準。",
-       "英國脫歐後英鎊與歐元走勢脫鉤，所以看歐元時常把英鎊一併比較。本站目前還沒有英鎊序列。",
+       "英鎊是歐洲另一個主要貨幣，看歐元時常把英鎊一併比較。本站目前還沒有英鎊序列。",
        links=["cascade:brexit", "cascade:ukbudget22"], related=["quote_convention"], class_note=True),
 
     # ── 債市 ──
