@@ -461,9 +461,12 @@ table.data tr.sel td { background: var(--accent-soft); }
 /* FAQ */
 .faq-q { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .faq-q h3 { margin: 0; font-size: 15.5px; flex: 1 1 320px; }
-.faq-asked { font-size: 12px; }
 .faq-a { margin: 6px 0 0; line-height: 1.7; font-size: 13.5px; }
-.faq-item.open { border-left: 3px solid var(--warn); }
+/* 課堂提到的題目＝主色淡底＋左側主色條；名詞卡維持原樣。篩選列「課堂提到」鈕前面的色塊同色 */
+.gl-class { background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface)); box-shadow: inset 4px 0 0 var(--accent), var(--card-shadow); }
+.gl-kind-class::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 2px; background: var(--accent); }
+.gl-kind-class[aria-pressed="true"]::before { background: var(--on-accent); }
+.gl-kinds { margin-bottom: 8px; }
 
 .bar-track.mono .bar-fill.exempt { left: 0; right: auto; background: var(--line-strong); }
 /* 進口月數橫條：各列共用同一組欄寬（橫條要等長才能比），數值欄依最長的字決定、不換行。
@@ -476,7 +479,6 @@ table.data tr.sel td { background: var(--accent-soft); }
 .bars-months .bar-fill.ok { background: color-mix(in srgb, var(--accent) 70%, var(--surface)); }
 .bars-months .bar-fill.low { background: var(--up); }
 .bars-months .n.low { color: var(--up); font-weight: 600; }
-.gl-views { margin: 4px 0 14px; }
 /* 收合卡：收起時只剩標題列 */
 .card.folded { padding-bottom: 14px; }
 .card.folded .card-h { margin-bottom: 0; }
