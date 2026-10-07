@@ -43,8 +43,7 @@
       const o = document.getElementById("tab-overview");
       if (o) o.replaceChildren();
     }
-    if (id === "faq") {             // FAQ 併進名詞解釋分頁（2026-10-01）：舊連結照樣打得開
-      window.glView = "faq";
+    if (id === "faq") {             // FAQ 併進名詞解釋分頁（2026-10-01）、分頁現在就叫 FAQ：舊連結照樣打得開
       id = "glossary";
       const g = document.getElementById("tab-glossary");
       if (g) g.replaceChildren();

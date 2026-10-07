@@ -899,7 +899,7 @@ function addToc(root) {
   if (view) return addToc(view);
   const old = root.querySelector(":scope > .toc");
   if (old) old.remove();
-  if (root.id === "tab-glossary") return;          // 名詞解釋有自己的分類篩選
+  if (root.id === "tab-glossary") return;          // FAQ 分頁是兩塊長清單，不放目錄
   const cards = tocCards(root);
   if (cards.length < 4) return;
   // 卡片可能被分頁內的重畫換掉：點的時候才依序號找當下的卡片

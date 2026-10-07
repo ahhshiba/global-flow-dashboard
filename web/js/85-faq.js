@@ -1,4 +1,4 @@
-/* 名詞解釋分頁裡「課堂提到」的題目卡（內容在 gfd/faq.py；清單與篩選在 80-glossary.js）。
+/* FAQ 分頁裡「問題加答案」的卡（內容在 gfd/faq.py；版面在 80-glossary.js）。
    名詞連結在同一個分頁內捲到那一條（jumpTerm），其他連結照常換分頁。 */
 
 function faqGo(link, jumpTerm) {
@@ -22,9 +22,9 @@ function faqLabel(link) {
 function faqCard(i, jumpTerm) {
   return h("article", { class: "card span-12 faq-item gl-class", id: "faq-" + i.id },
     h("div", { class: "faq-q" },
-      h("span", { class: `pill ${i.status === "open" ? "pill-warn" : "pill-up"}` }, i.status === "open" ? "未答" : "已答"),
+      i.status === "open" ? h("span", { class: "pill pill-warn" }, "未答") : null,
       h("h3", {}, i.q)),
-    i.answer ? h("p", { class: "faq-a" }, i.answer) : h("p", { class: "faq-a muted" }, "尚未回答。回答寫在 gfd/faq.py 的 answer 欄。"),
+    i.answer ? h("p", { class: "faq-a" }, i.answer) : h("p", { class: "faq-a muted" }, "還沒有答案。"),
     i.links.length ? h("div", { class: "gl-row" }, h("span", { class: "gl-lab" }, "本站哪裡看"),
       ...i.links.map((l) => h("button", { class: "chip gl-link", type: "button", onclick: () => faqGo(l, jumpTerm) }, faqLabel(l) + " →"))) : null);
 }

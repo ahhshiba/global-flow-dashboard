@@ -423,7 +423,6 @@ table.data tr.sel td { background: var(--accent-soft); }
   background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; }
 .gl-search:focus { outline: none; border-color: var(--accent); }
 .gl-count { font-size: 12px; }
-.gl-cat { margin: 22px 0 10px; font-size: 15px; }
 .gl-entry { display: flex; flex-direction: column; gap: 6px; scroll-margin-top: 80px; }
 .gl-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .gl-title h3 { margin: 0; font-size: 16px; }
@@ -461,12 +460,11 @@ table.data tr.sel td { background: var(--accent-soft); }
 /* FAQ */
 .faq-q { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .faq-q h3 { margin: 0; font-size: 15.5px; flex: 1 1 320px; }
-.faq-a { margin: 6px 0 0; line-height: 1.7; font-size: 13.5px; }
-/* 課堂提到的題目＝主色淡底＋左側主色條；名詞卡維持原樣。篩選列「課堂提到」鈕前面的色塊同色 */
+.faq-a { margin: 6px 0 0; line-height: 1.7; font-size: 13.5px; white-space: pre-line; }   /* 答案裡的換行照顯示 */
+/* FAQ 分頁的兩塊：問題加答案＝主色淡底＋左側主色條；原有的名詞解釋＝青綠淡底＋左側青綠條。只靠顏色區分，不加標題 */
 .gl-class { background: color-mix(in srgb, var(--accent-soft) 60%, var(--surface)); box-shadow: inset 4px 0 0 var(--accent), var(--card-shadow); }
-.gl-kind-class::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 2px; background: var(--accent); }
-.gl-kind-class[aria-pressed="true"]::before { background: var(--on-accent); }
-.gl-kinds { margin-bottom: 8px; }
+.gl-term { background: color-mix(in srgb, var(--s10) 9%, var(--surface)); box-shadow: inset 4px 0 0 var(--s10), var(--card-shadow); }
+.gl-block + .gl-block { margin-top: 28px; }
 
 .bar-track.mono .bar-fill.exempt { left: 0; right: auto; background: var(--line-strong); }
 /* 進口月數橫條：各列共用同一組欄寬（橫條要等長才能比），數值欄依最長的字決定、不換行。
