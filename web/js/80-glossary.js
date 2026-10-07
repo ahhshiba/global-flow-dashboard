@@ -46,8 +46,8 @@ TABS.glossary = (outer) => {
   const byId = Object.fromEntries(G.entries.map((e) => [e.id, e]));
   let q = "";
   let cat = store.get("glCat", "all");
-  let onlyOpen = store.get("glOpen", false);
-  if (cat !== "all" && !cats.some((c) => c.id === cat)) cat = "all";
+  let onlyOpen = store.get("glOpen", false) && faqItems.length > 0;           // 存著的篩選失效時（題目清空、分類沒東西）不能把使用者卡在空清單
+  if (cat !== "all" && !(cats.some((c) => c.id === cat) && catCount(cat))) cat = "all";
 
   const input = h("input", { class: "gl-search", type: "search", placeholder: "搜尋名詞、英文或老師的提問，例：殖利率、Fisher、稀土",
     "aria-label": "搜尋名詞與提問" });
