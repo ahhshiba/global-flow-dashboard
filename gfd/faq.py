@@ -21,7 +21,6 @@ ITEMS = [
     _q("yield_panic", "為什麼市場一怕，殖利率有時反而上升？大家搶著出場時發生了什麼？", "bond", ["glossary:price_yield", "cascade"]),
     _q("curve", "短天期與長天期殖利率的差異是什麼？曲線倒掛代表什麼？", "bond", ["glossary:curve", "glossary:inversion", "bond"]),
     _q("statements", "四大財務報表各看什麼？怎麼分辨賺的是不是真的錢？", "equity", ["glossary:bs", "glossary:is", "glossary:cf", "glossary:se", "flow"]),
-    _q("exam", "高級業務員考試的重點範圍是什麼？", "equity"),
     _q("oil_types", "頁岩油、傳統石油、重油、海上石油有什麼差別？儲量與成本差多少？", "commodity",
        ["glossary:shale", "glossary:conventional_oil", "glossary:heavy_oil", "glossary:offshore_oil", "commodity"]),
     _q("energy_capacity", "能源目前的市場產值與潛在產能是多少？", "commodity", ["glossary:potential_output", "commodity"]),
@@ -54,7 +53,7 @@ ITEMS = [
 
 
 # 答案（2026-10-07）：內容取自本站名詞解釋與分析資料；有數字的題目標明資料日期與口徑，
-# 本站沒有的數字（例如全球能源儲量）不編造，寫「站內沒有」。exam 一題站內沒有任何資料，維持未答。
+# 本站沒有的數字（例如全球能源儲量）不編造，寫「站內沒有」。站內完全沒有資料的題目（例如考試範圍）不放進來。
 # 資料型答案（reserves_top10、fertilizer_chain、shock_types、energy_capacity、grains）的數字是寫入當天的值，
 # 資料更新後要回頭核對。
 ANSWERS = {
