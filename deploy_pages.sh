@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 把 docs/index.html 與 docs/data/*.json 推到 gh-pages 分支（每次都是單一 commit，覆蓋舊的，repo 不會愈長愈大）。
+# 把 docs/index.html 與 docs/data/*.json、docs/data/*.csv（短期預測帳本，試算表 IMPORTDATA 用）推到 gh-pages 分支（每次都是單一 commit，覆蓋舊的，repo 不會愈長愈大）。
 # 需要 python3 gfd.py build --public 的產物與已設定的 origin。
 # docs/data/ 是頁面用到才下載的大塊資料（事件衝擊、訊號劇本、沙盤推演、完整日線、鉅亨每日），頁面裡的網址帶內容雜湊。
 set -euo pipefail
@@ -19,8 +19,10 @@ done < <(grep -o 'data/[A-Za-z0-9_-]*\.json?v=[0-9a-f]*' docs/index.html | sort 
 PAGE=$(git hash-object -w docs/index.html)
 NOJEKYLL=$(printf '' | git hash-object -w --stdin)
 ENTRIES=$(printf '100644 blob %s\tindex.html\n100644 blob %s\t.nojekyll' "$PAGE" "$NOJEKYLL")
-DATA_FILES=(docs/data/*.json)
-if [ -f "${DATA_FILES[0]}" ]; then
+shopt -s nullglob
+DATA_FILES=(docs/data/*.json docs/data/*.csv)   # csv 不在頁面引用的雜湊檢查範圍內（上面的檢查只對 json）
+shopt -u nullglob
+if [ "${#DATA_FILES[@]}" -gt 0 ]; then
   DATA_TREE=$(for f in "${DATA_FILES[@]}"; do printf '100644 blob %s\t%s\n' "$(git hash-object -w "$f")" "$(basename "$f")"; done | git mktree)
   ENTRIES=$(printf '%s\n040000 tree %s\tdata' "$ENTRIES" "$DATA_TREE")
 fi
@@ -30,4 +32,6 @@ git push -q --force origin "$COMMIT":refs/heads/gh-pages
 # 每次部署都在本機 .git 寫一份新的頁面與資料 blob，舊的部署 commit 推上去後就不再被任何分支引用；
 # 清掉三天以上的無引用物件（git gc 預設要等兩週），避免 .git 每天長十幾 MB
 git prune --expire=3.days.ago 2>/dev/null || true
-echo "已部署 gh-pages（commit ${COMMIT:0:7}，頁面 $(du -h docs/index.html | cut -f1)，資料 $(du -ch docs/data/*.json 2>/dev/null | tail -1 | cut -f1)）"
+DATA_SIZE=0
+if [ "${#DATA_FILES[@]}" -gt 0 ]; then DATA_SIZE=$(du -ch "${DATA_FILES[@]}" | tail -1 | cut -f1); fi
+echo "已部署 gh-pages（commit ${COMMIT:0:7}，頁面 $(du -h docs/index.html | cut -f1)，資料 ${DATA_SIZE}）"

@@ -955,3 +955,106 @@ table.sim-mx th.c { color: var(--accent); font-size: 14px; }
 .rl-q { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
 .rl-q b { font-weight: 600; }
 .rl-ev { margin-top: 3px; font-size: 13px; line-height: 1.6; color: var(--ink-2); max-width: 60em; }
+
+/* ── 預測帳本（2026-10-09）：沙盤推演的「預測帳本」檢視，web/js/69-ledger.js ──
+   漲跌色用站上的 --up／--down（紅漲綠跌）；可信度燈號用 accent／warn，不用紅綠（紅綠會被讀成好壞） */
+.fc-banner { margin: 0; }
+.fc-wait { margin-bottom: 10px; }
+.fc-score-tbl td.n .sub { text-align: right; }
+.fc-asset { font-weight: 600; }
+.fc-src { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 500; vertical-align: 1px; }
+.fc-src.live { background: var(--accent-soft); color: var(--accent); }
+.fc-src.bf { background: var(--surface-2); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.pill.fc-flat { background: var(--surface-2); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
+table.fc-recent td .sub { word-break: keep-all; }
+
+/* 本週預測列：一列一個 details，摘要用格線對齊成表格 */
+.fc-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+.fc-cols, .fc-sum {
+  display: grid; align-items: center; gap: 4px 14px; padding: 9px 6px;
+  grid-template-columns: minmax(12em, 2fr) 3.4em 6.6em minmax(10.5em, 1.5fr) 5.2em 5.6em 7.6em;
+  grid-template-areas: "name hz pred band pup verdict due";
+}
+.fc-cols, .fc-sum { font-size: 13px; }      /* 表頭與列的欄寬用 em，兩邊字級要一樣才會對齊 */
+.fc-cols { padding-block: 0 6px; color: var(--muted); letter-spacing: 0.03em; }
+.fc-cols .fc-c { font-size: 12px; }
+.fc-c-name { grid-area: name; min-width: 0; } .fc-c-hz { grid-area: hz; } .fc-c-pred { grid-area: pred; } .fc-c-band { grid-area: band; }
+.fc-c-pup { grid-area: pup; } .fc-c-verdict { grid-area: verdict; } .fc-c-due { grid-area: due; }
+.fc-n { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; font-size: 13px; }
+.fc-cols .fc-n { font-family: inherit; }
+.fc-c-verdict { text-align: center; justify-self: center; }
+.fc-br { display: none; }
+.fc-c::before { content: none; }
+.fc-item { border-top: 1px solid var(--line); }
+.fc-list > .fc-item:last-child { border-bottom: 1px solid var(--line); }
+.fc-sum { cursor: pointer; list-style: none; border-radius: var(--radius-sm); }
+.fc-sum::-webkit-details-marker { display: none; }
+.fc-sum:hover, .fc-item[open] > .fc-sum { background: var(--surface-2); }
+.fc-c-name .fc-asset { font-size: 14.5px; line-height: 1.35; }
+.fc-c-name .fc-asset::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--muted); font-weight: 400; transition: transform var(--dur-fast) var(--ease-out); }
+.fc-item[open] > .fc-sum .fc-asset::before { transform: rotate(90deg); }
+.fc-c-name .sub { display: block; margin-left: 1.1em; font-size: 11.5px; color: var(--muted); font-weight: 400; overflow-wrap: anywhere; }
+.fc-detail { padding: 4px 6px 16px calc(6px + 1.1em); font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
+.fc-detail h5 { margin: 12px 0 4px; font: 600 13px var(--f-body); color: var(--ink); letter-spacing: 0.03em; }
+.fc-detail h5:first-child { margin-top: 4px; }
+.fc-detail p { margin: 0 0 6px; max-width: 60em; }
+.fc-meta { font-size: 12px; margin-top: 10px; overflow-wrap: anywhere; }
+
+/* 判斷流程：一步一個小方塊（S0 → S7），實線＝參與預測、虛線＝只記錄 */
+.fc-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; margin: 4px 0 8px; }
+.fc-step { flex: 1 1 11.5em; max-width: 17em; min-width: 0; display: flex; flex-direction: column; gap: 1px; padding: 7px 10px; border-radius: 8px;
+  border: 1px solid var(--line-strong); background: var(--surface); line-height: 1.45; }
+.fc-step.use { border-color: var(--accent); background: var(--accent-soft); }
+.fc-step.rec { border-style: dashed; }
+.fc-sh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; font-size: 12.5px; color: var(--ink); }
+.fc-sh small { font: 600 11.5px var(--f-mono); color: var(--muted); }
+.fc-sh b { font-weight: 600; }
+.fc-sv { font: 600 14px var(--f-disp); color: var(--ink); overflow-wrap: anywhere; }
+.fc-sd { font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
+.fc-arrow { align-self: center; color: var(--muted); flex: none; }
+.fc-flow.mini { margin-bottom: 12px; }
+.fc-flow.mini .fc-step { flex: 0 1 auto; max-width: none; padding: 4px 10px; }
+.fc-method { margin: 0; padding-left: 1.4em; max-width: 60em; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
+.fc-method li { margin: 4px 0; }
+.fc-rec-note { max-width: 60em; }
+
+/* 下載與試算表 */
+.fc-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.fc-links a.tool { display: inline-block; padding: 6px 14px; font-size: 13px; text-decoration: none; color: var(--accent); border-color: var(--accent); }
+.fc-localcsv { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.fc-localcsv code { font-family: var(--f-mono); font-size: 12.5px; padding: 1px 6px; border-radius: 4px; background: var(--surface-2); color: var(--ink); }
+
+/* 推演總結裡的入口 */
+.fc-entry-row { margin: 2px 0 14px; }
+button.fc-entry { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 44px; padding: 10px 14px; text-align: left;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--ink); cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-fast) ease; }
+button.fc-entry:active { transform: scale(0.99); }
+@media (hover: hover) and (pointer: fine) { button.fc-entry:hover { border-color: var(--accent); } }
+.fc-entry-t { font-size: 14.5px; font-weight: 600; color: var(--accent); }
+button.fc-entry .sub { font-size: 12.5px; color: var(--ink-2); }
+
+/* 窄螢幕：預測列改成兩三行（資產＋判定／期間、預測、上漲機率／區間、到期），不出現整頁橫向捲動 */
+@media (max-width: 900px) {
+  .fc-cols { display: none; }
+  .fc-sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+  .fc-c-name { order: 0; flex: 1 1 0; min-width: 9em; }
+  .fc-c-verdict { order: 1; margin-left: auto; }
+  .fc-br { display: block; order: 2; flex-basis: 100%; height: 0; }
+  .fc-c-hz, .fc-c-pred, .fc-c-pup { order: 3; }
+  .fc-c-band, .fc-c-due { order: 4; }
+  .fc-n { text-align: left; font-size: 12.5px; white-space: normal; }
+  .fc-c[data-l]::before { content: attr(data-l) " "; font: 11.5px var(--f-body); color: var(--muted); }
+}
+@media (max-width: 640px) {
+  /* 成績表在手機上讓欄位標題與數字換行，五欄一屏放得下，不用在卡片裡橫捲 */
+  table.data.fc-score-tbl td:first-child:not(.n) { min-width: 0; }
+  table.data.fc-score-tbl th, table.data.fc-score-tbl th.n { white-space: normal; }
+  table.data.fc-score-tbl td.n .sub { white-space: normal; }
+  table.data.fc-score-tbl th, table.data.fc-score-tbl td { padding-inline: 4px; }
+  .fc-detail { padding-left: 6px; }
+  .fc-step { flex-basis: 100%; max-width: none; }
+  .fc-arrow { display: none; }
+  .fc-flow.mini .fc-step { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .fc-c-name .fc-asset::before, button.fc-entry { transition: none; } button.fc-entry:active { transform: none; } }

@@ -23,6 +23,7 @@ CATS = [
 TABS = {"overview", "fx", "bond", "equity", "commodity", "flow", "vol", "cascade", "chains", "playbook", "scenario",
         "research",   # 2026-10-02 起是總覽關聯熱圖的別名（舊連結仍可用）
         "hedge",      # 沙盤推演的「避險」檢視（2026-10-02）
+        "ledger",     # 沙盤推演的「預測帳本」檢視（2026-10-09）
         "daily", "glossary"}
 
 

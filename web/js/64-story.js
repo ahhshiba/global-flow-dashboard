@@ -220,6 +220,8 @@ function storyCard(S, hz) {
       h("p", {}, v === "樣本外有效" ? "回測裡有效，但訊號和門檻是事後設計的，實際效果可能比較差。" : "所以排行只能當研究線索，不要照著買。"),
       h("p", { class: "muted" }, "完整的排行和每個標的的原因在下面「研究細節」的期望值排行。")));
 
+  const fcE = fcEntry(S);
+
   // 根據什麼：現在正在發生的事
   const lit = storyLit(S);
   const groups = SC_THEMES.map((t) => [t, lit.filter((a) => (SC_PLAIN[a.id] || [, "其他"])[1] === t)]).filter(([, xs]) => xs.length);
@@ -235,6 +237,7 @@ function storyCard(S, hz) {
     more.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "比平常更可能"), ...more.map(item)) : h("p", { class: "st-note" }, "沒有哪件事明顯比平常更可能。"),
     less.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, R && !R.lessOk ? "比平常更不可能（這個方向回頭對答案沒有參考價值，只是列出來）" : "比平常更不可能"), ...less.map(item)) : null,
     h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "其他問題"), rank),
+    ...(fcE ? [fcE] : []),        // 短期預測帳本的入口（69-ledger.js）
     h("p", { class: "st-note" }, "全部是歷史統計，不是投資建議。"),
     basis);
   return c;

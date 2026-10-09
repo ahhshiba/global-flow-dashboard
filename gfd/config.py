@@ -835,3 +835,41 @@ TARGET_START = "1990-01-01"
 LOWBASE = dict(pct_low=25, dd_pull=-20.0, pct_high=80, dd_high=-5.0)
 # 低基期有沒有用：底層序列的「10 年內位階」分五段，看各段之後 6／12 個月的報酬；位階用當時往前 10 年算，不偷看
 LOWBASE_WINDOW = 120
+
+# ── 短期預測帳本 v1（2026-10-09）：日線、10／21 個交易日，每個 ISO 週一批，只增不改 ──
+# 方法與規格見 gfd/forecast.py。v1 只用「同一波動三分位的歷史報酬分布」；趨勢／動能／VIX 只記錄不參與預測。
+FORECAST_VERSION = "v1"
+# (asset_id, 預測用代號, 資料來源, 顯示名稱, 台股可買的對應；空字串＝無)
+# 資料來源：targets＝data/raw/daily_targets.json，cascade＝data/raw/daily_cascade.json
+FORECAST_ASSETS = [
+    ("b_ust_long", "TLT", "targets", "美國長天期公債", "00679B.TWO／00687B.TWO"),
+    ("b_ig", "LQD", "targets", "美國投資級公司債", "00720B.TWO"),
+    ("b_hy", "HYG", "targets", "美國高收益債", "00710B.TW"),
+    ("c_gold", "GLD", "targets", "黃金", "00635U.TW"),
+    ("fx_usdtwd", "TWD=X", "cascade", "美元／新台幣", "美元定存／00865B.TW"),
+    ("fx_dxy", "UUP", "targets", "美元指數", "00682U.TW"),
+    ("fx_usdjpy~inv", "FXY", "targets", "日圓", ""),
+    ("eq_twii", "0050.TW", "targets", "台股（台灣 50）", "006208.TW"),
+    ("tw_2330", "2330.TW", "targets", "台積電", "2330.TW"),
+    ("eq_sox", "SOXX", "targets", "美國半導體", "00891.TW"),
+    ("eq_spx", "SPY", "targets", "美股 S&P 500", "00646.TW"),
+    ("eq_ndx", "QQQ", "targets", "那斯達克 100", "00662.TW"),
+    ("eq_n225", "EWJ", "targets", "日股", "00645.TW"),
+    ("eq_hsi", "EWH", "targets", "港股", ""),
+    ("c_wti", "USO", "targets", "原油", "00642U.TW"),
+    ("c_natgas", "UNG", "targets", "天然氣", ""),
+    ("c_copper", "CPER", "targets", "銅", ""),
+    ("c_silver", "SLV", "targets", "白銀", ""),
+    ("c_platinum", "PPLT", "targets", "白金", ""),
+    ("ci_agri", "DBA", "targets", "農產品", ""),
+    ("c_urea", "MOS", "targets", "肥料股", "CF／NTR／1722.TW"),
+    ("b_brk", "BRK-B", "targets", "波克夏", ""),
+]
+FORECAST_HORIZONS = (10, 21)          # 交易日（各標的自己的交易日）
+FORECAST_BACKTEST_START = "2008-01-01"  # 走步回測的第一個決策日
+FORECAST_BACKFILL_WEEKS = 12          # 帳本第一次建立時往回補登幾週
+FORECAST_MIN_HISTORY = 1000           # S0：至少幾個交易日的歷史
+FORECAST_MIN_NEFF = 15                # S5：同波動樣本的獨立段數低於這個就改用全部歷史
+FORECAST_UP = 0.55                    # S6：歷史上漲機率 ≥ 這個 → 偏漲
+FORECAST_DOWN = 0.45                  # S6：歷史上漲機率 ≤ 這個 → 偏跌
+FORECAST_STALE_DAYS = 7               # S0：最後收盤超過這麼多個日曆天 → 跳過

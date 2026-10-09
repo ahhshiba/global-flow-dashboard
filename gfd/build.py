@@ -3,7 +3,7 @@
 產出兩份：
   dashboard.html           完整 HTML 文件，直接用瀏覽器開
   dashboard.artifact.html  只有頁面內容（無 doctype/head/body），發佈成 Artifact 用
-公開版（--public）另外產出 docs/index.html 與 docs/data/*.json。
+公開版（--public）另外產出 docs/index.html 與 docs/data/*.json，並把短期預測帳本的 CSV 複製成 docs/data/forecast.csv（Google 試算表用 IMPORTDATA 讀）。
 
 載入速度（2026-10-02）：開頁只需要總覽與各市場分頁的資料，事件衝擊、訊號劇本、沙盤推演、完整日線、歷史每日
 占了頁面資料的八成以上。這幾塊拆出來（LAZY_KEYS），用到才拿：
@@ -15,6 +15,7 @@ import datetime as dt
 import hashlib
 import json
 import pathlib
+import shutil
 
 from . import config as C
 from . import faq as FQ
@@ -26,6 +27,7 @@ OUT = ROOT / "dashboard.html"
 OUT_ARTIFACT = ROOT / "dashboard.artifact.html"
 OUT_PUBLIC = ROOT / "docs" / "index.html"
 OUT_PUBLIC_DATA = ROOT / "docs" / "data"
+FORECAST_CSV = ROOT / "data" / "forecast" / "forecast.csv"   # gfd/forecast.py 產出；公開版原樣複製到 docs/data/forecast.csv
 LAZY_KEYS = ("cascade", "playbook", "scenario", "detail", "daily_latest", "daily")
 # 總覽 KPI 用到的日線尾巴：走勢小圖取日線最後 120 點（留 130）；「12 月」漲跌往回找「最新收盤日 − 365 天」以前
 # 最後一個週收盤，所以週線依日期截：最後一週往前 450 天，再多留一點在那之前（週線有缺口也找得到同一點）
@@ -88,6 +90,12 @@ def run(log=print, public=False):
         for stale in OUT_PUBLIC_DATA.glob("*.json"):  # docs/data 是產物目錄：不再產出的舊檔不留著被部署出去
             if stale.stem not in LAZY_KEYS:
                 stale.unlink()
+        # 預測帳本 CSV 原樣複製（位元組不動：試算表靠列位置對齊）；上面只清 *.json，不會動到這個 csv
+        if FORECAST_CSV.exists():
+            dest = OUT_PUBLIC_DATA / "forecast.csv"
+            tmp = dest.with_suffix(".csv.tmp")
+            shutil.copyfile(FORECAST_CSV, tmp)
+            tmp.replace(dest)
         lazy_tags = ""
     else:
         lazy_src = {k: f"#gfd-lazy-{k}" for k in LAZY_KEYS}
