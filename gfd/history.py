@@ -378,15 +378,18 @@ def fetch_hedge_daily(log=print):
 
 
 def fetch_targets_daily(log=print):
-    """確切標的的含息日線 → data/raw/daily_targets.json。每天跑（低基期要用最新價格）；抓不到的沿用上次。"""
+    """確切標的的含息日線 → data/raw/daily_targets.json。每天跑（低基期要用最新價格）；抓不到的沿用上次。
+    同一次請求另存未還原收盤 raw_closes（與 dates 逐筆對齊，缺值為 null；預測帳本給人工查價用，其他分析不讀它）。"""
     old = _load("daily_targets.json", {}).get("series", {})
     out, errors = {}, []
     for sym in dict.fromkeys(t[1] for t in C.TARGETS if t[3] != "cash"):
         try:
-            rows, meta = S.yahoo_chart(sym, interval="1d", start=C.TARGET_START, adjusted=True, completed_only=True)
+            rows, meta = S.yahoo_chart(sym, interval="1d", start=C.TARGET_START, adjusted=True, completed_only=True,
+                                       with_raw=True)
             if len(rows) < 250:
                 raise RuntimeError(f"日線只有 {len(rows)} 筆")
-            out[sym] = dict(dates=[d.isoformat() for d, _ in rows], closes=[float(f"{v:.6g}") for _, v in rows],
+            out[sym] = dict(dates=[d.isoformat() for d, _, _ in rows], closes=[float(f"{v:.6g}") for _, v, _ in rows],
+                            raw_closes=[None if r is None else round(r, 4) for _, _, r in rows],
                             currency=(meta or {}).get("currency"))
             time.sleep(0.3)
         except Exception as e:  # noqa: BLE001

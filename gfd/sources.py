@@ -47,8 +47,10 @@ def _f(v):
 
 
 # ── Yahoo Finance ──
-def yahoo_chart(symbol, *, interval, start=None, rng=None, adjusted=True, completed_only=False):
-    """completed_only=True：交易時段還沒結束的最後一根（盤中價，期貨晚盤價）不算收盤，捨棄。"""
+def yahoo_chart(symbol, *, interval, start=None, rng=None, adjusted=True, completed_only=False, with_raw=False):
+    """completed_only=True：交易時段還沒結束的最後一根（盤中價，期貨晚盤價）不算收盤，捨棄。
+    with_raw=True：每列多回一個未還原收盤（Yahoo quote close，只調整分割，不調整配息；人工查價用），
+    回傳 [(日期, 還原價, 未還原收盤)]——同一次請求的同一份回應，不多打請求；預設回傳形狀不變。"""
     q = {"interval": interval, "events": "div,split"}
     if rng:
         q["range"] = rng
@@ -70,7 +72,12 @@ def yahoo_chart(symbol, *, interval, start=None, rng=None, adjusted=True, comple
         v = adj[i] if adj and i < len(adj) and adj[i] is not None else (close[i] if i < len(close) else None)
         if v is None:
             continue
-        out.append((dt.datetime.fromtimestamp(t + off, dt.timezone.utc).date(), float(v)))
+        day = dt.datetime.fromtimestamp(t + off, dt.timezone.utc).date()
+        if with_raw:
+            rc = close[i] if i < len(close) else None
+            out.append((day, float(v), float(rc) if rc is not None else None))
+        else:
+            out.append((day, float(v)))
         last_t = t
     # Yahoo 的當日 K 棒在交易時段內是即時價；期貨在美東晚盤到午夜之間也還不是結算價。
     reg = ((r["meta"].get("currentTradingPeriod") or {}).get("regular") or {})

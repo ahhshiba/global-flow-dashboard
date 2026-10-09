@@ -836,9 +836,10 @@ LOWBASE = dict(pct_low=25, dd_pull=-20.0, pct_high=80, dd_high=-5.0)
 # 低基期有沒有用：底層序列的「10 年內位階」分五段，看各段之後 6／12 個月的報酬；位階用當時往前 10 年算，不偷看
 LOWBASE_WINDOW = 120
 
-# ── 短期預測帳本 v1（2026-10-09）：日線、10／21 個交易日，每個 ISO 週一批，只增不改 ──
-# 方法與規格見 gfd/forecast.py。v1 只用「同一波動三分位的歷史報酬分布」；趨勢／動能／VIX 只記錄不參與預測。
-FORECAST_VERSION = "v1"
+# ── 預測帳本 v2（2026-10-10）：日線、5／10／21／63／126／252 個交易日（短線到長線），只增不改 ──
+# 方法與規格見 gfd/forecast.py。只用「同一波動三分位的歷史報酬分布」；趨勢／動能／VIX 只記錄不參與預測。
+# v1（2026-10-09，10／21 日）已封存到 data/forecast/archive/。
+FORECAST_VERSION = "v2"
 # (asset_id, 預測用代號, 資料來源, 顯示名稱, 台股可買的對應；空字串＝無)
 # 資料來源：targets＝data/raw/daily_targets.json，cascade＝data/raw/daily_cascade.json
 FORECAST_ASSETS = [
@@ -865,9 +866,18 @@ FORECAST_ASSETS = [
     ("c_urea", "MOS", "targets", "肥料股", "CF／NTR／1722.TW"),
     ("b_brk", "BRK-B", "targets", "波克夏", ""),
 ]
-FORECAST_HORIZONS = (10, 21)          # 交易日（各標的自己的交易日）
+FORECAST_HORIZONS = (5, 10, 21, 63, 126, 252)   # 交易日（各標的自己的交易日）；列的順序＝CSV 的期間順序
+# 期間 → (層級, 約略名稱)
+FORECAST_HORIZON_INFO = {5: ("短線", "1週"), 10: ("短線", "2週"), 21: ("中線", "1個月"),
+                         63: ("中線", "3個月"), 126: ("長線", "6個月"), 252: ("長線", "12個月")}
+# 批次節奏（台北時間、ISO 週）：week＝每週第一次執行；month＝該週週一落在當月 1～7 日；
+# quarter＝同 month 且月份在 FORECAST_QUARTER_MONTHS
+FORECAST_CADENCE = {5: "week", 10: "week", 21: "month", 63: "month", 126: "quarter", 252: "quarter"}
+FORECAST_QUARTER_MONTHS = (1, 4, 7, 10)
+FORECAST_BACKFILL = (("week", 12), ("month", 12), ("quarter", 8))   # 帳本第一次建立時往回補登：週 12、月 12、季 8
+FORECAST_MONTHLY_MONTHS = {63: 3, 126: 6, 252: 12}   # 與月度沙盤推演銜接：期間 → 月度模型的月數
+FORECAST_NO_DIVIDEND = ("TWD=X",)    # 沒有配息的代號：沒有 raw_closes 時，未還原收盤＝還原收盤
 FORECAST_BACKTEST_START = "2008-01-01"  # 走步回測的第一個決策日
-FORECAST_BACKFILL_WEEKS = 12          # 帳本第一次建立時往回補登幾週
 FORECAST_MIN_HISTORY = 1000           # S0：至少幾個交易日的歷史
 FORECAST_MIN_NEFF = 15                # S5：同波動樣本的獨立段數低於這個就改用全部歷史
 FORECAST_UP = 0.55                    # S6：歷史上漲機率 ≥ 這個 → 偏漲

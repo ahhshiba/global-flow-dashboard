@@ -713,7 +713,7 @@ def run(log=print):
             import traceback
             log(f"[targets] 失敗，這次略過確切標的：{exc!r}\n{traceback.format_exc()}")
             scen["targets"] = None
-        # 短期預測帳本 v1（2026-10-09）：日線 10／21 個交易日，每週一批、只增不改、到期自動對答案；失敗只略過這一塊
+        # 預測帳本 v2（2026-10-10）：日線 5／10／21／63／126／252 個交易日（週／月／季批次）、只增不改、到期自動對答案；失敗只略過這一塊
         try:
             scen["forecast"] = FC.build(scen=scen, log=log)
         except Exception as exc:      # noqa: BLE001
