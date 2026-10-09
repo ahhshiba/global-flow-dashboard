@@ -331,17 +331,20 @@ def _make_row(asset, h, s, vix, cut, created, source, monthly, bt, p):
     else:
         t2 = f"上漲機率介於 {p['down']:.0f}%～{p['up']:.0f}% 之間，不做方向判斷"
     if bt and bt["nj"]:
-        gap = bt["dir"] - bt["up"]
+        # 基準用「永遠猜多數方向」：對本來偏跌的資產，贏「永遠猜漲」太容易，不能拿來說有預測力
+        bmaj = max(bt["up"], 100 - bt["up"])
+        bname = "永遠猜漲" if bt["up"] >= 50 else "永遠猜跌"
+        gap = bt["dir"] - bmaj
         noise = 1.96 * 100 * math.sqrt(0.25 / bt["nj"])          # 單一比例的 95% 隨機誤差（保守）
         if abs(gap) < 0.5:
-            cmp_ = "和永遠猜漲一樣準，沒有比較準"
+            cmp_ = f"和{bname}一樣準，沒有比較準"
         elif gap < 0:
-            cmp_ = f"還不如永遠猜漲（差 {-gap:.0f} 個百分點）"
+            cmp_ = f"還不如{bname}（差 {-gap:.0f} 個百分點）"
         elif gap < noise:
-            cmp_ = f"只比永遠猜漲高 {gap:.0f} 個百分點，在隨機誤差內（±{noise:.0f}），不能說比永遠猜漲更準"
+            cmp_ = f"只比{bname}高 {gap:.0f} 個百分點，在隨機誤差內（±{noise:.0f}），不能說比較準"
         else:
-            cmp_ = f"比永遠猜漲高 {gap:.0f} 個百分點（超出隨機誤差 ±{noise:.0f}，但不保證延續）"
-        t3 = (f"走步回測（只算起始日前已到期的決策）方向命中 {bt['dir']:.0f}%（{bt['nj']} 次判定）、永遠猜漲 {bt['up']:.0f}%，"
+            cmp_ = f"比{bname}高 {gap:.0f} 個百分點（超出隨機誤差 ±{noise:.0f}，但不保證延續）"
+        t3 = (f"走步回測（只算起始日前已到期的決策）方向命中 {bt['dir']:.0f}%（{bt['nj']} 次判定）、永遠猜漲 {bt['up']:.0f}%、永遠猜跌 {100 - bt['up']:.0f}%，"
               f"{cmp_}；預測區間實際涵蓋 {bt['band']:.0f}%（理想約 50%）。")
     elif bt:
         t3 = f"走步回測（{bt['n']} 次決策）沒有方向判定可比；預測區間實際涵蓋 {bt['band']:.0f}%（理想約 50%）。"
@@ -423,6 +426,9 @@ def csv_text(rows):
 
 def _load_ledger(path):
     if not path.exists():
+        # 帳本不見但備份還在＝有東西出錯了：不能默默重建（會換掉已公開的預測），要人工把 ledger.prev.json 改回來
+        if path.with_name("ledger.prev.json").exists():
+            raise FileNotFoundError(f"{path} 不見了但 ledger.prev.json 還在：請確認後把備份改名回 ledger.json，不自動重建")
         return dict(version=C.FORECAST_VERSION, rows=[])
     led = json.loads(path.read_text(encoding="utf-8"))   # 壞檔就讓它報錯：不能在壞檔上覆寫，ledger.prev.json 還在
     if not isinstance(led.get("rows"), list):

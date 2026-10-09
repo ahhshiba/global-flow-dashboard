@@ -104,20 +104,22 @@ function fcFlow(steps, mini) {
   return h("div", { class: `fc-flow${mini ? " mini" : ""}` }, steps.flatMap((s, i) => [i ? h("span", { class: "fc-arrow", "aria-hidden": "true" }, "→") : null, fcStep(s)]));
 }
 function fcDetail(r) {
-  const gap = fin(r.bt_dir) && fin(r.bt_up) ? r.bt_dir - r.bt_up : null;
+  // 基準＝永遠猜多數方向（偏跌的資產贏「永遠猜漲」太容易）
+  const maj = fin(r.bt_up) ? Math.max(r.bt_up, 100 - r.bt_up) : null, majName = fin(r.bt_up) && r.bt_up < 50 ? "永遠猜跌" : "永遠猜漲";
+  const gap = fin(r.bt_dir) && fin(maj) ? r.bt_dir - maj : null;
   const out = [
     h("h5", {}, "判斷流程（實線＝參與預測，虛線＝只記錄、不參與）"),
     fcFlow(r.steps || []),
     h("h5", {}, "判斷原因"),
     h("p", { class: "fc-reason" }, r.reason),
     h("h5", {}, "回測成績（同資產、同期間的走步回測）"),
-    h("p", { class: "fc-bt" }, `方向命中 ${fcPct(r.bt_dir)}，永遠猜漲 ${fcPct(r.bt_up)}${gap != null && gap < 2 ? "（沒有比猜漲準）" : ""}；預測區間實際落入 ${fcPct(r.bt_band)}（理想 50%）。`),
+    h("p", { class: "fc-bt" }, `方向命中 ${fcPct(r.bt_dir)}，${majName} ${fcPct(maj)}${gap != null && gap < 2 ? `（沒有比${majName}準）` : ""}；預測區間實際落入 ${fcPct(r.bt_band)}（理想 50%）。`),
     h("h5", {}, "月度沙盤推演（3 個月）"),
     h("p", { class: "fc-monthly" }, fin(r.monthly) ? `3 個月期望超額 ${fmtSigned(r.monthly, 2, "%")}（月資料的另一個角度，不參與這筆預測）。` : "沒有對應的月度標的。"),
   ];
   if (r.status === "已到期") out.push(h("h5", {}, "對答案"),
     h("p", {}, `${r.settled} 到期，實際 ${fmtSigned(r.actual, 2, "%")}；落在區間：${r.in_band || "—"}；方向：${r.dir_ok || "—"}。`));
-  out.push(h("p", { class: "muted fc-meta" }, `預測編號 ${r.id}・起始日 ${r.start_date}・起始價 ${fmtNum(r.start_price)}・模型 ${r.version}・${r.source}`));
+  out.push(h("p", { class: "muted fc-meta" }, `預測編號 ${r.id}・起始日 ${r.start_date || "—"}・起始價 ${fin(r.start_price) ? fmtNum(r.start_price) : "—"}・模型 ${r.version}・${r.source}`));
   return h("div", { class: "fc-detail" }, out);
 }
 function fcRow(r) {
