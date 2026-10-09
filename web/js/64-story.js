@@ -237,7 +237,7 @@ function storyCard(S, hz) {
     more.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "比平常更可能"), ...more.map(item)) : h("p", { class: "st-note" }, "沒有哪件事明顯比平常更可能。"),
     less.length ? h("div", { class: "st-group" }, h("div", { class: "st-cap" }, R && !R.lessOk ? "比平常更不可能（這個方向回頭對答案沒有參考價值，只是列出來）" : "比平常更不可能"), ...less.map(item)) : null,
     h("div", { class: "st-group" }, h("div", { class: "st-cap" }, "其他問題"), rank),
-    ...(fcE ? [fcE] : []),        // 短期預測帳本的入口（69-ledger.js）
+    ...(fcE ? [fcE] : []),        // 預測帳本的入口：短線／中線／長線各幾筆、系統已對答案幾筆（69-ledger.js 的 fcEntry）
     h("p", { class: "st-note" }, "全部是歷史統計，不是投資建議。"),
     basis);
   return c;
