@@ -161,11 +161,15 @@ function fcCondTable(steps) {
 // 回測成績（同資產、同期間）：基準是「永遠猜多數方向」，偏跌的資產贏「永遠猜漲」太容易
 function fcBt(r) {
   const gap = fin(r.bt_dir) && fin(r.bt_maj) ? r.bt_dir - r.bt_maj : null;
+  // 隨機誤差與後端 _noise 同一公式：95% 誤差＝1.96×100×√(0.25÷等效判定數)，等效判定數＝判定次數÷max(1, 期間÷5)
+  const neff = fin(r.bt_n) && r.bt_n > 0 ? r.bt_n / Math.max(1, r.horizon / 5) : null;
+  const noise = neff ? 1.96 * 100 * Math.sqrt(0.25 / neff) : null;
   const kv = (l, v, extra) => h("div", { class: "fc-kv" }, h("span", { class: "fc-kl" }, l), h("b", {}, v), extra || null);
   const claim = gap == null ? "這個資產與期間的回測判定太少，沒有可比的成績。"
     : gap < 0 ? `方向沒有比猜多數準（低 ${fmtNum(-gap, 1)} 個百分點）。`
       : gap < 0.05 ? "方向和猜多數一樣準，沒有比較準。"
-        : gap < 2 ? `只比多數方向高 ${fmtNum(gap, 1)} 個百分點，在隨機誤差內，不能算比較準。` : `比多數方向高 ${fmtNum(gap, 1)} 個百分點；每週決策的報酬互相重疊，等效獨立次數遠少於判定次數，隨機誤差仍要放寬看。`;
+        : noise == null || gap < noise ? `只比多數方向高 ${fmtNum(gap, 1)} 個百分點，在隨機誤差內${noise ? `（±${fmtNum(noise, 0)}）` : ""}，不能算比較準。`
+          : `比多數方向高 ${fmtNum(gap, 1)} 個百分點（超出隨機誤差 ±${fmtNum(noise, 0)}，但不保證延續）。`;
   return [
     h("div", { class: "fc-kvs" },
       kv("判定次數", fin(r.bt_n) ? fmtNum(r.bt_n, 0) : "—", fin(r.bt_nall) ? h("span", { class: "sub" }, `全部決策 ${fmtNum(r.bt_nall, 0)}`) : null),
