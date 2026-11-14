@@ -1,0 +1,563 @@
+﻿年,類別,CUSIP,發行人,家數,合計金額_美元,產業粗分,各家
+2001,共同加碼,717081103,PFIZER INC COM,3,143025509,醫療,Renaissance +125M；Point72（前 SAC） +11M；Elliott +7M
+2001,共同減碼,594918104,MICROSOFT CORP COM,3,-165053553,科技,Renaissance -107M；Point72（前 SAC） -37M；Elliott -21M
+2003,共同加碼,35138T107,FOX ENTERTAINMENT GROUP INC COM,3,52029622,通訊／媒體,Renaissance +39M；Point72（前 SAC） +8M；AQR +5M
+2003,共同加碼,825846108,SICOR INC COM,3,21309830,未分類,Point72（前 SAC） +8M；AQR +7M；Renaissance +6M
+2004,共同加碼,852061100,SPRINT CORP COM,3,322439665,未分類,Point72（前 SAC） +278M；Renaissance +35M；Elliott +10M
+2004,共同加碼,46185R100,INVITROGEN CORP COM,3,81240845,未分類,Point72（前 SAC） +58M；Renaissance +19M；AQR +5M
+2004,共同加碼,401698105,GUIDANT CORP COM,3,65807000,未分類,Renaissance +43M；Point72（前 SAC） +17M；AQR +6M
+2004,共同加碼,12612W104,CNF INC COM,3,29448818,未分類,Renaissance +14M；Point72（前 SAC） +10M；AQR +5M
+2004,共同加碼,651290108,NEWFIELD EXPLORATION CO COM,3,28727488,能源,Renaissance +13M；AQR +10M；Point72（前 SAC） +6M
+2004,共同加碼,442120101,HOUSTON EXPLORATION CO COM,3,19701835,能源,Renaissance +9M；AQR +5M；Point72（前 SAC） +5M
+2004,共同減碼,61166W101,MONSANTO CO COM,3,-44602283,未分類,Point72（前 SAC） -28M；Renaissance -10M；AQR -7M
+2004,共同減碼,825846108,SICOR INC COM,3,-22656000,未分類,Point72（前 SAC） -8M；AQR -7M；Renaissance -7M
+2005,共同加碼,30231G102,EXXON MOBIL CORP COM,5,624645048,能源,D. E. Shaw +396M；Renaissance +186M；Elliott +17M；AQR +15M；Point72（前 SAC） +11M
+2005,共同加碼,401698105,GUIDANT CORP COM,4,848639334,未分類,D. E. Shaw +631M；Elliott +198M；Point72（前 SAC） +11M；AQR +8M
+2005,共同加碼,458140100,INTEL CORP COM,4,372248497,科技,D. E. Shaw +225M；Renaissance +111M；AQR +29M；Point72（前 SAC） +7M
+2005,共同加碼,459200101,INTL BUSINESS MACHINES CORP COM,4,241370504,科技,Renaissance +148M；D. E. Shaw +45M；Point72（前 SAC） +36M；AQR +11M
+2005,共同加碼,302182100,EXPRESS SCRIPTS INC COM,4,236848073,未分類,D. E. Shaw +133M；Renaissance +76M；AQR +15M；Point72（前 SAC） +12M
+2005,共同加碼,20825C104,CONOCOPHILLIPS COM,4,161188502,能源,Renaissance +115M；AQR +18M；Point72（前 SAC） +15M；D. E. Shaw +13M
+2005,共同加碼,808655104,SCIENTIFIC-ATLANTA INC COM,4,150331227,未分類,D. E. Shaw +60M；Renaissance +60M；Point72（前 SAC） +20M；AQR +11M
+2005,共同加碼,912909108,UNITED STATES STEEL CORP COM,4,115916019,原物料,D. E. Shaw +60M；Renaissance +40M；Point72（前 SAC） +8M；AQR +8M
+2005,共同加碼,037389103,AON CORP COM,4,109422436,未分類,D. E. Shaw +71M；Renaissance +23M；AQR +10M；Point72（前 SAC） +5M
+2005,共同加碼,126408103,CSX CORP COM,4,93218672,未分類,D. E. Shaw +52M；AQR +18M；Point72（前 SAC） +15M；Renaissance +9M
+2005,共同加碼,02209S103,ALTRIA GROUP INC COM,4,84458436,消費,D. E. Shaw +36M；Renaissance +26M；AQR +15M；Point72（前 SAC） +8M
+2005,共同加碼,38259P508,GOOGLE INC-CL A CL.A,3,691780284,通訊／媒體,D. E. Shaw +592M；Renaissance +93M；AQR +7M
+2005,共同加碼,887317105,TIME WARNER INC COM,3,576001160,通訊／媒體,Point72（前 SAC） +499M；Elliott +71M；AQR +6M
+2005,共同加碼,453235103,INAMED CORP COM,3,538931664,未分類,Point72（前 SAC） +276M；D. E. Shaw +250M；AQR +14M
+2005,共同加碼,620076109,MOTOROLA INC COM,3,412695407,未分類,D. E. Shaw +272M；Renaissance +119M；AQR +22M
+2005,共同減碼,65332V103,NEXTEL COMMUNICATIONS INC CL CL.A,5,-98241000,通訊／媒體,Elliott -32M；Renaissance -31M；Point72（前 SAC） -20M；D. E. Shaw -8M；AQR -7M
+2005,共同減碼,35138T107,FOX ENTERTAINMENT GROUP INC CL.A,4,-117750000,通訊／媒體,D. E. Shaw -68M；Renaissance -25M；Point72（前 SAC） -16M；AQR -9M
+2005,共同減碼,816196109,SELECT MED CORP COM,4,-86532000,未分類,D. E. Shaw -52M；Point72（前 SAC） -14M；AQR -11M；Renaissance -10M
+2005,共同減碼,852061100,SPRINT CORP COM,3,-301827990,未分類,Point72（前 SAC） -259M；Renaissance -35M；D. E. Shaw -8M
+2005,共同減碼,562567107,MANDALAY RESORT GROUP COM,3,-286875000,未分類,D. E. Shaw -205M；Renaissance -72M；AQR -10M
+2005,共同減碼,594918104,MICROSOFT CORP COM,3,-238053213,科技,Point72（前 SAC） -135M；D. E. Shaw -96M；Elliott -7M
+2005,共同減碼,498780105,KMART HLDG CORPORATION COM,3,-224407000,未分類,D. E. Shaw -124M；Point72（前 SAC） -88M；AQR -13M
+2005,共同減碼,052769106,AUTODESK INC COM,3,-160403315,科技,D. E. Shaw -124M；Point72（前 SAC） -29M；Renaissance -7M
+2005,共同減碼,75952B105,RELIANT ENERGY INC COM,3,-108569000,能源,Point72（前 SAC） -89M；Renaissance -10M；AQR -9M
+2005,共同減碼,892335100,TOYS R US INC COM,3,-96390000,未分類,Point72（前 SAC） -58M；D. E. Shaw -23M；AQR -15M
+2006,共同加碼,501044101,KROGER CO COM,6,193967637,消費,Elliott +67M；Renaissance +52M；Two Sigma +30M；D. E. Shaw +20M；AQR +19M；Point72（前 SAC） +6M
+2006,共同加碼,717265102,PHELPS DODGE CORP COM,5,749278846,未分類,D. E. Shaw +354M；Point72（前 SAC） +309M；Two Sigma +48M；Elliott +30M；AQR +8M
+2006,共同加碼,413619107,HARRAH'S ENTERTAINMENT INC COM,5,314480154,通訊／媒體,D. E. Shaw +190M；Point72（前 SAC） +75M；Two Sigma +24M；Renaissance +19M；AQR +7M
+2006,共同加碼,079860102,BELLSOUTH CORP COM,4,554155288,未分類,D. E. Shaw +357M；Renaissance +138M；Elliott +45M；AQR +14M
+2006,共同加碼,595112103,MICRON TECHNOLOGY INC COM,4,382454864,科技,D. E. Shaw +293M；Two Sigma +46M；Renaissance +29M；AQR +15M
+2006,共同加碼,540424207,LOEWS CORP - CAROLINA GROUP TRSTK,4,344620862,未分類,Renaissance +188M；D. E. Shaw +129M；Two Sigma +16M；AQR +11M
+2006,共同加碼,60467R100,MIRANT CORP COM,4,308558000,未分類,Point72（前 SAC） +163M；D. E. Shaw +73M；Renaissance +38M；AQR +34M
+2006,共同加碼,02553E106,AMERICAN EAGLE OUTFITTERS COM,4,274898416,未分類,Renaissance +225M；D. E. Shaw +30M；AQR +13M；Point72（前 SAC） +7M
+2006,共同加碼,038521100,ARAMARK CORP-CL B CL.B,4,257909630,未分類,Renaissance +142M；D. E. Shaw +87M；Two Sigma +17M；AQR +13M
+2006,共同加碼,761713106,REYNOLDS AMERICAN INC COM,4,242500176,未分類,Renaissance +158M；D. E. Shaw +42M；AQR +35M；Two Sigma +8M
+2006,共同加碼,676220106,OFFICE DEPOT INC COM,4,220799699,未分類,D. E. Shaw +178M；Renaissance +23M；Two Sigma +10M；AQR +9M
+2006,共同加碼,580037109,MCDERMOTT INTL INC COM,4,219936411,未分類,Renaissance +115M；D. E. Shaw +61M；Two Sigma +29M；Point72（前 SAC） +15M
+2006,共同加碼,038020103,APPLIED BIOSYSTEMS GROUP-APP TRSTK,4,215951493,科技,Renaissance +132M；AQR +50M；Two Sigma +19M；D. E. Shaw +15M
+2006,共同加碼,666807102,NORTHROP GRUMMAN CORP COM,4,210392597,工業,Renaissance +116M；AQR +71M；D. E. Shaw +16M；Two Sigma +8M
+2006,共同加碼,38141G104,GOLDMAN SACHS GROUP INC COM,4,205942192,金融,Renaissance +113M；AQR +44M；D. E. Shaw +34M；Point72（前 SAC） +15M
+2006,共同減碼,401698105,GUIDANT STK (NYS) COM,5,-961946000,未分類,D. E. Shaw -714M；Elliott -198M；Point72（前 SAC） -26M；AQR -14M；Two Sigma -10M
+2006,共同減碼,453235103,INAMED CORP COM,5,-580192000,未分類,Point72（前 SAC） -276M；D. E. Shaw -272M；AQR -14M；Two Sigma -11M；Renaissance -8M
+2006,共同減碼,808655104,SCIENTIFIC-ATLANTA INC COM,5,-200964000,未分類,D. E. Shaw -105M；Renaissance -60M；Point72（前 SAC） -20M；AQR -11M；Two Sigma -6M
+2006,共同減碼,826170102,SIEBEL SYSTEMS INC COM,4,-372934000,科技,D. E. Shaw -301M；Renaissance -33M；Two Sigma -24M；AQR -14M
+2006,共同減碼,122014103,BURLINGTON RESOURCES INC COM,4,-231245000,能源,D. E. Shaw -187M；AQR -27M；Two Sigma -11M；Renaissance -5M
+2006,共同減碼,216640102,COOPER CAMERON CORP COM,4,-191872000,未分類,D. E. Shaw -120M；Renaissance -36M；Two Sigma -29M；Point72（前 SAC） -7M
+2006,共同減碼,65333F107,NEXTEL PARTNRS STK (NMQ) CL A,4,-189015000,未分類,D. E. Shaw -89M；Point72（前 SAC） -67M；Two Sigma -23M；AQR -10M
+2006,共同減碼,316326107,FIDELITY NATIONAL FINL INC COM,4,-160357000,金融,D. E. Shaw -132M；Two Sigma -16M；AQR -7M；Point72（前 SAC） -6M
+2006,共同減碼,013104104,ALBERTSONS ORDINARY (NYS) COM,4,-118781000,未分類,Elliott -95M；D. E. Shaw -10M；Point72（前 SAC） -8M；Two Sigma -6M
+2006,共同減碼,475070108,JEFFERSON-PILOT CORP COM,4,-96888000,未分類,D. E. Shaw -59M；AQR -14M；Renaissance -13M；Two Sigma -11M
+2007,共同加碼,78442P106,SLM CORP COM,6,159913004,未分類,Elliott +37M；Renaissance +36M；Millennium +32M；Two Sigma +24M；Point72（前 SAC） +19M；D. E. Shaw +12M
+2007,共同加碼,G6852T105,PARTNERRE LTD COM,6,148816795,未分類,Renaissance +99M；AQR +20M；Millennium +12M；D. E. Shaw +6M；Point72（前 SAC） +6M；Two Sigma +5M
+2007,共同加碼,717081103,PFIZER INC COM,5,622085591,醫療,D. E. Shaw +451M；Two Sigma +90M；Renaissance +42M；Bridgewater +25M；AQR +14M
+2007,共同加碼,447011107,HUNTSMAN CORP COM,5,514154546,未分類,D. E. Shaw +478M；Renaissance +13M；Two Sigma +9M；Millennium +7M；AQR +7M
+2007,共同加碼,494368103,KIMBERLY-CLARK CORP COM,5,376148217,消費,Renaissance +272M；D. E. Shaw +69M；Two Sigma +20M；Bridgewater +9M；Millennium +5M
+2007,共同加碼,585055106,MEDTRONIC INC COM,5,312893992,醫療,D. E. Shaw +224M；Millennium +40M；Two Sigma +27M；Bridgewater +13M；Renaissance +9M
+2007,共同加碼,63936L100,NAVTEQ Corp COM,5,231651763,未分類,D. E. Shaw +89M；Renaissance +70M；Millennium +39M；AQR +21M；Two Sigma +12M
+2007,共同加碼,263534109,EI Du Pont de Nemours & Co COM,5,198349135,未分類,D. E. Shaw +81M；Renaissance +79M；Two Sigma +21M；Millennium +13M；AQR +5M
+2007,共同加碼,G90073100,TRANSOCEAN INC SHS,5,185140000,未分類,D. E. Shaw +52M；AQR +50M；Renaissance +45M；Millennium +25M；Point72（前 SAC） +13M
+2007,共同加碼,025816109,AMERICAN EXPRESS CO COM,5,172183371,金融,Renaissance +99M；D. E. Shaw +42M；Bridgewater +16M；Millennium +9M；Point72（前 SAC） +6M
+2007,共同加碼,55616P104,MACYS INC COM,5,161923000,未分類,Renaissance +84M；Point72（前 SAC） +34M；D. E. Shaw +25M；AQR +10M；Millennium +9M
+2007,共同加碼,037411105,APACHE CORP COM,5,137743414,能源,Renaissance +90M；Millennium +14M；AQR +13M；D. E. Shaw +12M；Bridgewater +10M
+2007,共同加碼,156700106,CENTURYTEL INC COM,5,97639454,未分類,Renaissance +70M；AQR +8M；Bridgewater +7M；D. E. Shaw +7M；Two Sigma +6M
+2007,共同加碼,594918104,Microsoft Corp COM,5,77770796,科技,Bridgewater +22M；Millennium +21M；Point72（前 SAC） +16M；AQR +13M；Renaissance +6M
+2007,共同加碼,G9144P105,TYCO ELECTRONICS LTD COM NEW,5,75160000,科技,D. E. Shaw +30M；Renaissance +15M；Two Sigma +14M；Millennium +11M；AQR +5M
+2007,共同減碼,717265102,PHELPS DODGE CORP COM,6,-830632000,未分類,D. E. Shaw -393M；Point72（前 SAC） -321M；Two Sigma -48M；Elliott -30M；AQR -29M；Millennium -10M
+2007,共同減碼,49455P101,KINDER MORGAN INC KANS COM,6,-161064000,能源,Renaissance -85M；Two Sigma -26M；Millennium -22M；AQR -12M；D. E. Shaw -9M；Point72（前 SAC） -7M
+2007,共同減碼,873168108,TXU CORP COM,6,-138408000,未分類,Renaissance -43M；D. E. Shaw -42M；Millennium -18M；Point72（前 SAC） -14M；AQR -13M；Two Sigma -7M
+2007,共同減碼,171232101,CHUBB CORP COM,6,-112805806,金融,D. E. Shaw -49M；Renaissance -25M；Two Sigma -13M；Millennium -11M；Point72（前 SAC） -9M；AQR -6M
+2007,共同減碼,079860102,BELLSOUTH CORP COM,5,-718710000,未分類,D. E. Shaw -357M；Renaissance -160M；Millennium -141M；Elliott -45M；AQR -15M
+2007,共同減碼,60467R100,MIRANT CORP NEW COM,5,-354421732,未分類,Point72（前 SAC） -199M；D. E. Shaw -73M；Renaissance -46M；Millennium -30M；Two Sigma -5M
+2007,共同減碼,038521100,ARAMARK CORP CL B,5,-338820000,未分類,Renaissance -171M；D. E. Shaw -118M；Millennium -19M；Two Sigma -18M；AQR -13M
+2007,共同減碼,141705103,CAREMARK RX INC COM,5,-300899000,未分類,D. E. Shaw -146M；Point72（前 SAC） -85M；Millennium -41M；AQR -20M；Two Sigma -9M
+2007,共同減碼,294741103,EQUITY OFFICE PROPERTIES TRU COM,5,-246570000,不動產,D. E. Shaw -148M；Millennium -65M；Two Sigma -13M；AQR -12M；Renaissance -9M
+2007,共同減碼,501044101,Kroger Co/The COM,5,-239584402,消費,D. E. Shaw -72M；Elliott -67M；Renaissance -59M；Two Sigma -34M；Point72（前 SAC） -8M
+2008,共同加碼,09062X103,BIOGEN IDEC INC COM,5,41768668,醫療,D. E. Shaw +12M；Renaissance +9M；Point72（前 SAC） +8M；Millennium +7M；Bridgewater +5M
+2008,共同加碼,002824100,ABBOTT LABORATORIES COM,4,222744815,醫療,D. E. Shaw +115M；Renaissance +89M；Two Sigma +10M；AQR +9M
+2008,共同加碼,166764100,Chevron Corp COM,4,134269880,能源,Renaissance +68M；Point72（前 SAC） +41M；Millennium +13M；Two Sigma +12M
+2008,共同加碼,931142103,WAL-MART STORES INC COM,4,117177012,消費,Renaissance +95M；Point72（前 SAC） +9M；AQR +7M；Two Sigma +6M
+2008,共同加碼,368710406,GENENTECH INC COM NEW,4,116129832,未分類,Renaissance +58M；Two Sigma +26M；Millennium +22M；AQR +10M
+2008,共同加碼,53217V109,Life Technologies Corp COM,4,85731000,科技,Renaissance +38M；Point72（前 SAC） +24M；Millennium +15M；AQR +9M
+2008,共同加碼,343412102,FLUOR CORP COM,4,70584277,未分類,Renaissance +43M；D. E. Shaw +15M；Millennium +7M；AQR +5M
+2008,共同加碼,039483102,ARCHER-DANIELS-MIDLAND CO COM,4,28268339,未分類,Two Sigma +8M；D. E. Shaw +7M；Bridgewater +6M；Renaissance +6M
+2008,共同加碼,718172109,PHILIP MORRIS INTL INC COM,3,178700000,消費,Renaissance +154M；AQR +17M；D. E. Shaw +8M
+2008,共同加碼,61166W101,MONSANTO CO COM,3,175293676,未分類,Renaissance +163M；Two Sigma +6M；Millennium +6M
+2008,共同加碼,20825C104,CONOCOPHILLIPS COM,3,163862179,能源,Renaissance +143M；Millennium +15M；Two Sigma +6M
+2008,共同加碼,874039100,TAIWAN SEMICONDUCTOR MFG LTD SPONSORED ADR,3,137200249,科技,Renaissance +76M；D. E. Shaw +54M；Two Sigma +7M
+2008,共同加碼,156708109,CEPHALON INC COM,3,119035071,未分類,D. E. Shaw +102M；Millennium +11M；Renaissance +6M
+2008,共同加碼,881624209,TEVA PHARMACEUTICAL INDS LTD ADR,3,106556445,醫療,Point72（前 SAC） +66M；Two Sigma +30M；Renaissance +11M
+2008,共同加碼,071813109,Baxter International Inc COM,3,83957534,未分類,Renaissance +41M；D. E. Shaw +36M；Point72（前 SAC） +7M
+2008,共同減碼,184502102,CLEAR CHANNEL COMMUNICATIONS COM,6,-236450000,通訊／媒體,Renaissance -61M；D. E. Shaw -58M；Two Sigma -52M；Elliott -44M；Millennium -14M；AQR -7M
+2008,共同減碼,717081103,PFIZER INC COM,6,-184830303,醫療,D. E. Shaw -124M；Bridgewater -21M；Point72（前 SAC） -12M；AQR -12M；Two Sigma -9M；Millennium -6M
+2008,共同減碼,78442P106,SLM CORP COM,6,-149132701,未分類,Renaissance -40M；Elliott -37M；Two Sigma -24M；Point72（前 SAC） -19M；Millennium -15M；D. E. Shaw -15M
+2008,共同減碼,285661104,ELECTRONIC DATA SYSTEMS CORP COM,6,-130567000,科技,D. E. Shaw -76M；AQR -19M；Two Sigma -15M；Renaissance -8M；Millennium -6M；Bridgewater -5M
+2008,共同減碼,G0070K103,ACE Ltd ORD,6,-74758000,未分類,Renaissance -31M；Point72（前 SAC） -11M；AQR -11M；Bridgewater -7M；Millennium -7M；D. E. Shaw -7M
+2008,共同減碼,540424108,LOEWS CORP COM,5,-363221045,未分類,Renaissance -268M；D. E. Shaw -49M；Elliott -25M；Bridgewater -11M；AQR -10M
+2008,共同減碼,826322109,SIERRA HEALTH SVCS INC COM,5,-280450000,醫療,Renaissance -176M；D. E. Shaw -44M；AQR -40M；Millennium -14M；Two Sigma -6M
+2008,共同減碼,63936L100,NAVTEQ CORP COM,5,-266824000,未分類,D. E. Shaw -89M；Renaissance -70M；Two Sigma -46M；Millennium -40M；AQR -21M
+2008,共同減碼,037833100,APPLE INC COM,5,-259313877,科技,D. E. Shaw -128M；Renaissance -72M；Point72（前 SAC） -22M；Two Sigma -19M；AQR -18M
+2008,共同減碼,073325102,BEA SYS INC COM,5,-249213000,未分類,D. E. Shaw -188M；Elliott -33M；Two Sigma -13M；AQR -8M；Millennium -7M
+2009,共同加碼,H89128104,TYCO INTERNATIONAL LTD SHS,6,216067000,未分類,Point72（前 SAC） +103M；D. E. Shaw +64M；Two Sigma +26M；Renaissance +9M；Millennium +7M；AQR +7M
+2009,共同加碼,037833100,APPLE INC COM,5,1083972054,科技,Renaissance +535M；D. E. Shaw +300M；Point72（前 SAC） +158M；Two Sigma +78M；AQR +13M
+2009,共同加碼,38141G104,GOLDMAN SACHS GROUP INC COM,5,440068294,金融,D. E. Shaw +191M；Renaissance +146M；Two Sigma +42M；Point72（前 SAC） +31M；AQR +29M
+2009,共同加碼,H0023R105,ACE LTD SHS,5,289181025,未分類,D. E. Shaw +184M；Renaissance +59M；Two Sigma +25M；Point72（前 SAC） +13M；AQR +9M
+2009,共同加碼,857477103,STATE STR CORP COM,5,275904297,未分類,D. E. Shaw +141M；Renaissance +111M；Point72（前 SAC） +9M；Two Sigma +9M；Millennium +7M
+2009,共同加碼,H8817H100,TRANSOCEAN LTD REG SHS,5,227322000,未分類,D. E. Shaw +142M；Point72（前 SAC） +44M；Millennium +23M；AQR +10M；Renaissance +9M
+2009,共同加碼,651639106,NEWMONT MINING CORP COM,5,174330759,原物料,Renaissance +105M；Two Sigma +28M；D. E. Shaw +24M；Millennium +10M；Point72（前 SAC） +6M
+2009,共同加碼,92553P201,VIACOM INC NEW CL B,5,125119783,通訊／媒體,D. E. Shaw +53M；Point72（前 SAC） +40M；Renaissance +15M；Two Sigma +11M；AQR +6M
+2009,共同加碼,G6852T105,PARTNERRE LTD COM,5,110054417,未分類,Renaissance +38M；Two Sigma +34M；D. E. Shaw +18M；Millennium +12M；Point72（前 SAC） +7M
+2009,共同加碼,58155Q103,MCKESSON CORP COM,5,105273913,未分類,D. E. Shaw +49M；Renaissance +30M；Two Sigma +13M；Point72（前 SAC） +8M；Millennium +5M
+2009,共同加碼,039483102,ARCHER DANIELS MIDLAND CO COM,5,102310362,未分類,Renaissance +27M；D. E. Shaw +24M；AQR +23M；Two Sigma +14M；Point72（前 SAC） +13M
+2009,共同加碼,060505104,BANK OF AMERICA CORPORATION COM,5,99716622,金融,D. E. Shaw +60M；Two Sigma +14M；Point72（前 SAC） +11M；AQR +9M；Millennium +7M
+2009,共同加碼,778296103,ROSS STORES INC COM,5,73724054,消費,Two Sigma +38M；D. E. Shaw +12M；Point72（前 SAC） +10M；AQR +9M；Millennium +5M
+2009,共同加碼,12673P105,CA INC COM,5,69042807,未分類,Two Sigma +26M；Millennium +13M；D. E. Shaw +12M；AQR +12M；Renaissance +6M
+2009,共同加碼,46625H100,JPMORGAN CHASE & CO COM,4,657633138,金融,D. E. Shaw +500M；Point72（前 SAC） +84M；Renaissance +63M；AQR +11M
+2009,共同減碼,071813109,BAXTER INTL INC COM,5,-240336491,未分類,Renaissance -115M；D. E. Shaw -98M；Millennium -12M；Point72（前 SAC） -8M；AQR -8M
+2009,共同減碼,983024100,WYETH COM,5,-122500000,未分類,D. E. Shaw -48M；Renaissance -32M；Millennium -24M；AQR -10M；Point72（前 SAC） -8M
+2009,共同減碼,590188108,MERRILL LYNCH & CO INC COM,4,-163298000,未分類,Renaissance -99M；D. E. Shaw -38M；AQR -14M；Millennium -11M
+2009,共同減碼,704326107,PAYCHEX INC COM,4,-144230962,未分類,Renaissance -127M；D. E. Shaw -6M；AQR -5M；Point72（前 SAC） -5M
+2009,共同減碼,037604105,APOLLO GROUP INC CL A,4,-129225635,金融,D. E. Shaw -64M；Renaissance -44M；Two Sigma -15M；Millennium -7M
+2009,共同減碼,368710406,GENENTECH INC COM NEW,4,-125822000,未分類,Renaissance -58M；Two Sigma -35M；Millennium -22M；AQR -10M
+2009,共同減碼,204412209,COMPANHIA VALE DO RIO DOCE SPONSORED ADR,4,-98433000,未分類,Point72（前 SAC） -40M；Renaissance -27M；D. E. Shaw -24M；Millennium -6M
+2009,共同減碼,929903102,WACHOVIA CORP NEW COM,4,-95860000,未分類,Renaissance -47M；Millennium -18M；AQR -17M；D. E. Shaw -14M
+2009,共同減碼,53217V109,LIFE TECHNOLOGIES CORP COM,4,-80110706,科技,Renaissance -38M；AQR -19M；Point72（前 SAC） -13M；Millennium -10M
+2009,共同減碼,044209104,ASHLAND INC NEW COM,4,-60133670,未分類,Elliott -24M；Renaissance -21M；Two Sigma -9M；AQR -5M
+2010,共同加碼,25179M103,DEVON ENERGY CORP NEW COM,6,383873738,能源,D. E. Shaw +199M；Point72（前 SAC） +61M；Citadel +53M；Millennium +33M；Renaissance +24M；AQR +15M
+2010,共同加碼,084670702,BERKSHIRE HATHAWAY INC DEL CL B NEW,6,222098279,金融,Renaissance +85M；D. E. Shaw +74M；Citadel +21M；AQR +18M；Point72（前 SAC） +16M；Millennium +8M
+2010,共同加碼,31428X106,FEDEX CORP COM,6,111358288,工業,Point72（前 SAC） +38M；D. E. Shaw +22M；Millennium +20M；AQR +17M；Renaissance +10M；Citadel +5M
+2010,共同加碼,594918104,MICROSOFT CORP COM,5,302143451,科技,D. E. Shaw +171M；AQR +57M；Point72（前 SAC） +46M；Citadel +17M；Renaissance +12M
+2010,共同加碼,79466L302,SALESFORCE COM INC COM,5,233431636,科技,Renaissance +163M；Point72（前 SAC） +34M；Millennium +18M；D. E. Shaw +13M；Citadel +5M
+2010,共同加碼,354613101,FRANKLIN RES INC COM,5,188456732,未分類,Renaissance +100M；Citadel +53M；D. E. Shaw +16M；Millennium +12M；AQR +8M
+2010,共同加碼,25470F302,DISCOVERY COMMUNICATNS NEW COM SER C,5,185331223,未分類,Point72（前 SAC） +98M；D. E. Shaw +36M；Citadel +25M；AQR +16M；Renaissance +10M
+2010,共同加碼,579064106,MCAFEE INC COM,5,177042674,未分類,D. E. Shaw +53M；Point72（前 SAC） +49M；AQR +29M；Millennium +25M；Renaissance +21M
+2010,共同加碼,55616P104,MACYS INC COM,5,170300239,未分類,Point72（前 SAC） +77M；D. E. Shaw +46M；AQR +27M；Renaissance +13M；Citadel +7M
+2010,共同加碼,441060100,HOSPIRA INC COM,5,149298657,未分類,Point72（前 SAC） +78M；Renaissance +33M；Citadel +21M；D. E. Shaw +9M；Millennium +9M
+2010,共同加碼,29358Q109,ENSCO PLC SPONSORED ADR,5,146054000,未分類,Citadel +68M；AQR +40M；Renaissance +18M；Millennium +13M；Point72（前 SAC） +7M
+2010,共同加碼,548661107,LOWES COS INC COM,5,145974092,消費,Citadel +57M；Point72（前 SAC） +37M；D. E. Shaw +25M；AQR +15M；Millennium +12M
+2010,共同加碼,74733V100,QEP RES INC COM,5,83109000,未分類,D. E. Shaw +26M；Citadel +21M；Renaissance +15M；Millennium +12M；Point72（前 SAC） +9M
+2010,共同加碼,018490102,ALLERGAN INC COM,5,80474534,未分類,Citadel +39M；Point72（前 SAC） +17M；D. E. Shaw +9M；Millennium +9M；Renaissance +6M
+2010,共同加碼,203372107,COMMSCOPE INC COM,5,73201472,未分類,D. E. Shaw +22M；Point72（前 SAC） +18M；AQR +18M；Millennium +10M；Citadel +6M
+2010,共同減碼,717081103,PFIZER INC COM,6,-293180946,醫療,D. E. Shaw -87M；Renaissance -77M；Citadel -61M；AQR -40M；Millennium -14M；Point72（前 SAC） -14M
+2010,共同減碼,060505419,BANK OF AMERICA CORPORATION UNIT 99/99/9999,5,-487808000,金融,D. E. Shaw -236M；Point72（前 SAC） -106M；Citadel -82M；Millennium -49M；AQR -15M
+2010,共同減碼,H8817H100,TRANSOCEAN LTD REG SHS,5,-213120626,未分類,D. E. Shaw -142M；Point72（前 SAC） -37M；Millennium -16M；AQR -10M；Renaissance -9M
+2010,共同減碼,674599105,OCCIDENTAL PETE CORP DEL COM,5,-165999612,能源,D. E. Shaw -86M；Point72（前 SAC） -31M；AQR -28M；Millennium -15M；Citadel -6M
+2010,共同減碼,750438103,RADIOSHACK CORP COM,5,-125044598,未分類,Renaissance -41M；Citadel -34M；Point72（前 SAC） -24M；D. E. Shaw -19M；AQR -6M
+2010,共同減碼,670006105,NOVELL INC COM,5,-64260392,未分類,Renaissance -28M；Citadel -20M；D. E. Shaw -6M；Millennium -5M；AQR -5M
+2010,共同減碼,12189T104,BURLINGTON NORTHN SANTA FE C COM,4,-443669000,未分類,D. E. Shaw -194M；Renaissance -123M；Millennium -105M；AQR -21M
+2010,共同減碼,H27013103,WEATHERFORD INTERNATIONAL LT REG,4,-291861683,未分類,D. E. Shaw -191M；Citadel -57M；Renaissance -31M；Millennium -13M
+2010,共同減碼,969457100,WILLIAMS COS INC DEL COM,4,-236844311,能源,D. E. Shaw -116M；Millennium -71M；Renaissance -37M；AQR -13M
+2010,共同減碼,931422109,WALGREEN CO COM,4,-218176308,未分類,D. E. Shaw -106M；Renaissance -81M；Millennium -21M；AQR -10M
+2011,共同加碼,71715N106,PHARMASSET INC COM,6,314349841,醫療,D. E. Shaw +166M；AQR +54M；Point72（前 SAC） +33M；Renaissance +23M；Millennium +22M；Citadel +16M
+2011,共同加碼,053332102,AUTOZONE INC COM,6,242810622,消費,Renaissance +123M；D. E. Shaw +37M；Citadel +33M；AQR +24M；Point72（前 SAC） +13M；Millennium +13M
+2011,共同加碼,343412102,FLUOR CORP COM,6,114726673,未分類,Renaissance +53M；AQR +22M；Point72（前 SAC） +17M；D. E. Shaw +12M；Millennium +6M；Citadel +5M
+2011,共同加碼,867224107,SUNCOR ENERGY INC COM,6,105815058,能源,D. E. Shaw +35M；Point72（前 SAC） +34M；Millennium +14M；Citadel +10M；Bridgewater +7M；AQR +5M
+2011,共同加碼,26875P101,EOG RES INC COM,5,399998310,能源,Citadel +199M；Point72（前 SAC） +78M；Millennium +59M；Renaissance +38M；D. E. Shaw +25M
+2011,共同加碼,032511107,ANADARKO PETE CORP COM,5,328354625,能源,Citadel +98M；D. E. Shaw +91M；Point72（前 SAC） +72M；Renaissance +36M；Millennium +31M
+2011,共同加碼,09062X103,BIOGEN IDEC INC COM,5,311525504,醫療,Point72（前 SAC） +117M；Renaissance +112M；D. E. Shaw +32M；Millennium +29M；AQR +21M
+2011,共同加碼,674599105,OCCIDENTAL PETROLEUM CORP COM,5,269663570,能源,Point72（前 SAC） +128M；Millennium +67M；AQR +28M；D. E. Shaw +28M；Citadel +19M
+2011,共同加碼,172967424,CITIGROUP INC COM NEW,5,254442000,金融,Citadel +118M；Renaissance +51M；AQR +51M；Millennium +28M；Point72（前 SAC） +6M
+2011,共同加碼,907818108,UNION PACIFIC CORP COM,5,250678697,工業,D. E. Shaw +138M；Citadel +57M；Renaissance +23M；Millennium +20M；Point72（前 SAC） +12M
+2011,共同加碼,65248E104,News Corp CL A,5,242925296,通訊／媒體,Point72（前 SAC） +62M；AQR +61M；Citadel +59M；D. E. Shaw +51M；Renaissance +10M
+2011,共同加碼,26884L109,EQT CORP COM,5,238768041,未分類,Point72（前 SAC） +107M；Citadel +53M；Millennium +52M；D. E. Shaw +17M；Renaissance +10M
+2011,共同加碼,H89128104,TYCO INTERNATIONAL LTD SHS,5,219400257,未分類,Point72（前 SAC） +115M；Citadel +59M；AQR +29M；Millennium +10M；D. E. Shaw +6M
+2011,共同加碼,35671D857,FREEPORT-MCMORAN COPPER COM,5,216895972,原物料,Point72（前 SAC） +102M；AQR +64M；Millennium +25M；Citadel +20M；D. E. Shaw +6M
+2011,共同加碼,855244109,STARBUCKS CORP COM,5,197967858,消費,Point72（前 SAC） +110M；Citadel +30M；D. E. Shaw +28M；Renaissance +24M；AQR +6M
+2011,共同減碼,172967101,CITIGROUP INC COM,6,-383271340,金融,Citadel -208M；D. E. Shaw -65M；Renaissance -43M；Millennium -37M；Point72（前 SAC） -23M；Bridgewater -8M
+2011,共同減碼,203372107,COMMSCOPE INC COM,6,-125991000,未分類,Renaissance -46M；D. E. Shaw -25M；Point72（前 SAC） -21M；AQR -18M；Millennium -10M；Citadel -6M
+2011,共同減碼,H01301102,ALCON INC COM SHS,5,-855143000,未分類,Point72（前 SAC） -577M；Renaissance -145M；D. E. Shaw -63M；Millennium -56M；Citadel -14M
+2011,共同減碼,G2554F105,Covidien Plc SHS,5,-307530000,未分類,D. E. Shaw -115M；Point72（前 SAC） -67M；Renaissance -67M；Citadel -32M；Millennium -27M
+2011,共同減碼,579064106,MCAFEE INC COM,5,-216698000,未分類,D. E. Shaw -60M；Point72（前 SAC） -52M；Renaissance -51M；AQR -29M；Millennium -25M
+2011,共同減碼,25470F302,DISCOVERY COMMUNICATNS NEW COM SER C,5,-184319019,未分類,Point72（前 SAC） -100M；D. E. Shaw -24M；AQR -22M；Citadel -20M；Renaissance -18M
+2011,共同減碼,156708109,CEPHALON INC COM,5,-102135210,未分類,Millennium -40M；Renaissance -27M；Bridgewater -20M；D. E. Shaw -10M；AQR -6M
+2011,共同減碼,549271104,LUBRIZOL CORP COM,5,-96040350,未分類,Renaissance -33M；AQR -24M；D. E. Shaw -21M；Bridgewater -10M；Point72（前 SAC） -7M
+2011,共同減碼,018490102,ALLERGAN INC COM,5,-91494923,未分類,Citadel -41M；Point72（前 SAC） -21M；D. E. Shaw -13M；Millennium -12M；Renaissance -6M
+2011,共同減碼,61945A107,MOSAIC CO COM,5,-49389000,原物料,Renaissance -19M；D. E. Shaw -11M；Point72（前 SAC） -7M；Millennium -6M；Citadel -6M
+2012,共同加碼,17275R102,CISCO SYSTEMS INC COM,6,331296090,科技,Citadel +150M；Renaissance +117M；Millennium +23M；AQR +23M；Bridgewater +12M；Point72（前 SAC） +6M
+2012,共同加碼,25490A309,DIRECTV COM,6,269341000,未分類,Renaissance +209M；AQR +19M；Point72（前 SAC） +15M；Citadel +10M；Bridgewater +10M；Millennium +6M
+2012,共同加碼,151020104,CELGENE CORP COM,6,156439697,未分類,Renaissance +86M；Millennium +28M；AQR +18M；Point72（前 SAC） +12M；Bridgewater +7M；Citadel +6M
+2012,共同加碼,30219G108,Express Scripts Holding Co COM,6,146687000,未分類,Millennium +44M；Point72（前 SAC） +36M；Citadel +29M；Renaissance +20M；AQR +11M；Bridgewater +8M
+2012,共同加碼,871503108,SYMANTEC CORP COM,5,517539698,未分類,Citadel +227M；Point72（前 SAC） +153M；AQR +66M；Millennium +36M；Renaissance +36M
+2012,共同加碼,742718109,PROCTER & GAMBLE CO COM,5,504168172,消費,Citadel +292M；Renaissance +109M；AQR +58M；Millennium +28M；Bridgewater +18M
+2012,共同加碼,03027X100,American Tower Corp COM,5,384443000,不動產,Citadel +280M；Point72（前 SAC） +55M；AQR +25M；Millennium +18M；Renaissance +5M
+2012,共同加碼,747525103,QUALCOMM INC COM,5,379273340,科技,Renaissance +325M；Bridgewater +19M；Millennium +15M；Point72（前 SAC） +10M；Citadel +10M
+2012,共同加碼,741503403,PRICELINE COM INC COM NEW,5,301735010,未分類,Point72（前 SAC） +109M；Citadel +97M；Renaissance +62M；Millennium +21M；AQR +14M
+2012,共同加碼,67103H107,O'REILLY AUTOMOTIVE INC COM,5,294638294,消費,Citadel +183M；Point72（前 SAC） +74M；Renaissance +17M；Millennium +16M；Bridgewater +5M
+2012,共同加碼,369604103,GENERAL ELECTRIC CO COM,5,270392332,公用事業,Renaissance +186M；Millennium +31M；Citadel +25M；Point72（前 SAC） +16M；AQR +12M
+2012,共同加碼,744320102,PRUDENTIAL FINANCIAL INC COM,5,265440134,金融,Citadel +192M；AQR +28M；Millennium +20M；Renaissance +18M；Point72（前 SAC） +7M
+2012,共同加碼,963320106,WHIRLPOOL CORP COM,5,262709838,未分類,Citadel +116M；Renaissance +61M；Point72（前 SAC） +40M；AQR +33M；Millennium +12M
+2012,共同加碼,608190104,MOHAWK INDS INC COM,5,255242632,未分類,Citadel +184M；Point72（前 SAC） +28M；Millennium +21M；Renaissance +11M；AQR +11M
+2012,共同加碼,911312106,United Parcel Service Inc CL B,5,223109779,工業,Renaissance +145M；Millennium +31M；Citadel +22M；Point72（前 SAC） +16M；AQR +9M
+2012,共同減碼,25490A101,DIRECTV COM CL A,6,-62188170,未分類,AQR -14M；Renaissance -13M；Millennium -11M；Point72（前 SAC） -9M；Citadel -8M；Bridgewater -6M
+2012,共同減碼,867914103,SUNTRUST BANKS INC COM,5,-214849983,金融,Citadel -169M；Renaissance -15M；Millennium -13M；Point72（前 SAC） -10M；Bridgewater -7M
+2012,共同減碼,302182100,EXPRESS SCRIPTS INC COM,5,-182706780,未分類,Renaissance -52M；Citadel -49M；Point72（前 SAC） -41M；Millennium -34M；Bridgewater -6M
+2012,共同減碼,71715N106,PHARMASSET INC COM,5,-176431000,醫療,AQR -54M；Millennium -48M；Point72（前 SAC） -34M；Renaissance -23M；Citadel -17M
+2012,共同減碼,343412102,FLUOR CORP COM,5,-106878242,未分類,Renaissance -53M；AQR -21M；Point72（前 SAC） -19M；Millennium -7M；Citadel -7M
+2012,共同減碼,584690309,Medicis Pharmaceutical Corp CL A NEW,5,-71286000,醫療,Renaissance -20M；Citadel -19M；AQR -17M；Point72（前 SAC） -9M；Millennium -6M
+2012,共同減碼,65248E104,News Corp CL A,4,-264247665,通訊／媒體,Citadel -167M；AQR -75M；Bridgewater -11M；Renaissance -11M
+2012,共同減碼,268648102,EMC Corp/Massachusetts COM,4,-192348496,未分類,Renaissance -84M；Citadel -64M；Millennium -30M；Point72（前 SAC） -14M
+2012,共同減碼,50075N104,KRAFT FOODS INC CL A,4,-134653000,消費,Citadel -78M；Renaissance -32M；AQR -15M；Millennium -9M
+2012,共同減碼,29082A107,EMBRAER S A SP ADR REP 4 COM,4,-126087145,未分類,Citadel -95M；Renaissance -16M；Millennium -9M；AQR -6M
+2013,共同加碼,478160104,JOHNSON & JOHNSON,6,741962538,醫療,Renaissance +485M；AQR +100M；Two Sigma +90M；Millennium +30M；Point72（前 SAC） +21M；Citadel +17M
+2013,共同加碼,171798101,CIMAREX ENERGY CO,6,377293182,能源,Citadel +156M；Point72（前 SAC） +66M；AQR +61M；Millennium +49M；Two Sigma +36M；Renaissance +10M
+2013,共同加碼,057224107,BAKER HUGHES INC,6,268800145,能源,Millennium +95M；Citadel +79M；Point72（前 SAC） +45M；Two Sigma +27M；Renaissance +14M；AQR +8M
+2013,共同加碼,228227104,CROWN CASTLE INTL CORP,6,216254693,未分類,Renaissance +61M；Point72（前 SAC） +59M；Millennium +53M；Two Sigma +23M；Citadel +15M；AQR +6M
+2013,共同加碼,713448108,PEPSICO INC,6,189792248,消費,Millennium +86M；Citadel +38M；AQR +22M；Two Sigma +18M；Bridgewater +16M；Point72（前 SAC） +10M
+2013,共同加碼,90130A200,TWENTY FIRST CENTY FOX INC,5,575966000,未分類,Elliott +394M；Point72（前 SAC） +87M；Citadel +53M；Renaissance +34M；Millennium +8M
+2013,共同加碼,717081103,PFIZER INC,5,546062651,醫療,Renaissance +200M；Two Sigma +159M；Citadel +124M；AQR +42M；Millennium +22M
+2013,共同加碼,48238T109,KAR AUCTION SVCS INC,5,305498509,未分類,Citadel +102M；Point72（前 SAC） +99M；Renaissance +46M；Two Sigma +42M；Millennium +16M
+2013,共同加碼,256677105,DOLLAR GEN CORP NEW,5,286673530,消費,Citadel +84M；Two Sigma +70M；Millennium +48M；Renaissance +44M；Point72（前 SAC） +40M
+2013,共同加碼,032511107,ANADARKO PETE CORP,5,286193829,能源,Two Sigma +116M；AQR +74M；Renaissance +43M；Elliott +41M；Bridgewater +13M
+2013,共同加碼,64110L106,NETFLIX INC,5,268451862,通訊／媒體,Two Sigma +110M；Renaissance +77M；Citadel +36M；Point72（前 SAC） +23M；AQR +22M
+2013,共同加碼,98978V103,ZOETIS INC,5,266800000,未分類,Point72（前 SAC） +155M；Citadel +34M；Two Sigma +33M；Renaissance +25M；Millennium +20M
+2013,共同加碼,517834107,LAS VEGAS SANDS CORP,5,254827009,未分類,Two Sigma +146M；AQR +32M；Millennium +32M；Renaissance +29M；Bridgewater +17M
+2013,共同加碼,00287Y109,ABBVIE INC,5,253686000,醫療,Renaissance +96M；Two Sigma +57M；AQR +53M；Citadel +24M；Millennium +23M
+2013,共同加碼,428236103,HEWLETT PACKARD CO,5,252429936,科技,AQR +83M；Two Sigma +65M；Citadel +51M；Point72（前 SAC） +35M；Millennium +18M
+2013,共同減碼,055921100,BMC SOFTWARE INC COM,7,-736996000,科技,Elliott -531M；Renaissance -134M；AQR -24M；Citadel -17M；Bridgewater -12M；Two Sigma -12M；Millennium -7M
+2013,共同減碼,744320102,PRUDENTIAL FINANCIAL INC COM,6,-592138184,金融,Citadel -419M；Renaissance -103M；Two Sigma -30M；Point72（前 SAC） -20M；Millennium -13M；Bridgewater -8M
+2013,共同減碼,726505100,PLAINS EXPL& PRODTN CO COM,6,-243741000,未分類,Point72（前 SAC） -70M；AQR -60M；Renaissance -56M；Millennium -29M；Two Sigma -21M；Citadel -8M
+2013,共同減碼,24702R101,DELL INC COM,6,-231235000,科技,Citadel -103M；Point72（前 SAC） -69M；Renaissance -20M；Bridgewater -14M；Millennium -13M；Two Sigma -12M
+2013,共同減碼,902973304,US BANCORP COM NEW,5,-504036390,金融,Citadel -283M；Renaissance -86M；Millennium -62M；Point72（前 SAC） -59M；AQR -14M
+2013,共同減碼,65248E104,NEWS CORP CL A,5,-476706000,通訊／媒體,Point72（前 SAC） -245M；Citadel -116M；AQR -101M；Millennium -9M；Two Sigma -7M
+2013,共同減碼,594918104,MICROSOFT CORP,5,-442563472,科技,Renaissance -224M；Two Sigma -133M；Bridgewater -43M；Citadel -29M；Millennium -15M
+2013,共同減碼,212015101,CONTINENTAL RESOURCES INC,5,-410948927,能源,Point72（前 SAC） -182M；Citadel -163M；Millennium -35M；Renaissance -20M；Two Sigma -12M
+2013,共同減碼,654106103,NIKE INC,5,-341446289,消費,Point72（前 SAC） -204M；Citadel -50M；Renaissance -50M；AQR -21M；Two Sigma -17M
+2013,共同減碼,675746309,OCWEN FINL CORP,5,-279064488,金融,Millennium -128M；Point72（前 SAC） -112M；Renaissance -20M；AQR -12M；Two Sigma -8M
+2014,共同加碼,192446102,COGNIZANT TECHNOLOGY SOLUTIO,7,313801228,科技,Millennium +99M；Citadel +66M；Two Sigma +56M；Renaissance +31M；AQR +26M；D. E. Shaw +25M；Bridgewater +11M
+2014,共同加碼,N31738102,FIAT CHRYSLER AUTOMOBILES N,7,220626000,消費,AQR +66M；Citadel +59M；Millennium +39M；D. E. Shaw +30M；Renaissance +12M；Point72（前 SAC） +8M；Two Sigma +7M
+2014,共同加碼,G48833100,WEATHERFORD INTL PLC,7,165108000,未分類,D. E. Shaw +44M；Millennium +36M；Renaissance +31M；Two Sigma +19M；Point72（前 SAC） +17M；AQR +14M；Citadel +6M
+2014,共同加碼,08579W103,BERRY PLASTICS GROUP INC,7,157650310,未分類,D. E. Shaw +42M；Millennium +31M；Renaissance +29M；Citadel +18M；Two Sigma +17M；Point72（前 SAC） +15M；AQR +6M
+2014,共同加碼,91913Y100,VALERO ENERGY CORP NEW,6,937003932,能源,D. E. Shaw +417M；AQR +187M；Two Sigma +133M；Point72（前 SAC） +127M；Millennium +60M；Bridgewater +13M
+2014,共同加碼,032511107,ANADARKO PETE CORP,6,823062415,能源,Elliott +339M；Citadel +192M；Millennium +174M；Point72（前 SAC） +70M；D. E. Shaw +34M；AQR +14M
+2014,共同加碼,375558103,GILEAD SCIENCES INC,6,753694066,醫療,AQR +369M；D. E. Shaw +148M；Point72（前 SAC） +94M；Renaissance +89M；Bridgewater +47M；Two Sigma +7M
+2014,共同加碼,929089100,VOYA FINL INC,6,609842000,金融,Citadel +351M；D. E. Shaw +73M；Two Sigma +72M；Millennium +72M；Renaissance +33M；Point72（前 SAC） +9M
+2014,共同加碼,460690100,INTERPUBLIC GROUP COS INC,6,498123029,未分類,Elliott +409M；D. E. Shaw +27M；Renaissance +25M；Millennium +19M；Two Sigma +11M；Bridgewater +7M
+2014,共同加碼,13342B105,CAMERON INTERNATIONAL CORP,6,496990244,未分類,Millennium +280M；D. E. Shaw +82M；Point72（前 SAC） +60M；Two Sigma +45M；Renaissance +22M；AQR +8M
+2014,共同加碼,609207105,MONDELEZ INTL INC,6,491851690,消費,Renaissance +204M；Two Sigma +78M；Millennium +73M；AQR +65M；D. E. Shaw +41M；Citadel +31M
+2014,共同加碼,22822V101,CROWN CASTLE INTL CORP NEW,6,347461000,未分類,Point72（前 SAC） +82M；Millennium +73M；Two Sigma +73M；Citadel +69M；AQR +26M；D. E. Shaw +25M
+2014,共同加碼,G91442106,TYCO INTL PLC,6,338286000,未分類,D. E. Shaw +109M；Renaissance +92M；Point72（前 SAC） +71M；Millennium +33M；AQR +22M；Citadel +12M
+2014,共同加碼,881624209,TEVA PHARMACEUTICAL INDS LTD,6,335999762,醫療,Millennium +140M；Two Sigma +69M；Renaissance +55M；D. E. Shaw +47M；Point72（前 SAC） +13M；AQR +12M
+2014,共同加碼,14040H105,CAPITAL ONE FINL CORP,6,326659908,金融,AQR +150M；D. E. Shaw +82M；Millennium +58M；Renaissance +20M；Citadel +9M；Two Sigma +8M
+2014,共同減碼,205638109,COMPUWARE CORP,8,-346298000,未分類,Elliott -209M；Citadel -38M；Millennium -27M；AQR -27M；D. E. Shaw -20M；Two Sigma -11M；Renaissance -9M；Point72（前 SAC） -5M
+2014,共同減碼,127097103,CABOT OIL & GAS CORP,7,-563997946,能源,Citadel -220M；Point72（前 SAC） -77M；AQR -71M；D. E. Shaw -68M；Millennium -62M；Two Sigma -50M；Renaissance -17M
+2014,共同減碼,751212101,RALPH LAUREN CORP,7,-458916568,未分類,Citadel -260M；Two Sigma -58M；D. E. Shaw -49M；Renaissance -44M；Point72（前 SAC） -32M；Bridgewater -9M；AQR -6M
+2014,共同減碼,228227104,CROWN CASTLE INTL CORP,7,-313646000,未分類,Point72（前 SAC） -134M；Renaissance -61M；Millennium -58M；Two Sigma -31M；Citadel -15M；AQR -8M；D. E. Shaw -7M
+2014,共同減碼,517834107,LAS VEGAS SANDS CORP,7,-249272960,未分類,Two Sigma -106M；Millennium -77M；Point72（前 SAC） -20M；AQR -19M；Bridgewater -10M；Citadel -10M；Renaissance -8M
+2014,共同減碼,92857W209,VODAFONE GROUP PLC NEW,6,-574009000,未分類,D. E. Shaw -238M；AQR -148M；Citadel -126M；Two Sigma -39M；Point72（前 SAC） -16M；Millennium -7M
+2014,共同減碼,931422109,WALGREEN CO,6,-355047000,未分類,D. E. Shaw -110M；AQR -96M；Renaissance -80M；Citadel -28M；Millennium -22M；Point72（前 SAC） -19M
+2014,共同減碼,26884L109,EQT CORP,6,-312589494,未分類,Point72（前 SAC） -99M；Citadel -82M；D. E. Shaw -49M；Renaissance -31M；Two Sigma -26M；Millennium -25M
+2014,共同減碼,886547108,TIFFANY & CO NEW,6,-301686919,未分類,Citadel -214M；Point72（前 SAC） -50M；Millennium -14M；Renaissance -11M；D. E. Shaw -7M；Bridgewater -5M
+2014,共同減碼,681919106,OMNICOM GROUP INC,6,-295619750,未分類,AQR -162M；D. E. Shaw -100M；Renaissance -12M；Point72（前 SAC） -11M；Two Sigma -5M；Citadel -5M
+2015,共同加碼,G0177J108,ALLERGAN PLC,7,1308954000,未分類,Elliott +631M；D. E. Shaw +283M；Two Sigma +163M；AQR +100M；Renaissance +65M；Millennium +44M；Point72（前 SAC） +23M
+2015,共同加碼,87165B103,SYNCHRONY FINL,7,603883922,金融,Millennium +197M；Citadel +143M；D. E. Shaw +84M；Point72（前 SAC） +71M；Renaissance +56M；Two Sigma +28M；AQR +26M
+2015,共同加碼,205887102,CONAGRA FOODS INC,7,534773433,消費,Millennium +214M；AQR +128M；Renaissance +77M；Citadel +75M；Two Sigma +26M；D. E. Shaw +8M；Point72（前 SAC） +6M
+2015,共同加碼,07177M103,BAXALTA INC,7,323451000,未分類,Millennium +110M；D. E. Shaw +77M；Citadel +50M；Two Sigma +32M；Elliott +22M；Point72（前 SAC） +17M；AQR +15M
+2015,共同加碼,032654105,ANALOG DEVICES INC,7,254318946,科技,Two Sigma +70M；Millennium +64M；Renaissance +35M；Citadel +27M；AQR +24M；D. E. Shaw +18M；Bridgewater +15M
+2015,共同加碼,55616P104,MACYS INC,7,168916640,未分類,Two Sigma +49M；AQR +43M；Bridgewater +25M；Citadel +23M；Point72（前 SAC） +17M；Millennium +7M；D. E. Shaw +6M
+2015,共同加碼,02079K107,ALPHABET INC,6,1049137000,通訊／媒體,D. E. Shaw +505M；AQR +218M；Millennium +173M；Citadel +97M；Point72（前 SAC） +36M；Renaissance +20M
+2015,共同加碼,500754106,KRAFT HEINZ CO,6,497405000,消費,D. E. Shaw +219M；Millennium +126M；Point72（前 SAC） +55M；AQR +42M；Citadel +40M；Renaissance +16M
+2015,共同加碼,124857202,CBS CORP NEW,6,485132444,通訊／媒體,Citadel +180M；Millennium +124M；D. E. Shaw +122M；Two Sigma +42M；Bridgewater +9M；Point72（前 SAC） +8M
+2015,共同加碼,071813109,BAXTER INTL INC,6,463389131,未分類,Citadel +277M；Two Sigma +78M；AQR +53M；Point72（前 SAC） +34M；Renaissance +12M；Millennium +9M
+2015,共同加碼,00846U101,AGILENT TECHNOLOGIES INC,6,436987555,科技,D. E. Shaw +147M；AQR +103M；Millennium +76M；Citadel +75M；Two Sigma +26M；Point72（前 SAC） +10M
+2015,共同加碼,574599106,MASCO CORP,6,411998059,未分類,AQR +205M；Millennium +112M；Renaissance +41M；Two Sigma +23M；Citadel +20M；Point72（前 SAC） +12M
+2015,共同加碼,79466L302,SALESFORCE COM INC,6,367895702,科技,Citadel +197M；D. E. Shaw +60M；Millennium +59M；Two Sigma +28M；AQR +12M；Renaissance +12M
+2015,共同加碼,42824C109,HEWLETT PACKARD ENTERPRISE C,6,367165000,科技,Citadel +118M；Elliott +102M；D. E. Shaw +83M；Millennium +31M；AQR +27M；Two Sigma +7M
+2015,共同加碼,87612E106,TARGET CORP,6,303171569,消費,AQR +219M；Renaissance +26M；D. E. Shaw +21M；Two Sigma +16M；Point72（前 SAC） +12M；Bridgewater +10M
+2015,共同減碼,307000109,FAMILY DLR STORES INC,7,-985131000,消費,Elliott -642M；Renaissance -93M；D. E. Shaw -83M；AQR -80M；Two Sigma -59M；Millennium -15M；Citadel -14M
+2015,共同減碼,45666Q102,INFORMATICA CORP,7,-245731000,未分類,Citadel -77M；Elliott -77M；Point72（前 SAC） -34M；D. E. Shaw -22M；Two Sigma -19M；Millennium -10M；AQR -6M
+2015,共同減碼,443510201,HUBBELL INC,7,-210332000,未分類,Citadel -82M；Millennium -42M；Point72（前 SAC） -31M；D. E. Shaw -17M；Two Sigma -16M；Renaissance -15M；AQR -8M
+2015,共同減碼,81282V100,SEAWORLD ENTMT INC,7,-112373603,未分類,Renaissance -27M；Millennium -26M；Two Sigma -14M；Point72（前 SAC） -13M；D. E. Shaw -13M；Citadel -12M；AQR -7M
+2015,共同減碼,018490102,ALLERGAN INC,6,-1026843000,未分類,D. E. Shaw -374M；Elliott -211M；AQR -175M；Two Sigma -139M；Millennium -64M；Renaissance -63M
+2015,共同減碼,428236103,HEWLETT PACKARD CO,6,-908824000,科技,AQR -335M；D. E. Shaw -304M；Renaissance -143M；Citadel -74M；Millennium -28M；Point72（前 SAC） -25M
+2015,共同減碼,38259P508,GOOGLE INC,6,-722117000,通訊／媒體,Citadel -234M；AQR -212M；Two Sigma -131M；D. E. Shaw -85M；Millennium -55M；Renaissance -7M
+2015,共同減碼,772739207,ROCK-TENN CO,6,-305269000,未分類,D. E. Shaw -222M；AQR -24M；Renaissance -18M；Point72（前 SAC） -18M；Millennium -16M；Citadel -7M
+2015,共同減碼,611740101,MONSTER BEVERAGE CORP,6,-301554000,消費,AQR -126M；Citadel -106M；Renaissance -37M；Millennium -17M；D. E. Shaw -11M；Two Sigma -6M
+2015,共同減碼,29266R108,ENERGIZER HLDGS INC,6,-270993000,未分類,Citadel -152M；Renaissance -43M；Millennium -34M；AQR -21M；D. E. Shaw -15M；Point72（前 SAC） -6M
+2016,共同加碼,24703L103,DELL TECHNOLOGIES INC,7,923204000,科技,Elliott +392M；D. E. Shaw +251M；Citadel +137M；Millennium +65M；AQR +28M；Point72（前 SAC） +27M；Two Sigma +22M
+2016,共同加碼,G51502105,JOHNSON CTLS INTL PLC,7,410396000,未分類,Renaissance +179M；Point72（前 SAC） +81M；Millennium +63M；D. E. Shaw +52M；AQR +13M；Two Sigma +12M；Citadel +10M
+2016,共同加碼,060505104,BANK AMER CORP,7,404061647,金融,Millennium +191M；AQR +108M；Citadel +31M；Point72（前 SAC） +28M；D. E. Shaw +28M；Two Sigma +10M；Bridgewater +7M
+2016,共同加碼,G50871105,JAZZ PHARMACEUTICALS PLC,7,309411700,醫療,Renaissance +168M；AQR +35M；Citadel +33M；D. E. Shaw +27M；Point72（前 SAC） +27M；Two Sigma +12M；Millennium +8M
+2016,共同加碼,34964C106,FORTUNE BRANDS HOME & SEC IN,7,201004652,消費,Citadel +45M；Point72（前 SAC） +32M；Two Sigma +30M；AQR +30M；Millennium +29M；Renaissance +22M；D. E. Shaw +13M
+2016,共同加碼,254687106,DISNEY WALT CO,6,1365035684,通訊／媒體,D. E. Shaw +515M；Renaissance +289M；Citadel +233M；Millennium +207M；Point72（前 SAC） +84M；Two Sigma +37M
+2016,共同加碼,92826C839,VISA INC,6,1155826414,金融,Citadel +379M；D. E. Shaw +367M；Point72（前 SAC） +155M；Renaissance +143M；Two Sigma +58M；Millennium +53M
+2016,共同加碼,Y09827109,BROADCOM LTD,6,913963000,科技,Citadel +391M；Renaissance +179M；Point72（前 SAC） +168M；D. E. Shaw +78M；AQR +50M；Millennium +48M
+2016,共同加碼,64110L106,NETFLIX INC,6,730215762,通訊／媒體,D. E. Shaw +296M；Citadel +181M；Two Sigma +111M；Renaissance +59M；Point72（前 SAC） +52M；Millennium +30M
+2016,共同加碼,78409V104,S&P GLOBAL INC,6,719172000,金融,D. E. Shaw +274M；Renaissance +134M；Millennium +121M；Two Sigma +119M；AQR +55M；Citadel +16M
+2016,共同加碼,00817Y108,AETNA INC NEW,6,605144111,未分類,Renaissance +328M；Two Sigma +117M；Millennium +73M；D. E. Shaw +48M；Bridgewater +23M；Point72（前 SAC） +16M
+2016,共同加碼,595112103,MICRON TECHNOLOGY INC,6,476419751,科技,Millennium +152M；Two Sigma +135M；Point72（前 SAC） +99M；Citadel +50M；D. E. Shaw +23M；Renaissance +19M
+2016,共同加碼,912909108,UNITED STATES STL CORP NEW,6,389933673,未分類,Renaissance +187M；Two Sigma +80M；Citadel +56M；Point72（前 SAC） +42M；D. E. Shaw +19M；Millennium +6M
+2016,共同加碼,94106L109,WASTE MGMT INC DEL,6,349200712,工業,AQR +136M；Renaissance +109M；Millennium +37M；Two Sigma +24M；D. E. Shaw +22M；Citadel +21M
+2016,共同加碼,688239201,OSHKOSH CORP,6,316198056,未分類,AQR +114M；Renaissance +71M；Millennium +47M；Two Sigma +45M；Citadel +24M；D. E. Shaw +15M
+2016,共同減碼,G91442106,TYCO INTL PLC,8,-356998000,未分類,D. E. Shaw -81M；Point72（前 SAC） -69M；Renaissance -67M；AQR -53M；Millennium -50M；Citadel -21M；Bridgewater -9M；Two Sigma -7M
+2016,共同減碼,88732J207,TIME WARNER CABLE INC,7,-1093589000,通訊／媒體,D. E. Shaw -420M；Citadel -262M；Two Sigma -170M；Millennium -127M；Renaissance -54M；AQR -50M；Elliott -11M
+2016,共同減碼,53578A108,LINKEDIN CORP,7,-871519000,未分類,D. E. Shaw -343M；Citadel -181M；Two Sigma -130M；Renaissance -87M；Point72（前 SAC） -58M；Millennium -45M；AQR -29M
+2016,共同減碼,85590A401,STARWOOD HOTELS&RESORTS WRLD,7,-525202000,消費,Two Sigma -149M；Citadel -129M；Millennium -92M；Renaissance -73M；AQR -55M；D. E. Shaw -18M；Point72（前 SAC） -10M
+2016,共同減碼,16117M305,CHARTER COMMUNICATIONS INC D,7,-390546000,通訊／媒體,Two Sigma -143M；Citadel -110M；D. E. Shaw -55M；Point72（前 SAC） -42M；AQR -16M；Millennium -12M；Renaissance -11M
+2016,共同減碼,07177M103,BAXALTA INC,7,-323451000,未分類,Millennium -110M；D. E. Shaw -77M；Citadel -50M；Two Sigma -32M；Elliott -22M；Point72（前 SAC） -17M；AQR -15M
+2016,共同減碼,268648102,E M C CORP MASS,6,-1620178000,未分類,Elliott -1084M；D. E. Shaw -199M；Two Sigma -136M；Citadel -91M；Millennium -63M；AQR -47M
+2016,共同減碼,111320107,BROADCOM CORP,6,-965036000,科技,D. E. Shaw -397M；Citadel -288M；Two Sigma -179M；Millennium -37M；Renaissance -32M；AQR -31M
+2016,共同減碼,717081103,PFIZER INC,6,-735602897,醫療,AQR -232M；Renaissance -167M；Citadel -126M；Two Sigma -110M；D. E. Shaw -81M；Millennium -19M
+2016,共同減碼,58501N101,MEDIVATION INC,6,-470548000,未分類,AQR -156M；Point72（前 SAC） -97M；Millennium -79M；Citadel -79M；D. E. Shaw -52M；Two Sigma -8M
+2017,共同加碼,459200101,INTERNATIONAL BUSINESS MACHS,7,1837816895,科技,Renaissance +478M；AQR +454M；D. E. Shaw +339M；Citadel +241M；Two Sigma +144M；Millennium +97M；Point72（前 SAC） +84M
+2017,共同加碼,704551100,PEABODY ENERGY CORP NEW,7,1104624000,能源,Elliott +834M；Citadel +96M；Millennium +88M；Renaissance +38M；Two Sigma +33M；D. E. Shaw +10M；AQR +5M
+2017,共同加碼,23355L106,DXC TECHNOLOGY CO,7,632754000,科技,AQR +154M；D. E. Shaw +149M；Millennium +134M；Renaissance +78M；Two Sigma +57M；Citadel +49M；Point72（前 SAC） +12M
+2017,共同加碼,053015103,AUTOMATIC DATA PROCESSING IN,7,614938730,科技,Citadel +232M；D. E. Shaw +149M；Renaissance +82M；Two Sigma +81M；AQR +31M；Millennium +30M；Point72（前 SAC） +10M
+2017,共同加碼,05722G100,BAKER HUGHES A GE CO,7,401114000,能源,D. E. Shaw +152M；Renaissance +67M；Millennium +55M；AQR +48M；Two Sigma +42M；Point72（前 SAC） +28M；Citadel +9M
+2017,共同加碼,55825T103,MADISON SQUARE GARDEN CO NEW,7,194568571,未分類,Renaissance +46M；Point72（前 SAC） +45M；D. E. Shaw +30M；Millennium +20M；Citadel +19M；AQR +19M；Two Sigma +16M
+2017,共同加碼,81761R109,SERVICEMASTER GLOBAL HLDGS I,7,183405525,未分類,Renaissance +64M；Citadel +36M；Two Sigma +25M；Millennium +21M；AQR +18M；D. E. Shaw +12M；Point72（前 SAC） +6M
+2017,共同加碼,N72482123,QIAGEN NV,7,174978000,未分類,AQR +63M；Citadel +33M；Renaissance +19M；D. E. Shaw +18M；Two Sigma +18M；Millennium +17M；Point72（前 SAC） +7M
+2017,共同加碼,30303M102,FACEBOOK INC,6,2456685111,通訊／媒體,Citadel +793M；D. E. Shaw +726M；AQR +617M；Millennium +148M；Point72（前 SAC） +115M；Renaissance +58M
+2017,共同加碼,097023105,BOEING CO,6,929985398,工業,AQR +456M；Millennium +205M；Citadel +173M；D. E. Shaw +68M；Point72（前 SAC） +22M；Two Sigma +7M
+2017,共同加碼,37045V100,GENERAL MTRS CO,6,832650122,未分類,Citadel +206M；Millennium +204M；Renaissance +185M；AQR +110M；Point72（前 SAC） +101M；D. E. Shaw +27M
+2017,共同加碼,502413107,L3 TECHNOLOGIES INC,6,797418000,科技,Citadel +230M；AQR +227M；Millennium +139M；Point72（前 SAC） +88M；Renaissance +63M；Two Sigma +50M
+2017,共同加碼,75886F107,REGENERON PHARMACEUTICALS,6,787835431,醫療,D. E. Shaw +198M；Point72（前 SAC） +181M；Millennium +148M；Renaissance +124M；Two Sigma +103M；AQR +34M
+2017,共同加碼,741503403,PRICELINE GRP INC,6,752521381,未分類,AQR +226M；Renaissance +160M；D. E. Shaw +151M；Citadel +107M；Two Sigma +84M；Millennium +24M
+2017,共同加碼,744320102,PRUDENTIAL FINL INC,6,741012528,金融,Millennium +168M；Citadel +164M；AQR +163M；Renaissance +125M；Two Sigma +93M；D. E. Shaw +28M
+2017,共同減碼,881609101,TESORO CORP,7,-809438000,未分類,Point72（前 SAC） -299M；AQR -232M；Renaissance -85M；D. E. Shaw -82M；Millennium -40M；Citadel -38M；Two Sigma -34M
+2017,共同減碼,064058100,BANK NEW YORK MELLON CORP,7,-626156754,金融,Millennium -241M；Renaissance -173M；D. E. Shaw -111M；Citadel -51M；Two Sigma -31M；AQR -13M；Bridgewater -6M
+2017,共同減碼,762760106,RICE ENERGY INC,7,-204034000,能源,Point72（前 SAC） -61M；Renaissance -50M；AQR -31M；Millennium -24M；D. E. Shaw -19M；Two Sigma -14M；Citadel -5M
+2017,共同減碼,189754104,COACH INC,7,-158311000,未分類,AQR -66M；Point72（前 SAC） -26M；Millennium -21M；D. E. Shaw -16M；Renaissance -15M；Bridgewater -8M；Citadel -6M
+2017,共同減碼,984332106,YAHOO INC,6,-955826000,通訊／媒體,D. E. Shaw -416M；Point72（前 SAC） -204M；Two Sigma -136M；Citadel -104M；Renaissance -65M；Millennium -29M
+2017,共同減碼,067383109,BARD C R INC,6,-670210000,未分類,Citadel -301M；Renaissance -114M；AQR -112M；Point72（前 SAC） -86M；Millennium -43M；Two Sigma -13M
+2017,共同減碼,260543103,DOW CHEM CO,6,-606698000,未分類,Two Sigma -183M；AQR -144M；Renaissance -126M；D. E. Shaw -93M；Point72（前 SAC） -35M；Millennium -26M
+2017,共同減碼,608190104,MOHAWK INDS INC,6,-488702595,未分類,Citadel -147M；Millennium -101M；D. E. Shaw -75M；AQR -65M；Two Sigma -52M；Renaissance -50M
+2017,共同減碼,871503108,SYMANTEC CORP,6,-444521531,未分類,Elliott -287M；Citadel -118M；AQR -15M；Millennium -10M；Renaissance -9M；Point72（前 SAC） -5M
+2017,共同減碼,984121103,XEROX CORP,6,-429204000,未分類,AQR -141M；Renaissance -100M；Millennium -73M；Two Sigma -60M；Citadel -30M；D. E. Shaw -25M
+2018,共同加碼,09857L108,BOOKING HLDGS INC,8,1556714000,消費,D. E. Shaw +674M；AQR +446M；Millennium +248M；Point72（前 SAC） +76M；Citadel +72M；Renaissance +15M；Bridgewater +15M；Two Sigma +10M
+2018,共同加碼,337932107,FIRSTENERGY CORP,7,1267573868,能源,Elliott +940M；Renaissance +105M；Millennium +79M；Citadel +65M；Point72（前 SAC） +39M；D. E. Shaw +20M；AQR +19M
+2018,共同加碼,458140100,INTEL CORP,7,868737933,科技,D. E. Shaw +325M；Millennium +260M；AQR +122M；Citadel +110M；Bridgewater +25M；Two Sigma +18M；Point72（前 SAC） +9M
+2018,共同加碼,30034W106,EVERGY INC,7,831928000,未分類,Renaissance +392M；Citadel +203M；Millennium +136M；AQR +47M；D. E. Shaw +38M；Point72（前 SAC） +10M；Two Sigma +7M
+2018,共同加碼,91913Y100,VALERO ENERGY CORP NEW,7,761717339,能源,AQR +358M；Two Sigma +155M；Renaissance +107M；Point72（前 SAC） +93M；Bridgewater +24M；Citadel +15M；D. E. Shaw +11M
+2018,共同加碼,14149Y108,CARDINAL HEALTH INC,7,489257454,醫療,D. E. Shaw +166M；AQR +119M；Renaissance +93M；Millennium +49M；Two Sigma +30M；Citadel +19M；Bridgewater +14M
+2018,共同加碼,617446448,MORGAN STANLEY,7,448227568,金融,Citadel +119M；Millennium +119M；Point72（前 SAC） +103M；AQR +40M；D. E. Shaw +32M；Two Sigma +26M；Bridgewater +9M
+2018,共同加碼,00971T101,AKAMAI TECHNOLOGIES INC,7,398440189,科技,Millennium +138M；AQR +110M；D. E. Shaw +64M；Citadel +39M；Elliott +23M；Bridgewater +17M；Renaissance +7M
+2018,共同加碼,92220P105,VARIAN MED SYS INC,7,308352216,未分類,Millennium +129M；Renaissance +51M；Citadel +33M；Two Sigma +28M；AQR +28M；D. E. Shaw +25M；Point72（前 SAC） +14M
+2018,共同加碼,29261A100,ENCOMPASS HEALTH CORP,7,271381000,醫療,Renaissance +133M；Two Sigma +33M；D. E. Shaw +32M；Citadel +30M；Millennium +17M；Point72（前 SAC） +14M；AQR +13M
+2018,共同加碼,423452101,HELMERICH & PAYNE INC,7,230744944,未分類,Millennium +81M；AQR +57M；Two Sigma +32M；Citadel +27M；D. E. Shaw +18M；Renaissance +10M；Point72（前 SAC） +7M
+2018,共同加碼,125523100,CIGNA CORP NEW,6,1366837000,醫療,AQR +708M；D. E. Shaw +226M；Renaissance +133M；Millennium +120M；Citadel +102M；Point72（前 SAC） +77M
+2018,共同加碼,30303M102,FACEBOOK INC,6,1321447625,通訊／媒體,Renaissance +737M；Citadel +307M；D. E. Shaw +122M；Two Sigma +102M；Millennium +40M；Bridgewater +14M
+2018,共同加碼,151020104,CELGENE CORP,6,1063039313,未分類,D. E. Shaw +406M；Millennium +338M；AQR +148M；Point72（前 SAC） +93M；Two Sigma +47M；Renaissance +31M
+2018,共同加碼,438516106,HONEYWELL INTL INC,6,993630393,工業,Citadel +363M；Millennium +278M；Renaissance +154M；Two Sigma +144M；AQR +35M；D. E. Shaw +20M
+2018,共同減碼,24703L103,DELL TECHNOLOGIES INC,7,-1656023000,科技,D. E. Shaw -544M；Elliott -459M；Renaissance -301M；Citadel -122M；AQR -89M；Two Sigma -84M；Millennium -56M
+2018,共同減碼,887317303,TIME WARNER INC,7,-1563430000,通訊／媒體,D. E. Shaw -813M；Citadel -302M；Renaissance -158M；Millennium -123M；AQR -96M；Two Sigma -62M；Point72（前 SAC） -9M
+2018,共同減碼,Y09827109,BROADCOM LTD,7,-819622000,科技,D. E. Shaw -308M；Citadel -301M；AQR -129M；Renaissance -30M；Two Sigma -29M；Millennium -17M；Point72（前 SAC） -5M
+2018,共同減碼,013872106,ALCOA CORP,7,-477998949,未分類,Elliott -156M；Renaissance -114M；AQR -74M；Point72（前 SAC） -48M；Two Sigma -33M；D. E. Shaw -32M；Millennium -21M
+2018,共同減碼,45321L100,IMPERVA INC,7,-192992347,未分類,Elliott -85M；Millennium -37M；Renaissance -27M；Two Sigma -16M；D. E. Shaw -12M；Citadel -9M；Point72（前 SAC） -8M
+2018,共同減碼,G67506108,OM ASSET MGMT PLC,7,-95452000,未分類,Millennium -31M；Renaissance -20M；Citadel -18M；D. E. Shaw -8M；Two Sigma -7M；Point72（前 SAC） -6M；AQR -6M
+2018,共同減碼,61166W101,MONSANTO CO NEW,6,-1182305000,未分類,Renaissance -336M；D. E. Shaw -309M；Citadel -223M；Millennium -132M；Two Sigma -117M；AQR -66M
+2018,共同減碼,459200101,INTERNATIONAL BUSINESS MACHS,6,-988141193,科技,Renaissance -478M；D. E. Shaw -190M；Citadel -121M；Two Sigma -69M；Millennium -69M；Point72（前 SAC） -61M
+2018,共同減碼,37045V100,GENERAL MTRS CO,6,-958033698,未分類,AQR -366M；Renaissance -218M；Citadel -143M；Millennium -108M；Point72（前 SAC） -88M；Two Sigma -35M
+2018,共同減碼,741503403,PRICELINE GRP INC,6,-912784000,未分類,AQR -283M；D. E. Shaw -228M；Renaissance -160M；Citadel -134M；Two Sigma -84M；Millennium -24M
+2019,共同加碼,064058100,BANK NEW YORK MELLON CORP,9,1035931141,金融,Citadel +368M；Millennium +231M；D. E. Shaw +192M；Two Sigma +93M；Point72（前 SAC） +85M；Man Group +30M；AQR +14M；Renaissance +13M；Bridgewater +10M
+2019,共同加碼,74736K101,QORVO INC,8,863707883,未分類,Renaissance +227M；AQR +224M；D. E. Shaw +177M；Man Group +102M；Millennium +57M；Citadel +50M；Two Sigma +14M；Point72（前 SAC） +13M
+2019,共同加碼,26614N102,DUPONT DE NEMOURS INC,8,809574000,原物料,D. E. Shaw +311M；Citadel +169M；Point72（前 SAC） +113M；Renaissance +111M；Millennium +53M；AQR +35M；Two Sigma +12M；Bridgewater +5M
+2019,共同加碼,502431109,L3HARRIS TECHNOLOGIES INC,7,1193240000,科技,Citadel +676M；Millennium +168M；Man Group +106M；Point72（前 SAC） +88M；AQR +73M；Renaissance +65M；Two Sigma +18M
+2019,共同加碼,83304A106,SNAP INC,7,884837591,通訊／媒體,Citadel +307M；D. E. Shaw +203M；Renaissance +163M；Two Sigma +133M；Millennium +60M；Point72（前 SAC） +14M；Bridgewater +5M
+2019,共同加碼,256677105,DOLLAR GEN CORP NEW,7,854965022,消費,Two Sigma +215M；Point72（前 SAC） +173M；Millennium +151M；Renaissance +122M；AQR +120M；D. E. Shaw +56M；Man Group +17M
+2019,共同加碼,G46188101,HORIZON THERAPEUTICS PUB LTD,7,657530000,醫療,Renaissance +366M；D. E. Shaw +186M；Citadel +49M；AQR +27M；Millennium +11M；Two Sigma +10M；Man Group +9M
+2019,共同加碼,26441C204,DUKE ENERGY CORP NEW,7,557751774,能源,Citadel +195M；D. E. Shaw +136M；Two Sigma +100M；Millennium +61M；Point72（前 SAC） +34M；AQR +23M；Man Group +7M
+2019,共同加碼,47215P106,JD COM INC,7,543058921,未分類,Point72（前 SAC） +223M；Man Group +136M；Citadel +95M；Renaissance +37M；D. E. Shaw +22M；Millennium +20M；Bridgewater +11M
+2019,共同加碼,464288513,ISHARES TR,7,498427708,ETF／基金,Man Group +133M；D. E. Shaw +127M；Millennium +89M；Elliott +73M；Bridgewater +59M；Citadel +10M；Renaissance +8M
+2019,共同加碼,668771108,NORTONLIFELOCK INC,7,390187000,未分類,D. E. Shaw +143M；Citadel +103M；Elliott +68M；Two Sigma +35M；AQR +19M；Millennium +17M；Man Group +6M
+2019,共同加碼,436440101,HOLOGIC INC,7,323701302,未分類,Point72（前 SAC） +64M；Citadel +59M；Man Group +57M；Two Sigma +54M；AQR +50M；D. E. Shaw +21M；Renaissance +20M
+2019,共同加碼,89677Q107,TRIP COM GROUP LTD,7,253152000,未分類,Renaissance +96M；D. E. Shaw +68M；AQR +39M；Millennium +19M；Point72（前 SAC） +13M；Two Sigma +10M；Citadel +7M
+2019,共同加碼,12008R107,BUILDERS FIRSTSOURCE INC,7,217216305,未分類,Renaissance +91M；Man Group +54M；AQR +23M；Citadel +19M；Millennium +13M；Two Sigma +11M；D. E. Shaw +6M
+2019,共同加碼,00287Y109,ABBVIE INC,6,1955823726,醫療,Renaissance +1036M；D. E. Shaw +264M；Man Group +256M；Citadel +242M；Two Sigma +91M；Millennium +68M
+2019,共同減碼,151020104,CELGENE CORP,9,-1810253000,未分類,D. E. Shaw -454M；AQR -429M；Millennium -381M；Two Sigma -131M；Citadel -130M；Point72（前 SAC） -106M；Renaissance -82M；Bridgewater -56M；Man Group -41M
+2019,共同減碼,194162103,COLGATE PALMOLIVE CO,8,-351701947,消費,D. E. Shaw -96M；Point72（前 SAC） -76M；Renaissance -62M；Millennium -39M；Bridgewater -35M；Citadel -21M；Man Group -13M；Two Sigma -10M
+2019,共同減碼,928563402,VMWARE INC,7,-990150891,未分類,Renaissance -453M；D. E. Shaw -314M；Citadel -109M；Two Sigma -47M；AQR -43M；Point72（前 SAC） -13M；Millennium -12M
+2019,共同減碼,806857108,SCHLUMBERGER LTD,7,-984467679,能源,D. E. Shaw -364M；Renaissance -304M；Two Sigma -200M；Point72（前 SAC） -81M；Citadel -22M；Man Group -8M；Millennium -6M
+2019,共同減碼,032511107,ANADARKO PETE CORP,7,-878972000,能源,Millennium -232M；Citadel -221M；AQR -177M；D. E. Shaw -127M；Point72（前 SAC） -81M；Renaissance -35M；Two Sigma -7M
+2019,共同減碼,14040H105,CAPITAL ONE FINL CORP,7,-767897623,金融,Man Group -205M；Millennium -191M；D. E. Shaw -125M；Point72（前 SAC） -124M；Renaissance -81M；Bridgewater -33M；Two Sigma -8M
+2019,共同減碼,375558103,GILEAD SCIENCES INC,7,-655959319,醫療,Millennium -195M；Citadel -122M；Man Group -119M；Two Sigma -107M；AQR -94M；Bridgewater -10M；Point72（前 SAC） -10M
+2019,共同減碼,891906109,TOTAL SYS SVCS INC,7,-619053000,未分類,Citadel -361M；Millennium -97M；Renaissance -56M；AQR -49M；Two Sigma -25M；D. E. Shaw -24M；Point72（前 SAC） -8M
+2019,共同減碼,25179M103,DEVON ENERGY CORP NEW,7,-561061146,能源,Elliott -376M；Point72（前 SAC） -66M；Citadel -45M；Man Group -44M；D. E. Shaw -12M；Bridgewater -11M；AQR -6M
+2019,共同減碼,00971T101,AKAMAI TECHNOLOGIES INC,7,-442202237,科技,Millennium -195M；Elliott -146M；Man Group -30M；Citadel -24M；D. E. Shaw -20M；Bridgewater -17M；Two Sigma -10M
+2020,共同加碼,72352L106,PINTEREST INC,9,1177448424,通訊／媒體,Millennium +238M；D. E. Shaw +230M；Renaissance +213M；Citadel +212M；Two Sigma +121M；Point72（前 SAC） +98M；AQR +38M；Man Group +16M；Elliott +12M
+2020,共同加碼,02079K305,ALPHABET INC,8,1755020554,通訊／媒體,Point72（前 SAC） +624M；Citadel +518M；Millennium +337M；D. E. Shaw +164M；Renaissance +44M；Man Group +42M；Two Sigma +18M；Bridgewater +8M
+2020,共同加碼,G0403H108,AON PLC,8,422856000,未分類,Two Sigma +160M；Citadel +92M；Millennium +70M；AQR +38M；Renaissance +31M；Man Group +13M；Point72（前 SAC） +10M；Bridgewater +9M
+2020,共同加碼,18915M107,CLOUDFLARE INC,8,300347011,科技,Citadel +76M；D. E. Shaw +61M；Millennium +57M；Renaissance +47M；Point72（前 SAC） +20M；Two Sigma +15M；AQR +13M；Man Group +11M
+2020,共同加碼,88025U109,10X GENOMICS INC,8,177801657,醫療,Millennium +45M；Point72（前 SAC） +30M；D. E. Shaw +29M；Citadel +26M；Renaissance +23M；Two Sigma +10M；Man Group +8M；AQR +8M
+2020,共同加碼,98980L101,ZOOM VIDEO COMMUNICATIONS IN,7,1565627276,通訊／媒體,Renaissance +806M；AQR +194M；Two Sigma +168M；Citadel +144M；Millennium +131M；D. E. Shaw +101M；Man Group +21M
+2020,共同加碼,235851102,DANAHER CORPORATION,7,1108317608,醫療,Millennium +340M；Citadel +291M；Renaissance +222M；Point72（前 SAC） +98M；Bridgewater +93M；Two Sigma +53M；D. E. Shaw +12M
+2020,共同加碼,62914V106,NIO INC,7,1086636698,未分類,D. E. Shaw +424M；Two Sigma +185M；Renaissance +180M；AQR +106M；Bridgewater +94M；Millennium +92M；Point72（前 SAC） +6M
+2020,共同加碼,22788C105,CROWDSTRIKE HLDGS INC,7,900310930,科技,D. E. Shaw +351M；Two Sigma +267M；Renaissance +226M；Millennium +31M；AQR +12M；Bridgewater +8M；Man Group +7M
+2020,共同加碼,G47567105,IHS MARKIT LTD,7,808260612,未分類,Citadel +325M；D. E. Shaw +249M；Two Sigma +85M；Millennium +85M；Man Group +34M；Renaissance +21M；AQR +9M
+2020,共同加碼,722304102,PINDUODUO INC,7,770945383,未分類,Bridgewater +230M；D. E. Shaw +222M；Millennium +111M；Two Sigma +94M；Citadel +68M；AQR +38M；Point72（前 SAC） +8M
+2020,共同加碼,65339F101,NEXTERA ENERGY INC,7,739095365,能源,Citadel +191M；D. E. Shaw +184M；Millennium +169M；AQR +130M；Point72（前 SAC） +37M；Two Sigma +23M；Man Group +5M
+2020,共同加碼,189054109,CLOROX CO DEL,7,561638851,未分類,Two Sigma +218M；Renaissance +161M；AQR +56M；Millennium +45M；Citadel +42M；Bridgewater +26M；Man Group +13M
+2020,共同加碼,427866108,HERSHEY CO,7,545071119,未分類,Citadel +246M；Millennium +149M；D. E. Shaw +41M；AQR +37M；Bridgewater +32M；Point72（前 SAC） +25M；Two Sigma +16M
+2020,共同加碼,416515104,HARTFORD FINL SVCS GROUP INC,7,363058371,金融,D. E. Shaw +203M；Two Sigma +65M；Millennium +42M；Renaissance +16M；Citadel +14M；Man Group +12M；Point72（前 SAC） +12M
+2020,共同減碼,855244109,STARBUCKS CORP,8,-1930085490,消費,AQR -502M；Renaissance -429M；D. E. Shaw -336M；Two Sigma -183M；Man Group -181M；Citadel -148M；Millennium -78M；Point72（前 SAC） -74M
+2020,共同減碼,913017109,UNITED TECHNOLOGIES CORP,8,-1695212000,科技,Citadel -694M；D. E. Shaw -199M；Point72（前 SAC） -185M；Millennium -183M；Two Sigma -175M；Renaissance -155M；AQR -94M；Man Group -11M
+2020,共同減碼,436440101,HOLOGIC INC,8,-447441687,未分類,Point72（前 SAC） -93M；Man Group -84M；Two Sigma -78M；Millennium -71M；D. E. Shaw -44M；Citadel -34M；AQR -26M；Renaissance -17M
+2020,共同減碼,265504100,DUNKIN BRANDS GROUP INC,8,-209271000,消費,Two Sigma -67M；Millennium -45M；Citadel -38M；Renaissance -26M；D. E. Shaw -10M；Man Group -9M；AQR -8M；Point72（前 SAC） -6M
+2020,共同減碼,G0177J108,ALLERGAN PLC,7,-2105956000,未分類,Renaissance -960M；Millennium -537M；Citadel -217M；Two Sigma -125M；D. E. Shaw -119M；AQR -83M；Man Group -66M
+2020,共同減碼,743315103,PROGRESSIVE CORP,7,-1123871923,未分類,Renaissance -513M；Citadel -193M；D. E. Shaw -188M；Two Sigma -99M；AQR -80M；Point72（前 SAC） -30M；Millennium -20M
+2020,共同減碼,30161N101,EXELON CORP,7,-1073235443,公用事業,AQR -552M；D. E. Shaw -165M；Two Sigma -126M；Citadel -99M；Man Group -92M；Renaissance -25M；Millennium -15M
+2020,共同減碼,177376100,CITRIX SYS INC,7,-834676091,未分類,Elliott -577M；Two Sigma -69M；Renaissance -58M；Man Group -41M；D. E. Shaw -41M；Citadel -39M；Point72（前 SAC） -9M
+2020,共同減碼,174610105,CITIZENS FINL GROUP INC,7,-686260758,金融,Citadel -248M；AQR -162M；D. E. Shaw -95M；Millennium -64M；Point72（前 SAC） -57M；Man Group -41M；Two Sigma -18M
+2020,共同減碼,98919V105,ZAYO GROUP HLDGS INC,7,-636188000,未分類,Citadel -280M；Renaissance -188M；Millennium -46M；Two Sigma -44M；Man Group -42M；D. E. Shaw -25M；AQR -10M
+2021,共同加碼,03743Q108,APA CORPORATION,9,525899000,未分類,D. E. Shaw +177M；Citadel +82M；Elliott +74M；Millennium +67M；Two Sigma +64M；AQR +34M；Point72（前 SAC） +13M；Man Group +9M；Renaissance +7M
+2021,共同加碼,46120E602,INTUITIVE SURGICAL INC,8,893576920,科技,Citadel +287M；Millennium +161M；Two Sigma +105M；D. E. Shaw +93M；Renaissance +77M；Point72（前 SAC） +69M；AQR +67M；Man Group +33M
+2021,共同加碼,674599105,OCCIDENTAL PETE CORP,8,378777382,能源,Citadel +105M；Renaissance +68M；D. E. Shaw +60M；Man Group +54M；AQR +37M；Millennium +27M；Point72（前 SAC） +16M；Two Sigma +13M
+2021,共同加碼,16411R208,CHENIERE ENERGY INC,8,375961205,能源,Renaissance +92M；Point72（前 SAC） +90M；Citadel +67M；Two Sigma +51M；D. E. Shaw +47M；Millennium +15M；AQR +7M；Man Group +6M
+2021,共同加碼,00206R102,ATT INC,7,2544201038,未分類,Citadel +1035M；Millennium +623M；Renaissance +411M；D. E. Shaw +287M；Man Group +130M；AQR +52M；Bridgewater +6M
+2021,共同加碼,31428X106,FEDEX CORP,7,884747824,工業,D. E. Shaw +303M；Millennium +176M；Point72（前 SAC） +113M；Renaissance +87M；Citadel +87M；Two Sigma +71M；Man Group +47M
+2021,共同加碼,747525103,QUALCOMM INC,7,815549173,科技,D. E. Shaw +360M；Citadel +168M；Man Group +95M；Millennium +86M；AQR +56M；Renaissance +27M；Point72（前 SAC） +24M
+2021,共同加碼,438516106,HONEYWELL INTL INC,7,764612677,工業,D. E. Shaw +316M；Two Sigma +188M；Renaissance +114M；Citadel +101M；Bridgewater +21M；AQR +14M；Man Group +9M
+2021,共同加碼,452327109,ILLUMINA INC,7,695582519,未分類,Citadel +199M；Two Sigma +178M；Renaissance +144M；Man Group +78M；Millennium +58M；Point72（前 SAC） +30M；D. E. Shaw +8M
+2021,共同加碼,369604301,GENERAL ELECTRIC CO,7,600988000,公用事業,Renaissance +205M；Citadel +165M；Millennium +113M；Two Sigma +46M；AQR +37M；D. E. Shaw +27M；Man Group +7M
+2021,共同加碼,13645T100,CANADIAN PAC RY LTD,7,454237513,未分類,Two Sigma +242M；Citadel +126M；D. E. Shaw +26M；Bridgewater +18M；Millennium +17M；Renaissance +15M；Man Group +10M
+2021,共同加碼,14316J108,CARLYLE GROUP INC,7,424207615,未分類,Millennium +126M；Citadel +94M；Point72（前 SAC） +63M；Two Sigma +51M；Renaissance +47M；D. E. Shaw +31M；Man Group +13M
+2021,共同加碼,363576109,GALLAGHER ARTHUR J CO,7,351003252,未分類,Citadel +166M；Point72（前 SAC） +69M；Millennium +48M；Renaissance +46M；Man Group +10M；D. E. Shaw +7M；AQR +5M
+2021,共同加碼,233331107,DTE ENERGY CO,7,297662801,能源,Renaissance +72M；Millennium +58M；Citadel +49M；Point72（前 SAC） +46M；Two Sigma +28M；D. E. Shaw +24M；AQR +21M
+2021,共同加碼,011659109,ALASKA AIR GROUP INC,7,220492754,未分類,Millennium +86M；Citadel +43M；Point72（前 SAC） +31M；D. E. Shaw +24M；Renaissance +22M；Man Group +8M；Two Sigma +6M
+2021,共同減碼,437076102,HOME DEPOT INC,8,-1427495910,消費,AQR -329M；Citadel -310M；Two Sigma -249M；Millennium -190M；Renaissance -145M；D. E. Shaw -89M；Man Group -87M；Point72（前 SAC） -27M
+2021,共同減碼,038222105,APPLIED MATLS INC,8,-949598845,科技,Citadel -471M；AQR -144M；Millennium -107M；Renaissance -105M；Man Group -57M；D. E. Shaw -44M；Two Sigma -14M；Bridgewater -8M
+2021,共同減碼,369604103,GENERAL ELECTRIC CO,8,-778004000,公用事業,Millennium -259M；Citadel -223M；Renaissance -164M；AQR -64M；D. E. Shaw -28M；Man Group -15M；Point72（前 SAC） -14M；Bridgewater -10M
+2021,共同減碼,501797104,L BRANDS INC,8,-489797000,消費,Point72（前 SAC） -128M；D. E. Shaw -113M；Two Sigma -102M；Millennium -46M；AQR -40M；Renaissance -35M；Citadel -18M；Man Group -9M
+2021,共同減碼,88025U109,10X GENOMICS INC,8,-152775019,醫療,Millennium -40M；Citadel -30M；D. E. Shaw -29M；Renaissance -22M；Two Sigma -10M；Man Group -8M；AQR -8M；Point72（前 SAC） -6M
+2021,共同減碼,02079K305,ALPHABET INC,7,-2657813891,通訊／媒體,Point72（前 SAC） -938M；Millennium -587M；AQR -430M；D. E. Shaw -359M；Citadel -209M；Man Group -122M；Bridgewater -13M
+2021,共同減碼,00724F101,ADOBE SYSTEMS INCORPORATED,7,-1433052599,科技,Millennium -529M；Citadel -450M；AQR -180M；Man Group -163M；D. E. Shaw -90M；Point72（前 SAC） -11M；Bridgewater -9M
+2021,共同減碼,015351109,ALEXION PHARMACEUTICALS INC,7,-1421580000,醫療,Renaissance -643M；Millennium -294M；Man Group -135M；D. E. Shaw -130M；Citadel -129M；AQR -59M；Point72（前 SAC） -31M
+2021,共同減碼,N6596X109,NXP SEMICONDUCTORS N V,7,-824409909,科技,Citadel -336M；Two Sigma -139M；Point72（前 SAC） -108M；Millennium -103M；D. E. Shaw -96M；AQR -28M；Renaissance -15M
+2021,共同減碼,30034W106,EVERGY INC,7,-740754521,未分類,Citadel -271M；Millennium -143M；D. E. Shaw -135M；Renaissance -80M；Elliott -77M；AQR -22M；Point72（前 SAC） -12M
+2022,共同加碼,902973304,US BANCORP DEL,9,984804320,金融,Citadel +295M；Renaissance +262M；Two Sigma +183M；Millennium +127M；D. E. Shaw +54M；Bridgewater +19M；AQR +17M；Man Group +14M；Point72（前 SAC） +13M
+2022,共同加碼,064058100,BANK NEW YORK MELLON CORP,8,910741605,金融,Citadel +345M；Millennium +289M；Renaissance +106M；Two Sigma +74M；Point72（前 SAC） +30M；Man Group +29M；AQR +27M；Bridgewater +12M
+2022,共同加碼,56585A102,MARATHON PETE CORP,8,856570226,能源,Renaissance +225M；AQR +162M；Millennium +141M；Two Sigma +132M；Citadel +120M；Man Group +49M；Point72（前 SAC） +17M；Bridgewater +12M
+2022,共同加碼,902494103,TYSON FOODS INC,8,581189275,消費,AQR +147M；Millennium +137M；Two Sigma +71M；Renaissance +67M；D. E. Shaw +56M；Citadel +55M；Man Group +39M；Bridgewater +8M
+2022,共同加碼,254709108,DISCOVER FINL SVCS,8,426981353,金融,Millennium +141M；Man Group +68M；D. E. Shaw +68M；Renaissance +50M；Citadel +46M；AQR +37M；Two Sigma +11M；Point72（前 SAC） +7M
+2022,共同加碼,845467109,SOUTHWESTERN ENERGY CO,8,378157847,能源,Renaissance +89M；Point72（前 SAC） +85M；Citadel +69M；Millennium +47M；D. E. Shaw +47M；Two Sigma +23M；AQR +12M；Man Group +6M
+2022,共同加碼,988498101,YUM BRANDS INC,7,1238228291,消費,Millennium +332M；Citadel +302M；Renaissance +156M；Two Sigma +152M；Point72（前 SAC） +138M；D. E. Shaw +123M；Man Group +35M
+2022,共同加碼,12572Q105,CME GROUP INC,7,1120792473,金融,D. E. Shaw +257M；Renaissance +253M；Two Sigma +206M；Millennium +193M；Citadel +129M；Bridgewater +69M；AQR +13M
+2022,共同加碼,70450Y103,PAYPAL HLDGS INC,7,1074169462,金融,Citadel +339M；Renaissance +320M；Point72（前 SAC） +187M；Elliott +71M；Bridgewater +69M；Two Sigma +58M；Man Group +30M
+2022,共同加碼,194162103,COLGATE PALMOLIVE CO,7,1002104844,消費,D. E. Shaw +441M；Millennium +283M；Point72（前 SAC） +113M；Renaissance +91M；Two Sigma +31M；Man Group +25M；AQR +18M
+2022,共同加碼,28176E108,EDWARDS LIFESCIENCES CORP,7,825504260,未分類,Millennium +327M；D. E. Shaw +206M；Two Sigma +146M；Renaissance +92M；Citadel +33M；Man Group +15M；Bridgewater +7M
+2022,共同加碼,009066101,AIRBNB INC,7,623291601,未分類,Renaissance +429M；Two Sigma +69M；Millennium +61M；Point72（前 SAC） +27M；Man Group +22M；Bridgewater +10M；AQR +6M
+2022,共同加碼,025816109,AMERICAN EXPRESS CO,7,453065050,金融,D. E. Shaw +279M；Two Sigma +59M；Renaissance +48M；Millennium +27M；Man Group +19M；Point72（前 SAC） +14M；AQR +7M
+2022,共同加碼,743315103,PROGRESSIVE CORP,7,418028490,未分類,Millennium +150M；Two Sigma +127M；Renaissance +53M；D. E. Shaw +30M；Bridgewater +29M；Citadel +21M；Man Group +6M
+2022,共同加碼,G01767105,ALKERMES PLC,7,294278488,未分類,Citadel +151M；Millennium +81M；Renaissance +22M；Two Sigma +19M；D. E. Shaw +10M；Point72（前 SAC） +6M；Man Group +6M
+2022,共同減碼,G06242104,ATLASSIAN CORP PLC,8,-1751754000,未分類,Renaissance -1107M；Two Sigma -232M；D. E. Shaw -126M；Point72（前 SAC） -124M；Millennium -104M；Citadel -32M；Man Group -18M；AQR -8M
+2022,共同減碼,67066G104,NVIDIA CORPORATION,8,-1433587166,科技,Millennium -510M；Two Sigma -241M；D. E. Shaw -216M；AQR -164M；Renaissance -115M；Man Group -80M；Citadel -68M；Point72（前 SAC） -39M
+2022,共同減碼,156782104,CERNER CORP,8,-710519000,未分類,Millennium -230M；Two Sigma -185M；D. E. Shaw -111M；AQR -63M；Bridgewater -57M；Man Group -37M；Citadel -21M；Renaissance -6M
+2022,共同減碼,90184L102,TWITTER INC,7,-1251504000,通訊／媒體,Elliott -432M；Two Sigma -223M；Renaissance -190M；D. E. Shaw -153M；Millennium -114M；Citadel -112M；Man Group -28M
+2022,共同減碼,09857L108,BOOKING HOLDINGS INC,7,-1051328883,消費,D. E. Shaw -436M；Two Sigma -182M；Man Group -139M；Renaissance -135M；Point72（前 SAC） -73M；Citadel -71M；Millennium -14M
+2022,共同減碼,438516106,HONEYWELL INTL INC,7,-923730611,工業,D. E. Shaw -338M；Two Sigma -203M；Millennium -116M；Renaissance -114M；Citadel -104M；AQR -29M；Man Group -19M
+2022,共同減碼,75886F107,REGENERON PHARMACEUTICALS,7,-708783269,醫療,Two Sigma -210M；D. E. Shaw -200M；AQR -101M；Renaissance -66M；Millennium -66M；Man Group -51M；Citadel -16M
+2022,共同減碼,177376100,CITRIX SYS INC,7,-362558000,未分類,D. E. Shaw -150M；Elliott -114M；Two Sigma -38M；Citadel -23M；Man Group -15M；Renaissance -14M；AQR -9M
+2022,共同減碼,229663109,CUBESMART,7,-272677683,未分類,Two Sigma -81M；Millennium -66M；Citadel -54M；Renaissance -30M；Man Group -20M；D. E. Shaw -14M；AQR -7M
+2022,共同減碼,00130H105,AES CORP,7,-220778133,未分類,D. E. Shaw -79M；Millennium -34M；Man Group -31M；Citadel -26M；Two Sigma -20M；AQR -17M；Renaissance -13M
+2023,共同加碼,67066G104,NVIDIA CORPORATION,9,5576924017,科技,D. E. Shaw +1303M；Citadel +856M；Millennium +822M；Renaissance +767M；AQR +687M；Man Group +457M；Point72（前 SAC） +276M；Two Sigma +276M；Bridgewater +133M
+2023,共同加碼,00287Y109,ABBVIE INC,9,1009519740,醫療,Renaissance +257M；D. E. Shaw +146M；Point72（前 SAC） +122M；Man Group +118M；Two Sigma +104M；Millennium +101M；Bridgewater +89M；AQR +66M；Citadel +8M
+2023,共同加碼,23331A109,D R HORTON INC,9,638172425,未分類,Millennium +176M；Point72（前 SAC） +116M；Two Sigma +79M；AQR +71M；Bridgewater +70M；Man Group +43M；Renaissance +38M；D. E. Shaw +27M；Citadel +20M
+2023,共同加碼,G25508105,CRH PLC,7,918598958,未分類,Millennium +517M；Citadel +186M；Point72（前 SAC） +113M；D. E. Shaw +71M；Two Sigma +15M；Man Group +12M；Bridgewater +5M
+2023,共同加碼,693506107,PPG INDS INC,7,771494579,未分類,Citadel +245M；Millennium +205M；Two Sigma +88M；AQR +72M；Man Group +70M；D. E. Shaw +46M；Renaissance +45M
+2023,共同加碼,58155Q103,MCKESSON CORP,7,561120519,未分類,AQR +183M；Citadel +114M；Man Group +86M；Point72（前 SAC） +84M；D. E. Shaw +46M；Two Sigma +27M；Bridgewater +22M
+2023,共同加碼,40434L105,HP INC,7,541221676,科技,Man Group +146M；Two Sigma +100M；Citadel +98M；Millennium +97M；Renaissance +65M；D. E. Shaw +30M；Bridgewater +7M
+2023,共同加碼,M7S64H106,MONDAY COM LTD,7,463499871,未分類,Renaissance +135M；Citadel +132M；Two Sigma +71M；Man Group +46M；Millennium +43M；Point72（前 SAC） +25M；D. E. Shaw +12M
+2023,共同加碼,974155103,WINGSTOP INC,7,453377694,未分類,D. E. Shaw +169M；Man Group +85M；Citadel +74M；Renaissance +73M；Millennium +27M；AQR +17M；Bridgewater +8M
+2023,共同加碼,G51502105,JOHNSON CTLS INTL PLC,7,436665848,未分類,Point72（前 SAC） +244M；Two Sigma +48M；AQR +47M；D. E. Shaw +44M；Millennium +31M；Man Group +13M；Bridgewater +9M
+2023,共同加碼,92537N108,VERTIV HOLDINGS CO,7,435894988,未分類,Two Sigma +121M；Renaissance +115M；Point72（前 SAC） +52M；AQR +46M；Citadel +45M；Man Group +40M；D. E. Shaw +17M
+2023,共同加碼,42824C109,HEWLETT PACKARD ENTERPRISE C,7,411679576,科技,Two Sigma +130M；AQR +85M；Citadel +71M；D. E. Shaw +56M；Renaissance +46M；Man Group +14M；Bridgewater +9M
+2023,共同加碼,67059N108,NUTANIX INC,7,334636827,未分類,Renaissance +114M；Millennium +108M；Citadel +49M；Point72（前 SAC） +28M；AQR +17M；Two Sigma +11M；Man Group +7M
+2023,共同加碼,172062101,CINCINNATI FINL CORP,7,322021325,金融,Millennium +125M；Man Group +74M；AQR +65M；Citadel +23M；D. E. Shaw +13M；Point72（前 SAC） +11M；Renaissance +10M
+2023,共同加碼,620076307,MOTOROLA SOLUTIONS INC,7,278043412,未分類,Two Sigma +96M；AQR +40M；Renaissance +37M；Man Group +28M；D. E. Shaw +28M；Citadel +26M；Millennium +23M
+2023,共同減碼,902973304,US BANCORP DEL,9,-1109839516,金融,Renaissance -274M；Citadel -260M；Millennium -213M；Two Sigma -193M；D. E. Shaw -84M；Bridgewater -31M；AQR -26M；Man Group -15M；Point72（前 SAC） -13M
+2023,共同減碼,53223X107,LIFE STORAGE INC,9,-282406162,未分類,Citadel -145M；Millennium -44M；Man Group -23M；Two Sigma -21M；Bridgewater -14M；Renaissance -13M；D. E. Shaw -9M；Point72（前 SAC） -7M；AQR -6M
+2023,共同減碼,988498101,YUM BRANDS INC,8,-1341738488,消費,Citadel -405M；Millennium -329M；Renaissance -192M；Two Sigma -152M；D. E. Shaw -117M；Point72（前 SAC） -96M；Bridgewater -43M；AQR -7M
+2023,共同減碼,09062X103,BIOGEN INC,8,-1244272042,醫療,D. E. Shaw -448M；Point72（前 SAC） -340M；Man Group -162M；Millennium -86M；Citadel -63M；Renaissance -63M；AQR -42M；Two Sigma -41M
+2023,共同減碼,G1151C101,ACCENTURE PLC IRELAND,8,-561059770,科技,D. E. Shaw -165M；Millennium -106M；Renaissance -86M；Point72（前 SAC） -71M；AQR -59M；Citadel -42M；Two Sigma -17M；Bridgewater -14M
+2023,共同減碼,25746U109,DOMINION ENERGY INC,8,-366823589,能源,Point72（前 SAC） -120M；Citadel -118M；D. E. Shaw -37M；Millennium -28M；AQR -23M；Bridgewater -17M；Two Sigma -14M；Man Group -10M
+2023,共同減碼,G0176J109,ALLEGION PLC,8,-303031177,未分類,Citadel -106M；Millennium -54M；Two Sigma -40M；D. E. Shaw -33M；Renaissance -33M；AQR -15M；Point72（前 SAC） -12M；Man Group -9M
+2023,共同減碼,82669G104,SIGNATURE BK NEW YORK N Y,8,-296864034,未分類,Renaissance -101M；Citadel -51M；D. E. Shaw -47M；Two Sigma -37M；Millennium -25M；AQR -19M；Point72（前 SAC） -9M；Man Group -8M
+2023,共同減碼,30161N101,EXELON CORP,8,-282119937,公用事業,Point72（前 SAC） -80M；Millennium -56M；Renaissance -46M；Man Group -29M；Citadel -28M；D. E. Shaw -26M；Bridgewater -11M；AQR -7M
+2023,共同減碼,040413106,ARISTA NETWORKS INC,7,-1027320282,科技,Point72（前 SAC） -231M；Man Group -221M；Millennium -195M；Two Sigma -166M；Citadel -94M；Renaissance -75M；D. E. Shaw -46M
+2024,共同加碼,040413205,ARISTA NETWORKS INC,9,1473847409,科技,AQR +336M；Point72（前 SAC） +334M；Millennium +251M；Man Group +137M；D. E. Shaw +111M；Renaissance +111M；Bridgewater +74M；Citadel +69M；Two Sigma +51M
+2024,共同加碼,11135F101,BROADCOM INC,8,3415494003,科技,Millennium +1673M；AQR +570M；D. E. Shaw +441M；Man Group +224M；Citadel +195M；Bridgewater +152M；Point72（前 SAC） +148M；Two Sigma +13M
+2024,共同加碼,949746101,WELLS FARGO CO NEW,8,1451459940,金融,Millennium +668M；Citadel +292M；Renaissance +158M；Bridgewater +99M；Point72（前 SAC） +85M；D. E. Shaw +77M；AQR +56M；Man Group +17M
+2024,共同加碼,512807306,LAM RESEARCH CORP,8,1207457385,科技,D. E. Shaw +255M；Citadel +225M；Two Sigma +203M；Bridgewater +183M；Millennium +175M；Man Group +120M；AQR +40M；Renaissance +6M
+2024,共同加碼,31488V107,FERGUSON ENTERPRISES INC,8,566970862,未分類,Millennium +279M；D. E. Shaw +79M；Renaissance +67M；Citadel +59M；AQR +55M；Point72（前 SAC） +13M；Man Group +9M；Two Sigma +6M
+2024,共同加碼,G87052109,TE CONNECTIVITY PLC,8,515749603,未分類,Millennium +124M；D. E. Shaw +108M；Point72（前 SAC） +104M；AQR +76M；Citadel +44M；Renaissance +33M；Man Group +14M；Bridgewater +12M
+2024,共同加碼,136375102,CANADIAN NATL RY CO,8,476324176,未分類,Millennium +145M；Citadel +87M；Point72（前 SAC） +70M；Two Sigma +62M；D. E. Shaw +51M；Renaissance +36M；Bridgewater +19M；Man Group +6M
+2024,共同加碼,G0378L100,ANGLOGOLD ASHANTI PLC,8,132321077,原物料,Man Group +35M；AQR +21M；D. E. Shaw +19M；Citadel +15M；Millennium +13M；Renaissance +10M；Bridgewater +9M；Two Sigma +8M
+2024,共同加碼,060505104,BANK AMERICA CORP,7,1828911294,金融,Millennium +666M；Citadel +568M；Two Sigma +237M；D. E. Shaw +221M；Man Group +53M；Point72（前 SAC） +43M；AQR +42M
+2024,共同加碼,461202103,INTUIT,7,1521840936,科技,D. E. Shaw +566M；Point72（前 SAC） +346M；Citadel +193M；Millennium +165M；Two Sigma +120M；Man Group +115M；AQR +17M
+2024,共同加碼,15135B101,CENTENE CORP DEL,7,1089363400,未分類,AQR +329M；Millennium +327M；D. E. Shaw +128M；Two Sigma +96M；Point72（前 SAC） +91M；Citadel +64M；Bridgewater +54M
+2024,共同加碼,049468101,ATLASSIAN CORPORATION,7,1006456153,未分類,Citadel +401M；D. E. Shaw +178M；AQR +162M；Two Sigma +87M；Point72（前 SAC） +65M；Man Group +60M；Millennium +54M
+2024,共同加碼,666807102,NORTHROP GRUMMAN CORP,7,829530891,工業,D. E. Shaw +257M；AQR +168M；Two Sigma +135M；Man Group +82M；Citadel +81M；Renaissance +71M；Millennium +36M
+2024,共同加碼,808513105,SCHWAB CHARLES CORP,7,807409710,金融,Millennium +377M；D. E. Shaw +203M；Renaissance +80M；Point72（前 SAC） +66M；Two Sigma +47M；Man Group +29M；AQR +5M
+2024,共同加碼,46266C105,IQVIA HLDGS INC,7,725453407,未分類,Millennium +263M；D. E. Shaw +189M；Two Sigma +151M；AQR +78M；Man Group +18M；Citadel +17M；Renaissance +9M
+2024,共同減碼,56585A102,MARATHON PETE CORP,8,-2099786297,能源,Elliott -1642M；Renaissance -115M；Millennium -107M；Citadel -107M；AQR -57M；Bridgewater -33M；D. E. Shaw -24M；Man Group -15M
+2024,共同減碼,24703L202,DELL TECHNOLOGIES INC,8,-1321882700,科技,AQR -331M；Point72（前 SAC） -309M；Citadel -303M；Millennium -154M；D. E. Shaw -74M；Man Group -57M；Renaissance -55M；Two Sigma -37M
+2024,共同減碼,512807108,LAM RESEARCH CORP,8,-630962007,科技,Citadel -218M；AQR -134M；Renaissance -132M；Man Group -58M；D. E. Shaw -46M；Two Sigma -19M；Millennium -17M；Bridgewater -6M
+2024,共同減碼,436440101,HOLOGIC INC,8,-620078120,未分類,Citadel -191M；Millennium -129M；Renaissance -111M；D. E. Shaw -95M；Two Sigma -31M；Point72（前 SAC） -30M；Bridgewater -27M；AQR -6M
+2024,共同減碼,60871R209,MOLSON COORS BEVERAGE CO,8,-279042803,消費,Man Group -76M；Point72（前 SAC） -63M；Citadel -42M；D. E. Shaw -31M；Bridgewater -23M；Millennium -15M；Two Sigma -15M；Renaissance -14M
+2024,共同減碼,02079K305,ALPHABET INC,7,-2511764615,通訊／媒體,Millennium -947M；AQR -414M；Renaissance -396M；Man Group -349M；D. E. Shaw -275M；Two Sigma -87M；Point72（前 SAC） -44M
+2024,共同減碼,723787107,PIONEER NAT RES CO,7,-1436789821,能源,Millennium -777M；Citadel -272M；D. E. Shaw -266M；Renaissance -49M；Man Group -42M；AQR -23M；Bridgewater -8M
+2024,共同減碼,855244109,STARBUCKS CORP,7,-1033317185,消費,Renaissance -370M；Bridgewater -202M；Man Group -161M；D. E. Shaw -149M；AQR -64M；Two Sigma -53M；Millennium -36M
+2024,共同減碼,G51502105,JOHNSON CTLS INTL PLC,7,-998264480,未分類,Point72（前 SAC） -294M；Two Sigma -224M；D. E. Shaw -215M；Man Group -134M；Millennium -106M；Citadel -13M；Bridgewater -12M
+2024,共同減碼,444859102,HUMANA INC,7,-744692681,醫療,Renaissance -187M；AQR -187M；Millennium -175M；Bridgewater -57M；Man Group -51M；Citadel -50M；Point72（前 SAC） -37M
+2025,共同加碼,06849F108,BARRICK MNG CORP,9,1404256418,原物料,D. E. Shaw +424M；Millennium +274M；AQR +206M；Man Group +159M；Citadel +118M；Bridgewater +108M；Renaissance +55M；Point72（前 SAC） +52M；Two Sigma +8M
+2025,共同加碼,H1467J104,CHUBB LIMITED,9,1284607892,金融,AQR +956M；Two Sigma +183M；Citadel +39M；Point72（前 SAC） +32M；Renaissance +21M；Bridgewater +18M；Millennium +16M；Man Group +14M；D. E. Shaw +6M
+2025,共同加碼,68902V107,OTIS WORLDWIDE CORP,9,945340325,未分類,D. E. Shaw +266M；Millennium +185M；AQR +167M；Renaissance +103M；Man Group +99M；Two Sigma +48M；Citadel +45M；Bridgewater +20M；Point72（前 SAC） +13M
+2025,共同加碼,595112103,MICRON TECHNOLOGY INC,8,3123851545,科技,AQR +874M；Renaissance +801M；Citadel +291M；Two Sigma +288M；Millennium +261M；Bridgewater +254M；Point72（前 SAC） +216M；Man Group +139M
+2025,共同加碼,742718109,PROCTER AND GAMBLE CO,8,1931426646,消費,D. E. Shaw +603M；Renaissance +368M；Millennium +303M；Two Sigma +207M；Citadel +139M；Man Group +126M；AQR +101M；Point72（前 SAC） +85M
+2025,共同加碼,80004C200,SANDISK CORP,8,1865418179,未分類,D. E. Shaw +497M；Millennium +356M；Renaissance +287M；AQR +269M；Two Sigma +170M；Point72（前 SAC） +138M；Citadel +96M；Man Group +53M
+2025,共同加碼,808513105,SCHWAB CHARLES CORP,8,1510649404,金融,D. E. Shaw +494M；Citadel +264M；AQR +203M；Two Sigma +192M；Point72（前 SAC） +175M；Man Group +79M；Renaissance +72M；Bridgewater +33M
+2025,共同加碼,281020107,EDISON INTL,8,1433531739,公用事業,AQR +985M；Two Sigma +112M；D. E. Shaw +107M；Man Group +101M；Citadel +79M；Millennium +34M；Renaissance +8M；Bridgewater +8M
+2025,共同加碼,438516106,HONEYWELL INTL INC,8,1009681686,工業,D. E. Shaw +460M；Man Group +146M；Renaissance +125M；Two Sigma +110M；AQR +60M；Millennium +60M；Citadel +37M；Bridgewater +11M
+2025,共同加碼,03027X100,AMERICAN TOWER CORP NEW,8,986730237,不動產,D. E. Shaw +228M；AQR +225M；Two Sigma +197M；Man Group +183M；Millennium +71M；Citadel +59M；Bridgewater +15M；Renaissance +8M
+2025,共同加碼,G6700G107,NVENT ELECTRIC PLC,8,888553957,公用事業,Millennium +400M；Citadel +205M；Point72（前 SAC） +161M；Man Group +54M；Two Sigma +36M；AQR +14M；Bridgewater +13M；D. E. Shaw +5M
+2025,共同加碼,14448C104,CARRIER GLOBAL CORPORATION,8,885534768,未分類,D. E. Shaw +245M；Citadel +220M；Point72（前 SAC） +161M；Two Sigma +85M；Renaissance +65M；AQR +65M；Millennium +24M；Man Group +20M
+2025,共同加碼,867224107,SUNCOR ENERGY INC NEW,8,602820926,能源,AQR +266M；Millennium +153M；Citadel +48M；Two Sigma +47M；D. E. Shaw +36M；Point72（前 SAC） +33M；Renaissance +13M；Man Group +7M
+2025,共同加碼,56501R106,MANULIFE FINL CORP,8,446135260,金融,Man Group +175M；AQR +101M；Two Sigma +78M；D. E. Shaw +36M；Bridgewater +22M；Point72（前 SAC） +17M；Renaissance +11M；Citadel +6M
+2025,共同加碼,03820C105,APPLIED INDL TECHNOLOGIES IN,8,324940175,科技,AQR +86M；Millennium +73M；Two Sigma +72M；Citadel +36M；D. E. Shaw +32M；Point72（前 SAC） +11M；Renaissance +8M；Bridgewater +7M
+2025,共同減碼,16119P108,CHARTER COMMUNICATIONS INC N,8,-572600715,通訊／媒體,Citadel -251M；Renaissance -94M；Point72（前 SAC） -89M；D. E. Shaw -72M；Two Sigma -40M；Man Group -12M；Millennium -9M；Bridgewater -6M
+2025,共同減碼,30303M102,META PLATFORMS INC,7,-1994920599,通訊／媒體,Millennium -955M；Bridgewater -262M；Two Sigma -262M；Citadel -252M；D. E. Shaw -217M；Renaissance -29M；Point72（前 SAC） -17M
+2025,共同減碼,949746101,WELLS FARGO CO NEW,7,-1674989462,金融,Millennium -964M；D. E. Shaw -204M；Citadel -173M；Renaissance -158M；Point72（前 SAC） -85M；Bridgewater -74M；AQR -16M
+2025,共同減碼,375558103,GILEAD SCIENCES INC,7,-700788911,醫療,Renaissance -312M；D. E. Shaw -101M；Citadel -99M；Point72（前 SAC） -79M；Millennium -67M；Two Sigma -22M；Bridgewater -21M
+2025,共同減碼,913903100,UNIVERSAL HLTH SVCS INC,7,-448902055,未分類,Citadel -280M；Millennium -52M；Man Group -37M；Renaissance -26M；Bridgewater -22M；Two Sigma -18M；Point72（前 SAC） -14M
+2025,共同減碼,067901108,BARRICK GOLD CORP,7,-422966955,原物料,D. E. Shaw -138M；Man Group -104M；Millennium -48M；Citadel -43M；Two Sigma -42M；Bridgewater -28M；Renaissance -20M
+2025,共同減碼,830566105,SKECHERS U S A INC,7,-419103117,未分類,D. E. Shaw -144M；Two Sigma -79M；AQR -69M；Point72（前 SAC） -66M；Millennium -28M；Citadel -23M；Man Group -11M
+2025,共同減碼,358039105,FRESHPET INC,7,-232060150,未分類,D. E. Shaw -103M；Point72（前 SAC） -38M；Millennium -26M；Man Group -24M；Citadel -22M；Two Sigma -10M；Renaissance -9M
+2025,共同減碼,46116X101,INTRA-CELLULAR THERAPIES INC,7,-202051849,未分類,AQR -45M；D. E. Shaw -45M；Millennium -43M；Renaissance -26M；Point72（前 SAC） -21M；Two Sigma -12M；Citadel -10M
+2025,共同減碼,09627Y109,BLUEPRINT MEDICINES CORP,7,-199773337,未分類,Millennium -64M；Citadel -57M；D. E. Shaw -32M；Point72（前 SAC） -15M；AQR -13M；Renaissance -11M；Man Group -9M
+2026,共同加碼,166764100,CHEVRON CORPORATION,9,1630621245,能源,AQR +704M；D. E. Shaw +257M；Citadel +176M；Millennium +150M；Man Group +116M；Renaissance +113M；Point72（前 SAC） +75M；Bridgewater +26M；Two Sigma +16M
+2026,共同加碼,69351T106,PPL CORP,8,1358784200,未分類,Citadel +456M；Millennium +330M；Point72（前 SAC） +304M；AQR +90M；Two Sigma +78M；Bridgewater +51M；Man Group +26M；D. E. Shaw +25M
+2026,共同加碼,G2004J103,CARNIVAL CORP LTD,8,1035494757,未分類,AQR +330M；Point72（前 SAC） +264M；D. E. Shaw +175M；Millennium +156M；Citadel +63M；Man Group +25M；Renaissance +14M；Two Sigma +8M
+2026,共同加碼,871607107,SYNOPSYS INC,8,1001686162,未分類,AQR +660M；Elliott +101M；Two Sigma +88M；Man Group +54M；D. E. Shaw +41M；Millennium +21M；Bridgewater +18M；Renaissance +18M
+2026,共同加碼,957638109,WESTERN ALLIANCE BANCORP,8,536498764,金融,AQR +383M；D. E. Shaw +36M；Two Sigma +34M；Bridgewater +33M；Millennium +20M；Man Group +16M；Citadel +7M；Point72（前 SAC） +7M
+2026,共同加碼,G7997R103,SEAGATE TECHNOLOGY HLDNGS PL,7,2800432705,科技,Citadel +545M；D. E. Shaw +538M；Millennium +532M；Point72（前 SAC） +410M；AQR +379M；Two Sigma +323M；Renaissance +73M
+2026,共同加碼,75513E101,RTX CORPORATION,7,2157503617,未分類,Two Sigma +590M；Point72（前 SAC） +516M；D. E. Shaw +420M；AQR +262M；Citadel +163M；Millennium +133M；Man Group +74M
+2026,共同加碼,461202103,INTUIT,7,2049858646,科技,Two Sigma +551M；D. E. Shaw +517M；AQR +310M；Millennium +268M；Renaissance +200M；Man Group +103M；Citadel +101M
+2026,共同加碼,46625H100,JPMORGAN CHASE & CO,7,1756068808,金融,Two Sigma +838M；D. E. Shaw +325M；Citadel +299M；Renaissance +126M；Man Group +87M；Point72（前 SAC） +73M；Bridgewater +8M
+2026,共同加碼,882508104,TEXAS INSTRS INC,7,1739187520,科技,Citadel +497M；Point72（前 SAC） +410M；AQR +345M；Millennium +182M；Renaissance +163M；Two Sigma +112M；Man Group +30M
+2026,共同加碼,12572Q105,CME GROUP INC,7,1321315989,金融,Two Sigma +526M；D. E. Shaw +259M；Millennium +209M；Point72（前 SAC） +139M；Renaissance +134M；Citadel +46M；Man Group +8M
+2026,共同加碼,674599105,OCCIDENTAL PETE CORP,7,934136807,能源,AQR +429M；Point72（前 SAC） +213M；D. E. Shaw +142M；Two Sigma +54M；Millennium +53M；Renaissance +35M；Man Group +9M
+2026,共同加碼,049560105,ATMOS ENERGY CORP,7,907364380,能源,AQR +322M；Point72（前 SAC） +234M；Citadel +208M；Renaissance +68M；Millennium +35M；Two Sigma +31M；D. E. Shaw +9M
+2026,共同加碼,G0593M107,ASTRAZENECA PLC,7,902170138,未分類,D. E. Shaw +208M；Citadel +184M；Point72（前 SAC） +135M；Man Group +128M；Millennium +110M；AQR +75M；Two Sigma +62M
+2026,共同加碼,78467J100,SS&C TECH HLDGS,7,839329064,未分類,Citadel +320M；AQR +241M；D. E. Shaw +87M；Two Sigma +87M；Millennium +71M；Point72（前 SAC） +28M；Renaissance +6M
+2026,共同減碼,143658300,CARNIVAL CORP,9,-1032495349,未分類,Citadel -257M；Renaissance -192M；D. E. Shaw -182M；Point72（前 SAC） -164M；AQR -110M；Millennium -58M；Man Group -40M；Two Sigma -20M；Bridgewater -11M
+2026,共同減碼,438516106,HONEYWELL INTL INC,8,-1512547429,工業,D. E. Shaw -472M；Citadel -295M；Millennium -261M；Man Group -166M；Renaissance -125M；Two Sigma -113M；AQR -70M；Bridgewater -11M
+2026,共同減碼,03152W109,AMICUS THERAPEUTICS INC,8,-224439070,醫療,Citadel -73M；Millennium -43M；Point72（前 SAC） -29M；D. E. Shaw -22M；Two Sigma -21M；Renaissance -17M；AQR -14M；Man Group -6M
+2026,共同減碼,58933Y105,MERCK & CO INC,7,-2196861029,醫療,Millennium -802M；Citadel -628M；AQR -398M；Point72（前 SAC） -123M；Man Group -110M；D. E. Shaw -100M；Bridgewater -36M
+2026,共同減碼,30063P105,EXACT SCIENCES CORP,7,-913366326,未分類,Millennium -350M；AQR -226M；Renaissance -162M；Man Group -98M；D. E. Shaw -51M；Point72（前 SAC） -18M；Citadel -8M
+2026,共同減碼,776696106,ROPER TECHNOLOGIES INC,7,-598151024,科技,D. E. Shaw -217M；AQR -195M；Renaissance -91M；Citadel -35M；Point72（前 SAC） -33M；Man Group -14M；Two Sigma -14M
+2026,共同減碼,35909D109,FRONTIER COMMUNICATIONS PARE,7,-563827248,通訊／媒體,Millennium -284M；Renaissance -86M；Man Group -57M；D. E. Shaw -55M；Citadel -49M；Point72（前 SAC） -24M；AQR -8M
+2026,共同減碼,436440101,HOLOGIC INC,7,-523669874,未分類,Millennium -261M；Renaissance -99M；Man Group -50M；Citadel -48M；AQR -45M；Point72（前 SAC） -15M；Two Sigma -6M
+2026,共同減碼,466313103,JABIL INC,7,-495103913,未分類,D. E. Shaw -159M；Two Sigma -159M；Point72（前 SAC） -98M；Renaissance -43M；Bridgewater -20M；Man Group -10M；Millennium -8M
+2026,共同減碼,109641100,BRINKER INTL INC,7,-488456962,未分類,D. E. Shaw -198M；Millennium -142M；Point72（前 SAC） -93M；Renaissance -36M；Bridgewater -7M；AQR -7M；Two Sigma -6M
